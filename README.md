@@ -9,7 +9,16 @@
     <a href="https://people.mpi-inf.mpg.de/~schiele">Bernt Schiele</a>
   </p>
   
-  <h3>Neural Information Processing Systems (NeurIPS) 2024</h3>
+  <h3>
+    <a href="https://nips.cc/virtual/2024/poster/95051"> Neural Information Processing Systems (NeurIPS) 2024</a>
+  </h3>
+
+  <h4> 
+    Also presented at: 
+    <a href="https://cvprinparis.github.io/CVPR2025InParis/"> CVPR@Paris</a> | 
+    <a href="https://icvss.dmi.unict.it/icvss2025/Home"> ICVSS 2025</a> | 
+    <a href="https://www.dagm-gcpr.de/year/2025"> DAGM GCPR</a> 
+  </h4>
     
   <h3>
     <a href="https://arxiv.org/abs/2411.00715">Paper</a> |
