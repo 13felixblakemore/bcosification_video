@@ -76,7 +76,7 @@ class CaptumDerivative(ExplainerBase):
                 self, img, target=torch.tensor(target), **self.configs
             )
         return self.__class__.__bases__[-1].attribute(
-            self, img, target=torch.tensor(target).cuda(), **self.configs
+            self, img, target=torch.tensor(target), **self.configs
         )
 
     def attribute_selection(self, img, targets):

@@ -508,6 +508,7 @@ class ClassificationLitModel(pl.LightningModule):
             self.bcos_loader = create_test_loader(transform=transforms.Compose(clip_bcos))                              
 
         num_classes = config["data"]["num_classes"]
+        print("Number of classes: ", num_classes)
         if not clip_kd:
             self.train_acc1 = torchmetrics.Accuracy(
                 task="multiclass", top_k=1, num_classes=num_classes, compute_on_cpu=True
@@ -872,7 +873,7 @@ class ClassificationLitModel(pl.LightningModule):
     def configure_gradient_clipping(
         self,
         optimizer,
-        optimizer_idx,
+        optimizer_idx=None,
         gradient_clip_val=None,
         gradient_clip_algorithm=None,
     ) -> None:
@@ -1067,7 +1068,7 @@ class FreezeTeacher(pl_callbacks.BaseFinetuning):
         if pl_module.clip_kd:
             self.freeze(pl_module.clip_model)
 
-    def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx):
+    def finetune_function(self, pl_module, current_epoch, optimizer, opt_idx=None):
         pass # Just HAD to be implemented :)
 
 class ZeroshotEval(pl_callbacks.Callback):

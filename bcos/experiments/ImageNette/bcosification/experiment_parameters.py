@@ -20,14 +20,14 @@ from bcos.optim import LRSchedulerFactory, OptimizerFactory
 
 __all__ = ["CONFIGS"]
 
-NUM_CLASSES = 10
+NUM_CLASSES = 1000
 NUM_TRAIN_EXAMPLES: int = 1_281_167
-NUM_EVAL_EXAMPLES: int = 50_000
+NUM_EVAL_EXAMPLES: int = 3925
 
 # These are mainly based on the recipes from
 # https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
 DEFAULT_BATCH_SIZE = 64  # per GPU! * 4 = 256 effective
-DEFAULT_NUM_EPOCHS = 90
+DEFAULT_NUM_EPOCHS = 91
 DEFAULT_LR =1e-4
 DEFAULT_CROP_SIZE = 224
 

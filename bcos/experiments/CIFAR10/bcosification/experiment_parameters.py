@@ -21,8 +21,8 @@ from bcos.optim import LRSchedulerFactory, OptimizerFactory
 __all__ = ["CONFIGS"]
 
 NUM_CLASSES = 10
-NUM_TRAIN_EXAMPLES: int = 1_281_167
-NUM_EVAL_EXAMPLES: int = 50_000
+NUM_TRAIN_EXAMPLES: int = 50_000
+NUM_EVAL_EXAMPLES: int = 10_000
 
 # These are mainly based on the recipes from
 # https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
@@ -71,7 +71,7 @@ DEFAULTS = dict(
     trainer=dict(
         max_epochs=DEFAULT_NUM_EPOCHS,
     ),
-    use_agc=True, 
+    use_agc=True,
 )
 
 # helper

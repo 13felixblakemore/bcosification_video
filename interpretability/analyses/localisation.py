@@ -276,9 +276,11 @@ class LocalisationAnalyser(Analyser):
         num_pixels = []
 
         for count in tqdm(range(sample_size), desc="Analysis..."):
+            print(" Indices: ", fixed_indices)
             multi_img, tgts, offset = self.make_multi_image(
                 n_imgs, dataset, offset=offset, fixed_indices=fixed_indices
             )
+
             if self.config["striding"] != "none":
                 stride = int(self.config["striding"])
                 padding = single_shape - stride
@@ -434,11 +436,15 @@ class LocalisationAnalyser(Analyser):
         imgs = []
         count = 0
         i = 0
+
         if fixed_indices is not None:
+            print("ho")
             mapper = fixed_indices
         else:
+            print("hey")
             mapper = list(range(len(dataset)))
 
+        print(len(dataset), len(mapper))
         # Going through the dataset to sample images
         while count < n_imgs:
             img, tgt = dataset[mapper[i + offset]]
@@ -569,7 +575,7 @@ def main(config):
 
 if __name__ == "__main__":
     params = get_arguments()
-
+    print(params)
     try:
         main(params)
     except Exception:

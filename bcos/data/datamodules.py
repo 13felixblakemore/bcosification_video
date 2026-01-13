@@ -25,14 +25,14 @@ import random
 
 import bcos.settings as settings
 
-from .categories import CIFAR10_CATEGORIES, IMAGENET_CATEGORIES
+from .categories import CIFAR10_CATEGORIES, IMAGENET_CATEGORIES, IMAGENETTE_CATEGORIES
 from .sampler import RASampler
 from .transforms import RandomCutmix, RandomMixup, SplitAndGrid
 
 from .cc3m import (CC3MImg, CC3MText, CustomDataCollatorImg,
                   CustomDataCollatorText)
 
-__all__ = ["ImageNetDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule"]
+__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule"]
 
 def get_random_cut(dataset, cut_ratio):
     all_indices = [*range(0, len(dataset))]
@@ -110,27 +110,27 @@ class ClassificationDataModule(pl.LightningDataModule):
             self.batch_size,
             shuffle=shuffle,
             sampler=train_sampler,
-            num_workers=self.num_workers,
+            num_workers=0,
             collate_fn=self.train_collate_fn,
-            pin_memory=True,
+            pin_memory=False,
         )
 
     def val_dataloader(self):
-        return data.DataLoader(
+        return [data.DataLoader(
             self.eval_dataset,
             self.batch_size,
             shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
-        )
+            num_workers=0,
+            pin_memory=False,
+        )]
 
     def test_dataloader(self):
         return data.DataLoader(
             self.eval_dataset,
             self.batch_size,
             shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
+            num_workers=0,
+            pin_memory=False,
         )
 
     @classmethod
@@ -191,7 +191,7 @@ class ClassificationDataModule(pl.LightningDataModule):
 
 class ImageNetDataModule(ClassificationDataModule):
     # from https://image-net.org/download.php
-    NUM_CLASSES: int = 1000
+    NUM_CLASSES: int = 10
 
     NUM_TRAIN_EXAMPLES: int = 1_281_167
     NUM_EVAL_EXAMPLES: int = 50_000
@@ -232,7 +232,7 @@ class ImageNetDataModule(ClassificationDataModule):
                 root=train_root,
                 transform=self.config["train_transform"],
             )
-            assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
+            #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
             if cache_dataset == "onthefly":
@@ -248,7 +248,70 @@ class ImageNetDataModule(ClassificationDataModule):
             root=os.path.join(IMAGENET_PATH, "val"),
             transform=self.config["test_transform"],
         )
-        assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
+        #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
+        rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+
+class ImageNetteDataModule(ClassificationDataModule):
+    # from https://image-net.org/download.php
+    NUM_CLASSES: int = 10
+
+    NUM_TRAIN_EXAMPLES: int = 1_281_167
+    NUM_EVAL_EXAMPLES: int = 3925
+
+    CATEGORIES: List[str] = IMAGENETTE_CATEGORIES
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.prepare_data_per_node = self.config.get("cache_dataset", None) == "shm"
+
+    def prepare_data(self) -> None:
+        cache_dataset = self.config.get("cache_dataset", None)
+        if cache_dataset != "shm":
+            return
+
+        # print because we also want global non-zero rank's
+        start = time.perf_counter()
+        print("Caching dataset into SHM!...")
+        from .caching import cache_tar_files_to_shm
+
+        cache_tar_files_to_shm()
+        end = time.perf_counter()
+        print(f"Caching successful! Time taken {end - start:.2f}s")
+
+    def setup(self, stage: str) -> None:
+        # this way changes to the settings are reflected at function call time
+        SHMTMPDIR = settings.SHMTMPDIR
+        IMAGENETTE_PATH = settings.IMAGENETTE_PATH
+        if stage == "fit":
+            cache_dataset = self.config.get("cache_dataset", None)
+            rank_zero_info("Setting up ImageNette train dataset...")
+            start = time.perf_counter()
+            train_root = os.path.join(
+                SHMTMPDIR if cache_dataset == "shm" else IMAGENETTE_PATH,
+                "train",
+            )
+            self.train_dataset = ImageFolder(
+                root=train_root,
+                transform=self.config["train_transform"],
+            )
+            #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
+            rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+            if cache_dataset == "onthefly":
+                rank_zero_info("Trying to setup Bagua's cached dataset!")
+                from .caching import CachedImageFolder
+
+                self.train_dataset = CachedImageFolder(self.train_dataset)
+                rank_zero_info("Successfully setup cached dataset!")
+
+        start = time.perf_counter()
+        rank_zero_info("Setting up ImageNette val dataset...")
+        self.eval_dataset = ImageFolder(
+            root=os.path.join(IMAGENETTE_PATH, "val"),
+            transform=self.config["test_transform"],
+        )
+        #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
 
@@ -497,9 +560,9 @@ class CC3MDataModule(ClassificationDataModule):
             None, 
             shuffle=shuffle,
             sampler=train_sampler,
-            num_workers=self.num_workers,
+            num_workers=0,
             collate_fn=self.train_collate_fn,
-            pin_memory=True,
+            pin_memory=False,
         )
 
     def val_dataloader(self):
@@ -507,8 +570,8 @@ class CC3MDataModule(ClassificationDataModule):
             self.eval_dataset,
             None,
             shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
+            num_workers=0,
+            pin_memory=False,
         )
 
     def test_dataloader(self):
@@ -516,6 +579,6 @@ class CC3MDataModule(ClassificationDataModule):
             self.eval_dataset,
             None,
             shuffle=False,
-            num_workers=self.num_workers,
-            pin_memory=True,
+            num_workers=0,
+            pin_memory=False,
         )

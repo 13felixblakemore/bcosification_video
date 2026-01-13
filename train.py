@@ -17,7 +17,7 @@ def get_parser(add_help=True):
         help="The base directory to store to.",
     )
     parser.add_argument(
-        "--dataset", choices=["ImageNet", "CIFAR10", "VOC", "CC3M"], help="The dataset."
+        "--dataset", choices=["ImageNet", "ImageNette", "CIFAR10", "VOC", "CC3M"], help="The dataset."
     )
     parser.add_argument(
         "--base_network", help="The model config or base network to use."

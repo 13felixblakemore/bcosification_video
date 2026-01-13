@@ -2,10 +2,23 @@
 Contains categories for the datasets.
 """
 
-__all__ = ["IMAGENET_CATEGORIES", "CIFAR10_CATEGORIES"]
+__all__ = ["IMAGENET_CATEGORIES", "CIFAR10_CATEGORIES", "IMAGENETTE_CATEGORIES"]
 
 # See https://www.cs.toronto.edu/~kriz/cifar.html
 # This is available in torchvision.dataset.CIFAR10 but just to keep stuff consistent...
+IMAGENETTE_CATEGORIES = [
+    "tench",
+    "English springer",
+    "cassette player",
+    "chain saw",
+    "church",
+    "French horn",
+    "garbage truck",
+    "gas pump",
+    "golf ball",
+    "parachute",
+]
+
 CIFAR10_CATEGORIES = [
     "airplane",
     "automobile",

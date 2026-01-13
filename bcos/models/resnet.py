@@ -221,7 +221,7 @@ class BcosResNet(BcosUtilMixin, nn.Module):
         self,
         block: Type[Union[BasicBlock, Bottleneck]],
         layers: List[int],
-        num_classes: int = 1000,
+        num_classes: int = 10,
         in_chans: int = 6,
         zero_init_residual: bool = False,
         groups: int = 1,
@@ -330,6 +330,7 @@ class BcosResNet(BcosUtilMixin, nn.Module):
             self.num_classes,
             kernel_size=1,
         )
+        print("classes: ", self.num_classes)
 
         if logit_bias is None:
             logit_bias = -math.log(num_classes - 1)

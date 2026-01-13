@@ -25,7 +25,7 @@ def get_parser(add_help=True):
     )
     parser.add_argument(
         "--dataset",
-        choices=["ImageNet", "CIFAR10"],
+        choices=["ImageNet", "CIFAR10", "ImageNette"],
         default="ImageNet",
         help="The dataset.",
     )
@@ -164,6 +164,7 @@ def load_model_and_config(args):
         )
 
     model = model.to(device)
+    print(model(torch.randn(1, 6, 224, 224).to(device)).shape)
 
     return model, config
 
