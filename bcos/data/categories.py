@@ -1,6 +1,9 @@
 """
 Contains categories for the datasets.
 """
+import traceback
+print("categories.py loaded from:")
+traceback.print_stack(limit=5)
 
 __all__ = ["IMAGENET_CATEGORIES", "CIFAR10_CATEGORIES", "IMAGENETTE_CATEGORIES"]
 

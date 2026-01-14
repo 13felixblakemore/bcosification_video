@@ -170,7 +170,6 @@ def load_model_and_config(args):
 
 
 def get_test_loader(dataset, config):
-    print("Hey dataset: ", dataset)
     print("Hey config: ", config)
     registry = ClassificationDataModule.registry()
     if dataset in registry:

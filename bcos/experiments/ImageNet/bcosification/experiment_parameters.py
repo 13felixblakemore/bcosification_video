@@ -20,7 +20,7 @@ from bcos.optim import LRSchedulerFactory, OptimizerFactory
 
 __all__ = ["CONFIGS"]
 
-NUM_CLASSES = 10
+NUM_CLASSES = 1000
 NUM_TRAIN_EXAMPLES: int = 1_281_167
 NUM_EVAL_EXAMPLES: int = 50_000
 
