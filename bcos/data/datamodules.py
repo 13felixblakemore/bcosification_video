@@ -191,7 +191,7 @@ class ClassificationDataModule(pl.LightningDataModule):
 
 class ImageNetDataModule(ClassificationDataModule):
     # from https://image-net.org/download.php
-    NUM_CLASSES: int = 10
+    NUM_CLASSES: int = 1000
 
     NUM_TRAIN_EXAMPLES: int = 1_281_167
     NUM_EVAL_EXAMPLES: int = 50_000
@@ -256,7 +256,7 @@ class ImageNetteDataModule(ClassificationDataModule):
     # from https://image-net.org/download.php
     NUM_CLASSES: int = 10
 
-    NUM_TRAIN_EXAMPLES: int = 1_281_167
+    NUM_TRAIN_EXAMPLES: int = 50000
     NUM_EVAL_EXAMPLES: int = 3925
 
     CATEGORIES: List[str] = IMAGENETTE_CATEGORIES
