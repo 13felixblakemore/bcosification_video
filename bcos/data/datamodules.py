@@ -116,13 +116,13 @@ class ClassificationDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self):
-        return [data.DataLoader(
+        return data.DataLoader(
             self.eval_dataset,
             self.batch_size,
             shuffle=False,
             num_workers=32,
             pin_memory=True,
-        )]
+        )
 
     def test_dataloader(self):
         return data.DataLoader(
