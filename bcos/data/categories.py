@@ -22,6 +22,20 @@ IMAGENETTE_CATEGORIES = [
     "parachute",
 ]
 
+IMAGENET_CATEGORIES = [
+    "tench",
+    "English springer",
+    "cassette player",
+    "chain saw",
+    "church",
+    "French horn",
+    "garbage truck",
+    "gas pump",
+    "golf ball",
+    "parachute",
+]
+
+
 CIFAR10_CATEGORIES = [
     "airplane",
     "automobile",
@@ -36,7 +50,7 @@ CIFAR10_CATEGORIES = [
 ]
 
 # Taken from https://github.com/pytorch/vision/blob/11bd2eaa6d6976129836b329b01/torchvision/models/_meta.py
-IMAGENET_CATEGORIES = [
+IMAGENET_CATEGORIES_X = [
     "tench",
     "goldfish",
     "great white shark",
