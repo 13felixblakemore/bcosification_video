@@ -1,3 +1,6 @@
+import torch.multiprocessing as mp
+mp.set_start_method("fork", force=True)
+
 import argparse
 import difflib
 import os
