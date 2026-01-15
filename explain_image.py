@@ -1,7 +1,5 @@
 import argparse
-import bcos.common.BcosUtilMixin
-
-from bcos import BcosUtilMixin
+from bcos.common import BcosUtilMixin
 
 
 def get_parser(add_help=True):
