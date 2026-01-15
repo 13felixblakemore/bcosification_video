@@ -74,10 +74,13 @@ def explain_image(args, image_path):
     if device == torch.device("cuda"):
         torch.backends.cudnn.benchmark = False
     torch.use_deterministic_algorithms(True)
+
+    img = Image.open(image_path)
+    img = img.to(device)
+
     model, config = load_model_and_config(args)
     model.eval()
 
-    img = Image.open(image_path)
     transform = ImageNetClassificationPresetEval(
         crop_size=224,
         is_bcos=True,
