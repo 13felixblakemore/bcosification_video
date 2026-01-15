@@ -90,7 +90,7 @@ def explain_image(args, image_path):
     model.eval()
 
     expl_out = model.explain(img)
-    print("Prediction:", idx2label[expl_out["prediction"]])
+    #print("Prediction:", idx2label[expl_out["prediction"]])
 
     plt.imshow(expl_out["explanation"])
     path_to_save = str(args.base_directory, "/explanation.png")
