@@ -164,13 +164,13 @@ def load_model_and_config(args):
         )
 
     model = model.to(device)
-    print(model(torch.randn(1, 6, 224, 224).to(device)).shape)
+    #print(model(torch.randn(1, 6, 224, 224).to(device)).shape)
 
     return model, config
 
 
 def get_test_loader(dataset, config):
-    print("Hey config: ", config)
+    #print("Hey config: ", config)
     registry = ClassificationDataModule.registry()
     if dataset in registry:
         datamodule = registry[dataset](config["data"])
