@@ -64,7 +64,10 @@ def explain_image(args, image_path):
     model.eval()
 
     img = Image.open(image_path)
-    img = model.transform(img)
+    transform = transforms.ToTensor()
+
+    # Convert the image to a tensor
+    img = transform(img)
     img = img[None]
 
     expl_out = model.explain(img)
