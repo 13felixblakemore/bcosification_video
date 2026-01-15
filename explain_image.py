@@ -76,10 +76,6 @@ def explain_image(args, image_path):
     torch.use_deterministic_algorithms(True)
 
     img = Image.open(image_path)
-    img = img.to(device)
-
-    model, config = load_model_and_config(args)
-    model.eval()
 
     transform = ImageNetClassificationPresetEval(
         crop_size=224,
@@ -88,6 +84,10 @@ def explain_image(args, image_path):
 
     img = transform(img)
     img = img[None]
+    img = img.to(device)
+
+    model, config = load_model_and_config(args)
+    model.eval()
 
     expl_out = model.explain(img)
     print("Prediction:", idx2label[expl_out["prediction"]])
