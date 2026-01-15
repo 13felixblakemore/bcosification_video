@@ -4,7 +4,12 @@ from pathlib import Path
 from evaluate import evaluate, load_model_and_config
 from PIL import Image
 import matplotlib.pyplot as plt
-import torchvision.transforms as transforms
+import torch
+try:
+    from tqdm.auto import tqdm
+except ImportError:
+    tqdm = lambda x: x  # noqa: E731
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from bcos.data.presets import ImageNetClassificationPresetEval
 
 def get_parser(add_help=True):
@@ -62,6 +67,13 @@ def get_parser(add_help=True):
     return parser
 
 def explain_image(args, image_path):
+    global device
+    if args.no_cuda:
+        device = torch.device("cpu")
+
+    if device == torch.device("cuda"):
+        torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
     model, config = load_model_and_config(args)
     model.eval()
 
