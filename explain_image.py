@@ -5,6 +5,7 @@ from evaluate import evaluate, load_model_and_config
 from PIL import Image
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
+from bcos.data.presets import ImageNetClassificationPresetEval
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
@@ -65,9 +66,11 @@ def explain_image(args, image_path):
     model.eval()
 
     img = Image.open(image_path)
-    transform = transforms.ToTensor()
+    transform = ImageNetClassificationPresetEval(
+        crop_size=224,
+        is_bcos=True,
+    )
 
-    # Convert the image to a tensor
     img = transform(img)
     img = img[None]
 
