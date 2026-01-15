@@ -5,6 +5,7 @@ from evaluate import evaluate, load_model_and_config
 from PIL import Image
 import matplotlib.pyplot as plt
 import torch
+import os
 try:
     from tqdm.auto import tqdm
 except ImportError:
@@ -93,7 +94,7 @@ def explain_image(args, image_path):
     #print("Prediction:", idx2label[expl_out["prediction"]])
 
     plt.imshow(expl_out["explanation"])
-    path_to_save = str(args.base_directory, "/explanation.png")
+    path_to_save = os.path.join(args.base_directory, "explanation.png")
 
     # Saving the plot
     plt.savefig(path_to_save, bbox_inches='tight')
