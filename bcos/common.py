@@ -510,7 +510,8 @@ def plot_contribution_map(
         ax.set_yticks([])
     
     if class_index is not None:
-        indx2label = get_inx2label_imagenet(class_index)
+        #indx2label = get_inx2label_imagenet(class_index)
+        indx2label = get_inx2label_imagenette(class_index)
         ax.set_title(f"Class {class_index}: {indx2label}")
 
     return ax, im
@@ -523,3 +524,9 @@ def get_inx2label_imagenet(index: int):
         class_idx = json.load(f)
     idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
     return idx2label[index]
+
+from bcos.data.categories import IMAGENETTE_CATEGORIES
+
+def get_inx2label_imagenette(index: int):
+    label = IMAGENETTE_CATEGORIES[index]
+    return label

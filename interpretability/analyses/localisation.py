@@ -438,13 +438,10 @@ class LocalisationAnalyser(Analyser):
         i = 0
 
         if fixed_indices is not None:
-            print("ho")
             mapper = fixed_indices
         else:
-            print("hey")
             mapper = list(range(len(dataset)))
 
-        print(len(dataset), len(mapper))
         # Going through the dataset to sample images
         while count < n_imgs:
             img, tgt = dataset[mapper[i + offset]]
