@@ -1,5 +1,5 @@
 import argparse
-from bcos.common import BcosUtilMixin
+from bcos.common import get_inx2label_imagenette as idx2label
 from pathlib import Path
 from evaluate import evaluate, load_model_and_config
 from PIL import Image
