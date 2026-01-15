@@ -2,6 +2,8 @@ import argparse
 from bcos.common import BcosUtilMixin
 from pathlib import Path
 from evaluate import evaluate, load_model_and_config
+from PIL import Image
+import matplotlib.pyplot as plt
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
@@ -61,7 +63,11 @@ def explain_image(args, image_path):
     model, config = load_model_and_config(args)
     model.eval()
 
-    expl_out = model.explain(image_path)
+    img = Image.open(image_path)
+    img = model.transform(img)
+    img = img[None]
+
+    expl_out = model.explain(img)
     print("Prediction:", idx2label[expl_out["prediction"]])
 
     plt.imshow(expl_out["explanation"])
