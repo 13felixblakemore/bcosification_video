@@ -1,7 +1,7 @@
 import argparse
 from bcos.common import BcosUtilMixin
 from pathlib import Path
-
+from evaluate import evaluate, load_model_and_config
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
