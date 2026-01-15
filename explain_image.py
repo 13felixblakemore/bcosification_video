@@ -1,5 +1,6 @@
 import argparse
 from bcos.common import BcosUtilMixin
+from pathlib import Path
 
 
 def get_parser(add_help=True):
@@ -60,17 +61,17 @@ def explain_image(args, image_path):
     model, config = load_model_and_config(args)
     model.eval()
 
-    expl_out = model.explain(img)
+    expl_out = model.explain(image_path)
     print("Prediction:", idx2label[expl_out["prediction"]])
 
     plt.imshow(expl_out["explanation"])
-    path_to_save = str(args.base_directory / f"explanation.png")
+    path_to_save = str(args.base_directory, "/explanation.png")
 
     # Saving the plot
     plt.savefig(path_to_save, bbox_inches='tight')
     plt.close()
 
-if __name__ == "main":
+if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
     image = args.image_path
