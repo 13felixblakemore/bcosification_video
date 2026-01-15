@@ -4,6 +4,7 @@ from pathlib import Path
 from evaluate import evaluate, load_model_and_config
 from PIL import Image
 import matplotlib.pyplot as plt
+import torchvision.transforms as transforms
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
