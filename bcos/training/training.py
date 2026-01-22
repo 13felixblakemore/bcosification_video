@@ -44,6 +44,7 @@ def run_training(args):
         base_network,
         experiment_name
     )
+    print(model)
     rank_zero_info(f"Model: {repr(model.model)}")
 
     # jit the internal model if specified
