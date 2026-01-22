@@ -130,12 +130,12 @@ densenets = {
 # -------------------------------------------------------------------------
 I3D_DEPTHS = ["50"]
 i3ds = {
-    f"i3d_{depth}": update_default(
+    f"i3d": update_default(
         dict(
             model=dict(
-                name=f"i3d{depth}",
+                name=f"i3d",
                 last_layer_name = "classifier", # For replacing the last fc layer with conv1x1
-                weights=f"I3D{depth}_Weights.DEFAULT",
+                weights=f"I3D_Weights.DEFAULT",
                 bcosify_args = dict(
                     fix_b = True, # Fixed b value (=2)
                     use_bias = False, # No bias
