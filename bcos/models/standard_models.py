@@ -1,5 +1,6 @@
 from torchvision.models import ResNet
 from torchvision.models import DenseNet
+from pytorchvideo.models.hub import i3d_r50
 import torch
 import torch.nn.functional as F
 
@@ -60,4 +61,31 @@ class DenseNetBcos(DenseNet):
         out = self.classifier(out)
         out = F.adaptive_avg_pool2d(out, (1, 1))
         out = torch.flatten(out, 1)
+        return out
+
+
+class MyI3D(i3d_r50):
+    def __init__(self, pretrained=True):
+        super().__init__(pretrained=pretrained)
+
+    def forward(self, x):
+        # Forward as usual
+        x = super().forward(x)
+        # Flatten to [B, C] for cross-entropy
+        return torch.flatten(x, 1)
+
+
+class I3DBcos(i3d_r50):
+    def __init__(self, pretrained=True):
+        # Initialize i3d_r50 normally
+        super().__init__(pretrained=pretrained)
+
+    def forward(self, x):
+        """
+        Forward pass through the I3D backbone.
+        Input: x of shape [B, C, T, H, W]
+        Output: flattened features for classification
+        """
+        out = super().forward(x)  # returns [B, num_classes, 1, 1, 1] if pretrained
+        out = torch.flatten(out, 1)  # flatten to [B, C]
         return out

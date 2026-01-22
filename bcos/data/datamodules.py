@@ -2,6 +2,9 @@ import os
 import time
 from typing import List
 
+import pytorchvideo
+from pytorchvideo.data import make_clip_sampler
+
 try:
     from defusedxml.ElementTree import parse as ET_parse
 except ImportError:
@@ -19,20 +22,20 @@ except ImportError:
 import torch
 import torch.utils.data as data
 import torchvision
-from torchvision.datasets import CIFAR10, ImageFolder
+from torchvision.datasets import CIFAR10, ImageFolder, UCF101
 from PIL import Image
 import random
 
 import bcos.settings as settings
 
-from .categories import CIFAR10_CATEGORIES, IMAGENET_CATEGORIES, IMAGENETTE_CATEGORIES
+from .categories import CIFAR10_CATEGORIES, IMAGENET_CATEGORIES, IMAGENETTE_CATEGORIES, UCF101_CATEGORIES
 from .sampler import RASampler
 from .transforms import RandomCutmix, RandomMixup, SplitAndGrid
 
 from .cc3m import (CC3MImg, CC3MText, CustomDataCollatorImg,
                   CustomDataCollatorText)
 
-__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule"]
+__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule", "UCF101DataModule"]
 
 def get_random_cut(dataset, cut_ratio):
     all_indices = [*range(0, len(dataset))]
@@ -315,6 +318,80 @@ class ImageNetteDataModule(ClassificationDataModule):
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
 
+class UCF101DataModule(ClassificationDataModule):
+    # from https://image-net.org/download.php
+    NUM_CLASSES: int = 101
+
+    NUM_TRAIN_EXAMPLES: int = 50000 # Not sure
+    NUM_EVAL_EXAMPLES: int = 3925 # Not sure
+
+    CATEGORIES: List[str] = UCF101_CATEGORIES
+
+    UCF101_PATH = settings.UCF101_PATH
+    _TRAIN_PATH = "ucfTrainTestlist/trainlist01.txt"
+    _TEST_PATH = "ucfTrainTestlist/testlist01.txt"
+    _CLIP_DURATION = 2  # Duration of sampled clip for each video
+    _BATCH_SIZE = 1
+    _NUM_WORKERS = 1  # Number of parallel processes fetching data
+
+    def setup(self, stage: str) -> None:
+        if stage == "fit":
+            rank_zero_info("Setting up UCF101 train dataset...")
+            start = time.perf_counter()
+            """    train_transform = Compose(
+                [
+                    ApplyTransformToKey(
+                        key="video",
+                        transform=Compose(
+                            [
+                                UniformTemporalSubsample(8),
+                                Lambda(lambda x: x / 255.0),
+                                Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
+                                RandomShortSideScale(min_size=256, max_size=320),
+                                RandomCrop(244),
+                                RandomHorizontalFlip(p=0.5),
+                            ]
+                        ),
+                    ),
+                ]
+            )"""
+            self.train_dataset = pytorchvideo.data.Ucf101(
+                data_path=self._TRAIN_PATH,
+                clip_sampler=make_clip_sampler("random", self._CLIP_DURATION),
+                video_path_prefix=settings.UCF101_PATH,
+                decode_audio=False,
+                transform=self.config["train_transform"],
+            )
+            #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
+            rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+        start = time.perf_counter()
+        rank_zero_info("Setting up UCF101 val dataset...")
+        """    val_transform = Compose(
+            [
+                ApplyTransformToKey(
+                    key="video",
+                    transform=Compose(
+                        [
+                            UniformTemporalSubsample(8),
+                            Lambda(lambda x: x / 255.0),
+                            Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
+                        ]
+                    ),
+                ),
+            ]
+        )"""
+        self.eval_dataset = pytorchvideo.data.Ucf101(
+            data_path=self._TRAIN_PATH,
+            clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self._CLIP_DURATION),
+            decode_audio=False,
+            video_path_prefix=settings.UCF101_PATH,
+            transform=self.config["test_transform"],
+        )
+        #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
+        rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+
 class CIFAR10DataModule(ClassificationDataModule):
     # from https://www.cs.toronto.edu/~kriz/cifar.html
     NUM_CLASSES: int = 10
@@ -335,11 +412,26 @@ class CIFAR10DataModule(ClassificationDataModule):
             )
             assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
 
-        self.eval_dataset = CIFAR10(
-            root=DATA_ROOT,
-            train=False,
-            transform=self.config["test_transform"],
-            download=True,
+        """    val_transform = Compose(
+            [
+                ApplyTransformToKey(
+                    key="video",
+                    transform=Compose(
+                        [
+                            UniformTemporalSubsample(8),
+                            Lambda(lambda x: x / 255.0),
+                            Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
+                        ]
+                    ),
+                ),
+            ]
+        )"""
+        val_dataset = pytorchvideo.data.Kinetics(
+            data_path=self._TRAIN_PATH,
+            clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self._CLIP_DURATION),
+            decode_audio=False,
+            #video_path_prefix=UCF101_PATH,
+            # transform=val_transform,
         )
         assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
 
