@@ -69,6 +69,8 @@ class I3D(nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
+        self.blocks = self.model.blocks
+        self.head = getattr(self.model, "head", None)
 
     def forward(self, x):
         # x: (B, C, T, H, W)
@@ -80,6 +82,8 @@ class I3DBcos(nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
+        self.blocks = self.model.blocks
+        self.head = getattr(self.model, "head", None)
 
     def forward(self, x):
         # x: (B, C, T, H, W)
