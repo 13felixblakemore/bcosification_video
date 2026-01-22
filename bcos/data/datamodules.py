@@ -111,7 +111,7 @@ class ClassificationDataModule(pl.LightningDataModule):
         return data.DataLoader(
             self.train_dataset,
             self.batch_size,
-            shuffle=shuffle,
+            shuffle=False,
             sampler=train_sampler,
             num_workers=32,
             collate_fn=self.train_collate_fn,
