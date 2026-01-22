@@ -128,20 +128,35 @@ densenets = {
     for depth in DENSENET_DEPTHS
 }
 # -------------------------------------------------------------------------
+I3D_DEPTHS = ["50"]
+i3ds = {
+    f"i3d_{depth}": update_default(
+        dict(
+            model=dict(
+                name=f"i3d{depth}",
+                last_layer_name = "classifier", # For replacing the last fc layer with conv1x1
+                weights=f"I3D{depth}_Weights.DEFAULT",
+                bcosify_args = dict(
+                    fix_b = True, # Fixed b value (=2)
+                    use_bias = False, # No bias
+                    norm_layer = "BnUncV2", # Modified Batch Norm
+                    manual_optim=False, # For manual optimization of b values
+                    gap = True, # Global Average Pooling reorder works with conv1x1 for the last linear layer
+                    act_layer = True, # ReLU activation layer
+                ),
+                standard_changes = {"features[3]": nn.AvgPool3d(kernel_size=3, stride=2, padding=1)},
+            ),
+        )
+    )
+    for depth in I3D_DEPTHS
+}
+
 
 CONFIGS = dict()
 CONFIGS.update(resnets)
 CONFIGS.update(densenets)
+CONFIGS.update(i3ds)
 CONFIGS.update(create_configs_with_different_seeds(CONFIGS, seeds=[5,420, 1337]))
-
-CONFIGS['i3d'] = update_default(
-    dict(
-        model=dict(
-            name='i3d',
-            args=dict(num_classes=NUM_CLASSES, in_channels=3),
-        )
-    )
-)
 
 
 if __name__ == "__main__":
