@@ -54,9 +54,9 @@ def get_model(model_config) -> nn.Module:
 
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
-    for k,v in standard_changes.items():
-        print("Changing maxpool to avgpool")
-        exec(f'model.model.{k} = v')
+    #for k,v in standard_changes.items():
+    #    print("Changing maxpool to avgpool")
+    #    exec(f'model.model.{k} = v')
     
     # Making all the bias parameters None
     print("Removing bias parameters (making None)")

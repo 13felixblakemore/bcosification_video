@@ -84,6 +84,7 @@ class I3DBcos(nn.Module):
         self.model = i3d_r50(pretrained=pretrained)
         self.blocks = self.model.blocks
         self.head = getattr(self.model, "head", None)
+        self.features = self.model.features
 
     def forward(self, x):
         # x: (B, C, T, H, W)
