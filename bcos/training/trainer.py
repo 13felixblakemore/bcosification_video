@@ -785,8 +785,8 @@ class ClassificationLitModel(pl.LightningModule):
         return loss
 
     def eval_step(self, batch, _batch_idx, val_or_test):
-        
-        images, labels = batch
+        images = batch["video"]
+        labels = batch["label"]
         clip_kd = self.config.get("clip_kd", False)
         if clip_kd:
             output_clip, output_bcos = self(images)
