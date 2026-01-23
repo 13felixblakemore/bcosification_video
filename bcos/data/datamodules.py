@@ -329,8 +329,8 @@ class UCF101DataModule(ClassificationDataModule):
     CATEGORIES: List[str] = UCF101_CATEGORIES
 
     UCF101_PATH = settings.UCF101_PATH
-    _TRAIN_PATH = "ucfTrainTestlist/trainlist01.txt"
-    _TEST_PATH = "ucfTrainTestlist/testlist01.txt"
+    _TRAIN_PATH = "ucfTrainTestlist"
+    _TEST_PATH = "ucfTrainTestlist"
     _CLIP_DURATION = 2  # Duration of sampled clip for each video
     _BATCH_SIZE = 1
     _NUM_WORKERS = 1  # Number of parallel processes fetching data
