@@ -23,6 +23,7 @@ import torch
 import torch.utils.data as data
 import torchvision
 from torchvision.datasets import CIFAR10, ImageFolder, UCF101
+from torch.utils.data import DataLoader
 from PIL import Image
 import random
 
@@ -355,12 +356,12 @@ class UCF101DataModule(ClassificationDataModule):
                     ),
                 ]
             )"""
-            self.train_dataset = pytorchvideo.data.Ucf101(
-                data_path=self._TRAIN_PATH,
-                clip_sampler=make_clip_sampler("random", self._CLIP_DURATION),
-                video_path_prefix=settings.UCF101_PATH,
-                decode_audio=False,
-                transform=self.config["train_transform"],
+            self.train_dataset = UCF101(
+                root=settings.UCF101_PATH,
+                annotation_path=self._TRAIN_PATH,
+                frames_per_clip=8,
+                step_between_clips=8,
+                train=True,
             )
             #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
@@ -381,12 +382,12 @@ class UCF101DataModule(ClassificationDataModule):
                 ),
             ]
         )"""
-        self.eval_dataset = pytorchvideo.data.Ucf101(
-            data_path=self._TRAIN_PATH,
-            clip_sampler=pytorchvideo.data.make_clip_sampler("random", self._CLIP_DURATION),
-            decode_audio=False,
-            video_path_prefix=settings.UCF101_PATH,
-            transform=self.config["test_transform"],
+        self.eval_dataset = UCF101(
+            root=settings.UCF101_PATH,
+            annotation_path=self._TRAIN_PATH,
+            frames_per_clip=8,
+            step_between_clips=8,
+            train=False,
         )
         #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
