@@ -383,7 +383,7 @@ class UCF101DataModule(ClassificationDataModule):
         )"""
         self.eval_dataset = pytorchvideo.data.Ucf101(
             data_path=self._TRAIN_PATH,
-            clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self._CLIP_DURATION),
+            clip_sampler=pytorchvideo.data.make_clip_sampler("random", self._CLIP_DURATION),
             decode_audio=False,
             video_path_prefix=settings.UCF101_PATH,
             transform=self.config["test_transform"],
