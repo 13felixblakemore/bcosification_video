@@ -111,10 +111,10 @@ class ClassificationDataModule(pl.LightningDataModule):
         shuffle = None if train_sampler is not None else True
         return data.DataLoader(
             self.train_dataset,
-            1,
+            self.batch_size,
             shuffle=False,
             sampler=train_sampler,
-            num_workers=0,
+            num_workers=32,
             collate_fn=self.train_collate_fn,
             pin_memory=True,
         )
@@ -122,18 +122,18 @@ class ClassificationDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return data.DataLoader(
             self.eval_dataset,
-            1,
+            self.batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=32,
             pin_memory=True,
         )
 
     def test_dataloader(self):
         return data.DataLoader(
             self.eval_dataset,
-            1,
+            self.batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=32,
             pin_memory=True,
         )
 
