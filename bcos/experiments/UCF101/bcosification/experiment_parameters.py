@@ -151,6 +151,7 @@ i3ds = {
     for depth in I3D_DEPTHS
 }
 
+#  sanity
 
 CONFIGS = dict()
 CONFIGS.update(resnets)
