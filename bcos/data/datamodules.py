@@ -360,7 +360,7 @@ class UCF101DataModule(ClassificationDataModule):
                 root=settings.UCF101_PATH,
                 annotation_path=self._TRAIN_PATH,
                 frames_per_clip=8,
-                fold=0,
+                fold=1,
                 step_between_clips=8,
                 train=True,
             )
@@ -387,7 +387,7 @@ class UCF101DataModule(ClassificationDataModule):
             root=settings.UCF101_PATH,
             annotation_path=self._TRAIN_PATH,
             frames_per_clip=8,
-            fold=0,
+            fold=1,
             step_between_clips=8,
             train=False,
         )
