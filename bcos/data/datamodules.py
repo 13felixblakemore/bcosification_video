@@ -337,7 +337,7 @@ class UCF101DataModule(ClassificationDataModule):
 
     def setup(self, stage: str) -> None:
         train_md = torch.load("ucf101_train_metadata.pt")
-        val_md = torch.load("ucf101_val_metadata.pt")
+        val_md = torch.load("ucf101_eval_metadata.pt")
         if stage == "fit":
             rank_zero_info("Setting up UCF101 train dataset...")
             start = time.perf_counter()
