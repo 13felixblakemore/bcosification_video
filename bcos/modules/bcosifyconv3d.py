@@ -80,6 +80,8 @@ class BcosifyConv3d(BcosConv3d):
             out = out.unflatten(dim=1, sizes=(O, M))
             out = out.max(dim=2, keepdim=False).values
 
+        print("post max out shape: ", out.shape)
+
         # if B=1, no further calculation necessary
         if self.b == 1 and self.b_loss == False:
             return out
@@ -105,6 +107,8 @@ class BcosifyConv3d(BcosConv3d):
 
         # put everything together
         out = dynamic_scaling * out  # |cos|^(B-1) (ŵ·x)
+
+        print("final out: ", out.shape)
         return out
 
     def extra_repr(self) -> str:
