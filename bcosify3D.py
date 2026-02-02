@@ -69,8 +69,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         print(self.model)
         out = self.model(out)
         print("model output: ", out.shape)
-        out = out.mean(dim=[2, 3, 4])  # global average pooling over T, H, W -> [B, 101]
-        print("Post pooling: ", out.shape)
         if self.logit_layer:
             out = self.logit_layer(out)  # now applied to correct shape
         print("post logitlayer: ", out.shape)
@@ -126,7 +124,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 if n != 'k_proj' and n != 'v_proj' and n != 'q_proj':  # Only modify c_proj (output layer) for the clip_kd
                     setattr(model, n, BcosifyLinear.from_standard_module(module, model_config))
             elif isinstance(module, nn.Linear) and n == last_layer_name and gap:
-                # replace Linear with BcosConv2d (conv1x1) for the last layer
+                # replace Linear with BcosConv3d (conv1x1x1) for the last layer
                 setattr(model, n, BcosifyConv3d.from_standard_module_linear(module, model_config))
                 print('Last Linear Layer Bcosified (Conv1x1) with GAP')
             elif isinstance(module, nn.Sequential):
