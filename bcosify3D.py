@@ -63,6 +63,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
     def forward(self, x):
         if self.logit_layer:
             out = self.logit_layer(self.model(self.bcosifynormalize(x)))
+            print(out.shape)
             out = out.flatten(2)  # (B, C, T*H*W)
             out = out.mean(-1)
             return out
