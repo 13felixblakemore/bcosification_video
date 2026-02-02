@@ -4,7 +4,7 @@ from torch import nn
 
 from bcos.data.presets import (
     ImageNetClassificationPresetEval,
-    ImageNetClassificationPresetTrain,
+    ImageNetClassificationPresetTrain, UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval,
 )
 from bcos.experiments.utils import (
     configs_cli,
@@ -40,11 +40,11 @@ DEFAULT_LR_SCHEDULE = LRSchedulerFactory(
 
 DEFAULTS = dict(
     data=dict(
-        train_transform=ImageNetClassificationPresetTrain(
+        train_transform=UCF101ClassificationPresetTrain(
             crop_size=DEFAULT_CROP_SIZE,
             is_bcos=True,
         ),
-        test_transform=ImageNetClassificationPresetEval(
+        test_transform=UCF101ClassificationPresetEval(
             crop_size=DEFAULT_CROP_SIZE,
             is_bcos=True,
         ),

@@ -363,7 +363,9 @@ class UCF101DataModule(ClassificationDataModule):
                 fold=1,
                 step_between_clips=8,
                 train=True,
+                _precomputed_metadata=None,
             )
+            torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
             #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
@@ -390,7 +392,9 @@ class UCF101DataModule(ClassificationDataModule):
             fold=1,
             step_between_clips=8,
             train=False,
+            _precomputed_metadata=None,
         )
+        torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
         #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 

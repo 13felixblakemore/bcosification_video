@@ -299,6 +299,87 @@ class ImageNetClassificationPresetEval:
         return result
 
 
+class UCF101ClassificationPresetTrain:
+    def __init__(
+        self,
+        crop_size=224,
+        mean=IMAGENET_MEAN,
+        std=IMAGENET_STD,
+        is_bcos=False,
+    ):
+        self.crop_size = crop_size
+        self.mean = mean
+        self.std = std
+        self.is_bcos = is_bcos
+
+        self.spatial_transform = transforms.Compose([
+            transforms.RandomResizedCrop(crop_size),
+            transforms.RandomHorizontalFlip(),
+        ])
+
+        self.normalize = transforms.Normalize(mean, std)
+
+    def __call__(self, video):
+        """
+        video: Tensor [T, H, W, C] uint8
+        returns: Tensor [C, T, H, W] float32
+        """
+
+        # uint8 → float in [0,1]
+        video = video.float() / 255.0
+
+        # T H W C → T C H W
+        video = video.permute(0, 3, 1, 2)
+
+        # apply spatial transforms frame-wise
+        video = torch.stack([
+            self.spatial_transform(frame) for frame in video
+        ])
+
+        # T C H W → C T H W
+        video = video.permute(1, 0, 2, 3)
+
+        if not self.is_bcos:
+            video = self.normalize(video)
+
+        return video
+
+
+class UCF101ClassificationPresetEval:
+    def __init__(
+        self,
+        crop_size=224,
+        resize_size=256,
+        mean=IMAGENET_MEAN,
+        std=IMAGENET_STD,
+        is_bcos=False,
+    ):
+        self.resize = transforms.Resize(resize_size)
+        self.center_crop = transforms.CenterCrop(crop_size)
+        self.normalize = transforms.Normalize(mean, std)
+        self.is_bcos = is_bcos
+
+    def __call__(self, video):
+        """
+        video: Tensor [T, H, W, C] uint8
+        returns: Tensor [C, T, H, W] float32
+        """
+
+        video = video.float() / 255.0
+        video = video.permute(0, 3, 1, 2)
+
+        video = torch.stack([
+            self.center_crop(self.resize(frame)) for frame in video
+        ])
+
+        video = video.permute(1, 0, 2, 3)
+
+        if not self.is_bcos:
+            video = self.normalize(video)
+
+        return video
+
+
 CIFAR10_MEAN = (0.49139968, 0.48215841, 0.44653091)
 CIFAR10_STD = (0.24703223, 0.24348513, 0.26158784)
 
