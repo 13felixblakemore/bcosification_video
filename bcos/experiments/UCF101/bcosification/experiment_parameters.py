@@ -65,8 +65,8 @@ DEFAULTS = dict(
             max_out=1,
         ),
     ),
-    criterion=torch.nn.CrossEntropyLoss(),
-    test_criterion=torch.nn.CrossEntropyLoss(),
+    criterion=UniformOffLabelsBCEWithLogitsLoss(),
+    test_criterion=BinaryCrossEntropyLoss(),
     optimizer=DEFAULT_OPTIMIZER,
     lr_scheduler=DEFAULT_LR_SCHEDULE,
     trainer=dict(

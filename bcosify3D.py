@@ -30,7 +30,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         # What does logit bias do? And does it need to be changed depending on num_classes?
         self.logit_layer = None
         if logit_layer:
-            self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(1000 - 1), )
+            self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(101 - 1), )
 
         # Must create new model config for I3D
         # Setting clip_kd
