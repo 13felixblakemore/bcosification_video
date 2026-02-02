@@ -64,9 +64,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         return out
 
     def forward(self, x):
-        x = x.float() / 255.0
         out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
         print("bcosifynorm output: ", out.shape)
+        print(self.model)
         out = self.model(out)
         print("model output: ", out.shape)
         out = out.mean(dim=[2, 3, 4])  # global average pooling over T, H, W -> [B, 101]
