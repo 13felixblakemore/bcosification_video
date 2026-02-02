@@ -95,9 +95,9 @@ class I3DBcos(nn.Module):
     def forward(self, x):
         # x: (B, C, T, H, W)
         print("HERE")
-        print(self.blocks)
+        #print(self.blocks)
         for block in self.blocks:
-            print(x.shape)
+            print("hello")
             x = block(x)
 
         return x  # keep [B, num_classes, T, H, W] shape
