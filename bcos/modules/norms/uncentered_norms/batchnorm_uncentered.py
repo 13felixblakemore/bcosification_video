@@ -296,21 +296,21 @@ def batch_norm_uncentered_3d(
 
     std = (var + eps).sqrt()[None, ..., None, None]
 
-    print("input shape: ", input.shape)
-    print("std shape: ", std.shape)
+    #print("input shape: ", input.shape)
+    #print("std shape: ", std.shape)
 
     std = torch.unsqueeze(std, -1)
 
-    print("new std shape: ", std.shape)
+    #print("new std shape: ", std.shape)
 
     result = input / std
 
 
     if weight is not None:
-        print("weight shape: ", weight.shape)
+        #print("weight shape: ", weight.shape)
         result = weight[None, ..., None, None, None] * result
     if bias is not None:
-        print("bias shape: ", bias.shape)
+        #print("bias shape: ", bias.shape)
         result = result + bias[None, ..., None, None, None]
 
     result = result.type(

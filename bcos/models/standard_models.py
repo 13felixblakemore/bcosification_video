@@ -97,7 +97,7 @@ class I3DBcos(nn.Module):
         print("HERE")
         #print(self.blocks)
         for block in self.blocks:
-            print("hello")
+            print(x.shape)
             x = block(x)
 
         return x  # keep [B, num_classes, T, H, W] shape
