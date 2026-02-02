@@ -375,7 +375,7 @@ class UCF101ClassificationPresetEval:
         ])
 
         video = torch.stack([
-            self.add_inverse()
+            self.add_inverse(frame) for frame in video
         ])
 
         video = video.permute(1, 0, 2, 3)
