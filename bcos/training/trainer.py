@@ -517,10 +517,10 @@ class ClassificationLitModel(pl.LightningModule):
                 task="multiclass", top_k=5, num_classes=num_classes, compute_on_cpu=True
             )
             self.eval_acc1 = torchmetrics.Accuracy(
-                task="multiclass", top_k=1, num_classes=num_classes, compute_on_cpu=True
+                task="binary", top_k=1, num_classes=num_classes, compute_on_cpu=True
             )
             self.eval_acc5 = torchmetrics.Accuracy(
-                task="multiclass", top_k=5, num_classes=num_classes, compute_on_cpu=True
+                task="binary", top_k=5, num_classes=num_classes, compute_on_cpu=True
             )
 
             has_ema = self.config.get("ema", None) is not None
