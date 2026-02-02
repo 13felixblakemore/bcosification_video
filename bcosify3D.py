@@ -61,6 +61,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         return (x.float() / 255.0 - mean) / std
 
     def forward(self, x):
+        x = x.float()
         out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
         print("bcosifynorm output: ", out.shape)
         out = self.model(out)
