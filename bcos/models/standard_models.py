@@ -83,15 +83,18 @@ class I3DBcos(nn.Module):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
         self.blocks = self.model.blocks
-        self.head = getattr(self.model, "head", None)
+
+        # replace last projection with Conv3d
+        self.blocks[-1].proj = nn.Conv3d(
+            in_channels=2048,
+            out_channels=101,  # num_classes
+            kernel_size=1,
+            bias=False,
+        )
 
     def forward(self, x):
         # x: (B, C, T, H, W)
-        if x.shape[1] != self.model.blocks[0].conv.weight.shape[1]:
-            # permute channels from last dim to dim=1
-            # assuming input shape is (B, T, H, W, C)
-            print("tensor shape: ", x)
-            x = x.permute(0, 4, 1, 2, 3)
-            print("new tensor shape: ", x)
-        out = self.model(x)
-        return out
+        for block in self.blocks:
+            x = block(x)
+        return x  # keep [B, num_classes, T, H, W] shape
+
