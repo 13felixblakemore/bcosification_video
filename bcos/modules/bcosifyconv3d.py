@@ -71,6 +71,8 @@ class BcosifyConv3d(BcosConv3d):
         # Simple linear layer
         out = self.linear(in_tensor)
 
+        print("final linear shape: ", out.shape)
+
         # MaxOut computation
         if self.max_out > 1:
             M = self.max_out
