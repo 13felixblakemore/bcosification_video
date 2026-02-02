@@ -305,13 +305,13 @@ def batch_norm_uncentered_3d(
 
     result = input / std
 
-    print("weight shape: ", weight.shape)
-    print("bias shape: ", bias.shape)
 
     if weight is not None:
-        result = weight[None, ..., None, None] * result
+        print("weight shape: ", weight.shape)
+        result = weight[None, ..., None, None, None] * result
     if bias is not None:
-        result = result + bias[None, ..., None, None]
+        print("bias shape: ", bias.shape)
+        result = result + bias[None, ..., None, None, None]
 
     result = result.type(
         input.dtype)  # For CLIP models where the inputs are float16 and division by std results in float32
