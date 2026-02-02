@@ -68,7 +68,7 @@ def evaluate(self, device, model, data_loader):
         total_correct_top5 = 0
         with torch.inference_mode():
             batch = next(iter(data_loader))
-            print("batch", batch)
+            print("batch", batch.shape)
             for image, target in tqdm(data_loader):
                 image = image.to(device, non_blocking=True)
                 target = target.to(device, non_blocking=True)
