@@ -8,6 +8,7 @@ https://github.com/pytorch/pytorch/blob/9e81c0c3f46a36333e82b799b4afa79b44b6bb59
 """
 from typing import Optional
 
+import torch
 import torch.nn as nn
 from torch import Tensor
 
@@ -297,6 +298,10 @@ def batch_norm_uncentered_3d(
 
     print("input shape: ", input.shape)
     print("std shape: ", std.shape)
+
+    std = torch.unsqueeze(std, -1)
+
+    print("new std shape: ", std.shape)
 
     result = input / std
 
