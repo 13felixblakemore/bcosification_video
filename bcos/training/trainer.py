@@ -834,9 +834,10 @@ class ClassificationLitModel(pl.LightningModule):
 
         else:
             outputs = self(images)
-            outputs = outputs[-1]
             loss = self.test_criterion(outputs, labels)
             print("loss: ", loss)
+            outputs = outputs[-1]
+            print(outputs.shape)
             self.eval_acc1(outputs, labels)
             self.eval_acc5(outputs, labels)
 
