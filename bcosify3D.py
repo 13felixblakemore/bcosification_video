@@ -62,9 +62,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
     def forward(self, x):
         out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
-        print("bcosifynorm output; ", out.shape)
+        print("bcosifynorm output: ", out.shape)
         out = self.model(out)
-        print("model output; ", out.shape)
+        print("model output: ", out.shape)
         out = out.mean(dim=[2, 3, 4])  # global average pooling over T, H, W -> [B, 101]
         print("Post pooling: ", out.shape)
         if self.logit_layer:
