@@ -315,6 +315,7 @@ class UCF101ClassificationPresetTrain:
         self.spatial_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size),
             transforms.RandomHorizontalFlip(),
+            custom_transforms.AddInverse(),
         ])
 
         self.normalize = transforms.Normalize(mean, std)
@@ -357,6 +358,7 @@ class UCF101ClassificationPresetEval:
         self.resize = transforms.Resize(resize_size)
         self.center_crop = transforms.CenterCrop(crop_size)
         self.normalize = transforms.Normalize(mean, std)
+        self.add_inverse = custom_transforms.AddInverse()
         self.is_bcos = is_bcos
 
     def __call__(self, video):
@@ -370,6 +372,10 @@ class UCF101ClassificationPresetEval:
 
         video = torch.stack([
             self.center_crop(self.resize(frame)) for frame in video
+        ])
+
+        video = torch.stack([
+            self.add_inverse()
         ])
 
         video = video.permute(1, 0, 2, 3)
