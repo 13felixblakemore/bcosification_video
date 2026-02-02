@@ -87,5 +87,9 @@ class I3DBcos(nn.Module):
 
     def forward(self, x):
         # x: (B, C, T, H, W)
+        if x.shape[1] != self.model.blocks[0].conv.weight.shape[1]:
+            # permute channels from last dim to dim=1
+            # assuming input shape is (B, T, H, W, C)
+            x = x.permute(0, 4, 1, 2, 3)
         out = self.model(x)
         return out
