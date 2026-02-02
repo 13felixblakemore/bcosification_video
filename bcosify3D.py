@@ -58,7 +58,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         """
         mean = torch.tensor(mean, device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
         std  = torch.tensor(std,  device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
-        return (x.float() / 255.0 - mean) / std
+        out = (x.float() / 255.0 - mean) / std
+        print("bcosifynorm output: ", out.shape)
+        return out
 
     def forward(self, x):
         x = x.float() / 255.0
