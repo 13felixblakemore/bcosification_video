@@ -278,7 +278,7 @@ def batch_norm_uncentered_3d(
     """
     Uncentered BN. Accepts only batched color image tensors.
     """
-    assert input.dim() == 5, "input should be a 4d tensor!"
+    assert input.dim() == 5, "input should be a 5d tensor!"
 
     if training:
         # first calc stats
@@ -294,6 +294,9 @@ def batch_norm_uncentered_3d(
         var = running_var
 
     std = (var + eps).sqrt()[None, ..., None, None]
+
+    print("input shape: ", input.shape)
+    print("std shape: ", std.shape)
 
     result = input / std
 
