@@ -1,5 +1,6 @@
 import math  # noqa
 
+import torch.nn
 from torch import nn
 
 from bcos.data.presets import (
@@ -64,8 +65,8 @@ DEFAULTS = dict(
             max_out=1,
         ),
     ),
-    criterion=UniformOffLabelsBCEWithLogitsLoss(),
-    test_criterion=BinaryCrossEntropyLoss(),
+    criterion=torch.nn.CrossEntropyLoss(),
+    test_criterion=torch.nn.CrossEntropyLoss(),
     optimizer=DEFAULT_OPTIMIZER,
     lr_scheduler=DEFAULT_LR_SCHEDULE,
     trainer=dict(
