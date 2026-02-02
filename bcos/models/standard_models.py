@@ -90,6 +90,8 @@ class I3DBcos(nn.Module):
         if x.shape[1] != self.model.blocks[0].conv.weight.shape[1]:
             # permute channels from last dim to dim=1
             # assuming input shape is (B, T, H, W, C)
+            print("tensor shape: ", x)
             x = x.permute(0, 4, 1, 2, 3)
+            print("new tensor shape: ", x)
         out = self.model(x)
         return out
