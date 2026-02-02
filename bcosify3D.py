@@ -40,16 +40,25 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         # Bcosify normalization as 0th layer
         # Must change the mean and std to that of the correct dataset
         if self.clip_kd and self.bfy_mean_zero:
-            self.bcosifynormalize = transforms.Normalize(mean=CLIP_MEAN_ZERO, std=CLIP_STD_ADDINVERSE)
+            self.bcosifynormalize = lambda x: self.normalize_video(x=x, mean=CLIP_MEAN_ZERO, std=CLIP_STD_ADDINVERSE)
         elif (self.clip_kd or self.linearprobe_clip) and not self.bfy_mean_zero:
-            self.bcosifynormalize = transforms.Normalize(mean=CLIP_MEAN_ADDINVERSE, std=CLIP_STD_ADDINVERSE)
+            self.bcosifynormalize = lambda x: self.normalize_video(x=x, mean=CLIP_MEAN_ADDINVERSE, std=CLIP_STD_ADDINVERSE)
         else:
-            self.bcosifynormalize = transforms.Normalize(mean=IMAGENET_MEAN_ADDINVERSE, std=IMAGENET_STD_ADDINVERSE)
+            self.bcosifynormalize = lambda x: self.normalize_video(x=x, mean=IMAGENET_MEAN_ADDINVERSE, std=IMAGENET_STD_ADDINVERSE)
 
         # Add channels to the first convolutional layer to allow for 6 channel inputs
         if add_channels:
             BcosifyNetwork.add_channels(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
+
+    def normalize_video(self, x, mean, std):
+        """
+        x: (B, C, T, H, W)
+        mean, std: tuple of length C
+        """
+        mean = torch.tensor(mean, device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
+        std  = torch.tensor(std,  device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
+        return (x.float() / 255.0 - mean) / std
 
     def forward(self, x):
         if self.logit_layer:
