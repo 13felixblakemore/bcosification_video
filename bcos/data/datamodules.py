@@ -336,6 +336,8 @@ class UCF101DataModule(ClassificationDataModule):
     _NUM_WORKERS = 1  # Number of parallel processes fetching data
 
     def setup(self, stage: str) -> None:
+        train_md = torch.load("ucf101_train_metadata.pt")
+        val_md = torch.load("ucf101_val_metadata.pt")
         if stage == "fit":
             rank_zero_info("Setting up UCF101 train dataset...")
             start = time.perf_counter()
@@ -361,11 +363,12 @@ class UCF101DataModule(ClassificationDataModule):
                 annotation_path=self._TRAIN_PATH,
                 frames_per_clip=8,
                 fold=1,
+                transform=self.config["train_transform"],
                 step_between_clips=8,
                 train=True,
-                _precomputed_metadata=None,
+                _precomputed_metadata=train_md,
             )
-            torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
+            #torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
             #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
@@ -390,11 +393,12 @@ class UCF101DataModule(ClassificationDataModule):
             annotation_path=self._TRAIN_PATH,
             frames_per_clip=8,
             fold=1,
+            transform=self.config["test_transform"],
             step_between_clips=8,
             train=False,
-            _precomputed_metadata=None,
+            _precomputed_metadata=val_md,
         )
-        torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
+        #torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
         #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
