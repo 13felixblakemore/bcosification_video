@@ -61,13 +61,12 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         return (x.float() / 255.0 - mean) / std
 
     def forward(self, x):
+        out = self.model(self.bcosifynormalize(x))  # [B, 101, 1, 1, 1]
+        out = out.mean(dim=[2, 3, 4])  # global average pooling over T, H, W -> [B, 101]
         if self.logit_layer:
-            out = self.logit_layer(self.model(self.bcosifynormalize(x)))
-            print(out.shape)
-            out = out.flatten(2)  # (B, C, T*H*W)
-            out = out.mean(-1)
-            return out
-        return self.model(self.bcosifynormalize(x))
+            out = self.logit_layer(out)  # now applied to correct shape
+        print(out.shape)
+        return out
 
     @classmethod
     def add_channels(cls, model):
