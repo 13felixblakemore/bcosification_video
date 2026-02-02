@@ -305,6 +305,9 @@ def batch_norm_uncentered_3d(
 
     result = input / std
 
+    print("weight shape: ", weight.shape)
+    print("bias shape: ", bias.shape)
+
     if weight is not None:
         result = weight[None, ..., None, None] * result
     if bias is not None:
