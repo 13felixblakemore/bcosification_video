@@ -368,6 +368,7 @@ class UCF101DataModule(ClassificationDataModule):
                 train=True,
                 _precomputed_metadata=train_md,
             )
+            self.train_dataset = VideoOnlyDataset(self.train_dataset)
             #torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
             #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
@@ -398,10 +399,22 @@ class UCF101DataModule(ClassificationDataModule):
             train=False,
             _precomputed_metadata=val_md,
         )
+        self.eval_dataset = VideoOnlyDataset(self.eval_dataset)
         #torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
         #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
+
+class VideoOnlyDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        video, _, label = self.dataset[idx]  # discard audio
+        return video, label
 
 class CIFAR10DataModule(ClassificationDataModule):
     # from https://www.cs.toronto.edu/~kriz/cifar.html

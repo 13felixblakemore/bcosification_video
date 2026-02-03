@@ -53,7 +53,7 @@ def create_test_loader(transform, val_data_folder=val_data_folder):
     val_dataset = ImageFolder(val_data_folder, transform=transform)
 
     # Create the validation data loader
-    batch_size = 64  # Adjust according to your needs
+    batch_size = 4  # Adjust according to your needs
     test_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
     
     return test_loader
@@ -67,9 +67,7 @@ def evaluate(self, device, model, data_loader):
         total_correct_top1 = 0
         total_correct_top5 = 0
         with torch.inference_mode():
-            batch = next(iter(data_loader))
-            print("batch", len(batch))
-            for image, audio, target in tqdm(data_loader):
+            for image, target in tqdm(data_loader):
                 image = image.to(device, non_blocking=True)
                 target = target.to(device, non_blocking=True)
 
@@ -253,7 +251,7 @@ def clip_zeroshot_evaluate(self, model):
     'a photo of a small {}.',
     'a tattoo of the {}.',
 ]
-    batch_size = 64
+    batch_size = 4
     common_trans = [
                 transforms.Resize(224, interpolation=transforms.InterpolationMode.BICUBIC),
                 transforms.CenterCrop(224),
@@ -668,7 +666,7 @@ class ClassificationLitModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         clip_kd = self.config.get("clip_kd", False)
-        images, audio, labels = batch
+        images, labels = batch
         if clip_kd:
             output_clip, output_bcos = self(images)
 
@@ -787,7 +785,7 @@ class ClassificationLitModel(pl.LightningModule):
         return loss
 
     def eval_step(self, batch, _batch_idx, val_or_test):
-        images, audio, labels = batch
+        images, labels = batch
         clip_kd = self.config.get("clip_kd", False)
         if clip_kd:
             output_clip, output_bcos = self(images)
