@@ -668,7 +668,7 @@ class ClassificationLitModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         clip_kd = self.config.get("clip_kd", False)
-        images, labels = batch
+        images, audio, labels = batch
         if clip_kd:
             output_clip, output_bcos = self(images)
 
