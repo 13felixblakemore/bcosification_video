@@ -2,6 +2,7 @@ import math  # noqa
 
 import torch.nn
 from torch import nn
+from torch.nn import CrossEntropyLoss
 
 from bcos.data.presets import (
     ImageNetClassificationPresetEval,
@@ -65,8 +66,8 @@ DEFAULTS = dict(
             max_out=1,
         ),
     ),
-    criterion=UniformOffLabelsBCEWithLogitsLoss(),
-    test_criterion=BinaryCrossEntropyLoss(),
+    criterion=CrossEntropyLoss(),
+    test_criterion=CrossEntropyLoss(),
     optimizer=DEFAULT_OPTIMIZER,
     lr_scheduler=DEFAULT_LR_SCHEDULE,
     trainer=dict(
