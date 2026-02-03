@@ -5,7 +5,7 @@ from tqdm.auto import tqdm
 exp = Experiment("UCF101", "bcosification", "i3d")
 config = exp.config
 
-datamodule = UCF101DataModule(config)
+datamodule = UCF101DataModule(config["datamodule"])
 
 # IMPORTANT: Lightning requires setup()
 datamodule.setup("fit")
