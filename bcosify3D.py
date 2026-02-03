@@ -69,6 +69,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         print(self.model)
         out = self.model(out)
         print("model output: ", out.shape)
+        print(out)
         if self.logit_layer:
             out = self.logit_layer(out)  # now applied to correct shape
         print("post logitlayer: ", out.shape)
