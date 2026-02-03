@@ -361,10 +361,10 @@ class UCF101DataModule(ClassificationDataModule):
             self.train_dataset = UCF101(
                 root=settings.UCF101_PATH,
                 annotation_path=self._TRAIN_PATH,
-                frames_per_clip=4,
+                frames_per_clip=8,
                 fold=1,
                 transform=self.config["train_transform"],
-                step_between_clips=4,
+                step_between_clips=8,
                 train=True,
                 _precomputed_metadata=train_md,
             )
@@ -392,10 +392,10 @@ class UCF101DataModule(ClassificationDataModule):
         self.eval_dataset = UCF101(
             root=settings.UCF101_PATH,
             annotation_path=self._TRAIN_PATH,
-            frames_per_clip=4,
+            frames_per_clip=8,
             fold=1,
             transform=self.config["test_transform"],
-            step_between_clips=4,
+            step_between_clips=8,
             train=False,
             _precomputed_metadata=val_md,
         )
