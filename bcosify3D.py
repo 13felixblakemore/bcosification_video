@@ -63,12 +63,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
     def forward(self, x):
         out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
-        print("bcosifynorm output: ", out.shape)
         out = self.model(out)
-        print("model output: ", out.shape)
         if self.logit_layer:
             out = self.logit_layer(out)  # now applied to correct shape
-        print("post logitlayer: ", out.shape)
         return out
 
     @classmethod
@@ -150,5 +147,4 @@ class BcosifyNormalize(nn.Module):
         mean = self.mean.to(x.device, x.dtype)
         std = self.std.to(x.device, x.dtype)
         out = (x.float() - mean) / std
-        print("BcosifyNormalize output:", out.shape)
         return out

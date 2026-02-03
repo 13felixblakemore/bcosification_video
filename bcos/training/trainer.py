@@ -787,7 +787,6 @@ class ClassificationLitModel(pl.LightningModule):
         return loss
 
     def eval_step(self, batch, _batch_idx, val_or_test):
-        print(batch)
         images, audio, labels = batch
         clip_kd = self.config.get("clip_kd", False)
         if clip_kd:
@@ -837,10 +836,6 @@ class ClassificationLitModel(pl.LightningModule):
         else:
             outputs = self(images)
             loss = self.test_criterion(outputs, labels)
-            print("loss: ", loss)
-            print(outputs.shape)
-            print("labels: ", labels.cpu().numpy())
-            print(labels.shape)
             self.eval_acc1(outputs, labels)
             self.eval_acc5(outputs, labels)
 

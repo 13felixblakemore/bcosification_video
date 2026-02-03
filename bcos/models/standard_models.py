@@ -91,16 +91,12 @@ class I3DBcos(nn.Module):
             kernel_size=1,
             bias=False,
         )
-        print("Pool removed")
         self.blocks[-1].output_pool = nn.Identity()
 
     def forward(self, x):
         # x: (B, C, T, H, W)
-        print(x.shape)
-        #print(self.blocks)
         for block in self.blocks:
             x = block(x)
-            print(x.shape)
 
         return x  # keep [B, num_classes, T, H, W] shape
 
