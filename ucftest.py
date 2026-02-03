@@ -19,6 +19,9 @@ transform = Compose([
     Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225))
 ])
 
+train_md = torch.load("ucf101_train_metadata.pt")
+val_md = torch.load("ucf101_eval_metadata.pt")
+
 # ====== LOAD DATASET ======
 train_dataset = UCF101(
     root=UCF101_PATH,
@@ -26,7 +29,8 @@ train_dataset = UCF101(
     frames_per_clip=FRAMES_PER_CLIP,
     step_between_clips=STEP_BETWEEN_CLIPS,
     train=True,
-    transform=transform
+    transform=transform,
+    _precomputed_metadata=train_md
 )
 
 # ====== DATALOADER ======
