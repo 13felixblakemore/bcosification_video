@@ -9,7 +9,7 @@ except ImportError:
 exp = Experiment("UCF101", "bcosification", "i3d")
 
 config = exp.config  # gets the config
-
+print(config)
 datamodule = UCF101DataModule(config)
 i=0
 
