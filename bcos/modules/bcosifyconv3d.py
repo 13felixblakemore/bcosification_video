@@ -161,11 +161,11 @@ class BcosifyConv3d(BcosConv3d):
     @classmethod
     def from_standard_module_linear(cls, mod, model_config):
         """
-        Create a BcosConv2d from a standard Linear module.
+        Create a BcosConv3d from a standard Linear module.
         Args:
             mod: Standard Linear module.
         Returns:
-            BcosConv2d module.
+            BcosConv3d module.
         """
         clamping = model_config['bcosify_args'].get("clamping", False)
         b_loss = model_config['bcosify_args'].get("learn_b", False)

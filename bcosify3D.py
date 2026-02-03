@@ -59,17 +59,13 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         mean = torch.tensor(mean, device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
         std  = torch.tensor(std,  device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
         out = (x.float() / 255.0 - mean) / std
-        print("bcosifynorm output: ", out.shape)
-        print("hello")
         return out
 
     def forward(self, x):
         out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
         print("bcosifynorm output: ", out.shape)
-        print(self.model)
         out = self.model(out)
         print("model output: ", out.shape)
-        print(out)
         if self.logit_layer:
             out = self.logit_layer(out)  # now applied to correct shape
         print("post logitlayer: ", out.shape)
