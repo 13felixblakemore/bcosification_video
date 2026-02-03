@@ -114,7 +114,7 @@ class ClassificationDataModule(pl.LightningDataModule):
             self.batch_size,
             shuffle=False,
             sampler=train_sampler,
-            num_workers=0,
+            num_workers=self.num_workers,
             collate_fn=self.train_collate_fn,
             pin_memory=True,
         )
@@ -124,7 +124,7 @@ class ClassificationDataModule(pl.LightningDataModule):
             self.eval_dataset,
             self.batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
 
@@ -133,7 +133,7 @@ class ClassificationDataModule(pl.LightningDataModule):
             self.eval_dataset,
             self.batch_size,
             shuffle=False,
-            num_workers=0,
+            num_workers=self.num_workers,
             pin_memory=True,
         )
 
