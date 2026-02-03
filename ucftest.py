@@ -15,8 +15,10 @@ BATCH_SIZE = 2
 
 # Optional transforms
 transform = Compose([
-    Lambda(lambda x: x / 255.0),
-    Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225))
+    # video comes as [T, H, W, C], convert to [C, T, H, W]
+    Lambda(lambda x: x.permute(3, 0, 1, 2)),  # C, T, H, W
+    Lambda(lambda x: x / 255.0),              # scale 0-1
+    Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225))  # per channel
 ])
 
 train_md = torch.load("ucf101_train_metadata.pt")
