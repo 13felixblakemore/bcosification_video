@@ -28,7 +28,7 @@ NUM_EVAL_EXAMPLES: int = 3925
 
 # These are mainly based on the recipes from
 # https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
-DEFAULT_BATCH_SIZE = 1  # per GPU - video heavy on memory
+DEFAULT_BATCH_SIZE = 4  # per GPU - video heavy on memory
 DEFAULT_NUM_EPOCHS = 1
 DEFAULT_LR =1e-4
 DEFAULT_CROP_SIZE = 224
