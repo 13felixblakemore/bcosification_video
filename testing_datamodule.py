@@ -1,22 +1,18 @@
 from bcos.data.datamodules import UCF101DataModule
 from bcos.experiments.utils import Experiment
-
-try:
-    from tqdm.auto import tqdm
-except ImportError:
-    tqdm = lambda x: x
+from tqdm.auto import tqdm
 
 exp = Experiment("UCF101", "bcosification", "i3d")
+config = exp.config
 
-config = exp.config  # gets the config
-print(config)
 datamodule = UCF101DataModule(config)
-i=0
 
+# IMPORTANT: Lightning requires setup()
+datamodule.setup("fit")
 
-for video, target in tqdm(datamodule):
-    print(target.numpy())
-    i = i + 1
+loader = datamodule.train_dataloader()
+
+for i, (video, target) in enumerate(tqdm(loader)):
+    print(target.cpu().numpy())
     if i == 20:
         break
-
