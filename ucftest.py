@@ -30,7 +30,6 @@ train_dataset = UCF101(
     step_between_clips=STEP_BETWEEN_CLIPS,
     train=True,
     transform=transform,
-    _precomputed_metadata=train_md
 )
 
 # ====== DATALOADER ======
