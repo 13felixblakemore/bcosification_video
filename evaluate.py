@@ -120,7 +120,7 @@ def check_correct(output, target, topk=(1,)):
             target = target.max(dim=1)[1]
 
         _, pred = output.topk(maxk, 1, True, True)
-        print(pred)
+        print(target)
         pred = pred.t()
         correct = pred.eq(target[None])
 
