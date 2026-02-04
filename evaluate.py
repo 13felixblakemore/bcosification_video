@@ -121,7 +121,6 @@ def check_correct(output, target, topk=(1,)):
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
-        print(pred.cpu().numpy())
         correct = pred.eq(target[None])
 
         res = []
