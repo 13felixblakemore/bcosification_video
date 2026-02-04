@@ -115,14 +115,13 @@ def evaluate(model, data_loader):
 
 def check_correct(output, target, topk=(1,)):
     with torch.inference_mode():
-        print(output.shape)
         maxk = max(topk)
         if target.ndim == 2:
             target = target.max(dim=1)[1]
 
         _, pred = output.topk(maxk, 1, True, True)
         pred = pred.t()
-        #print(pred.cpu().numpy())
+        print(pred.cpu().numpy())
         correct = pred.eq(target[None])
 
         res = []
@@ -131,6 +130,8 @@ def check_correct(output, target, topk=(1,)):
             res.append(correct_k)
         return res
 
+
+# output train predictions maybe
 
 def load_model_and_config(args):
     experiment = Experiment(
