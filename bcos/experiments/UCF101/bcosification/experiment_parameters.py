@@ -31,7 +31,7 @@ NUM_EVAL_EXAMPLES: int = 3925
 DEFAULT_BATCH_SIZE = 4  # per GPU - video heavy on memory
 DEFAULT_NUM_EPOCHS = 4
 DEFAULT_LR =1e-4
-DEFAULT_CROP_SIZE = 112
+DEFAULT_CROP_SIZE = 224
 
 DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered2d)  # bnu-linear
 DEFAULT_OPTIMIZER = OptimizerFactory(name="Adam", lr=DEFAULT_LR, bcosify=True, b_opt = False)
