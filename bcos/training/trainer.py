@@ -786,6 +786,11 @@ class ClassificationLitModel(pl.LightningModule):
 
     def eval_step(self, batch, _batch_idx, val_or_test):
         images, labels = batch
+        # inside validation step
+        logits = self.model(images)
+        pred = logits.argmax(dim=1)
+        print("pred:", pred[:5].tolist())
+        print("gt:  ", labels[:5].tolist())
         clip_kd = self.config.get("clip_kd", False)
         if clip_kd:
             output_clip, output_bcos = self(images)
