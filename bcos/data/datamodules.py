@@ -363,9 +363,9 @@ class UCF101DataModule(ClassificationDataModule):
                 root=settings.UCF101_PATH,
                 annotation_path=self._TRAIN_PATH,
                 frames_per_clip=8,
-                fold=1,
+                fold=2,
                 transform=self.config["train_transform"],
-                step_between_clips=8,
+                step_between_clips=16,
                 train=True,
                 _precomputed_metadata=train_md,
             )
@@ -398,9 +398,9 @@ class UCF101DataModule(ClassificationDataModule):
             root=settings.UCF101_PATH,
             annotation_path=self._TRAIN_PATH,
             frames_per_clip=8,
-            fold=1,
+            fold=2,
             transform=self.config["test_transform"],
-            step_between_clips=8,
+            step_between_clips=16,
             train=False,
             _precomputed_metadata=val_md,
         )
