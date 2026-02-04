@@ -369,6 +369,10 @@ class UCF101DataModule(ClassificationDataModule):
                 _precomputed_metadata=train_md,
             )
             self.train_dataset = VideoOnlyDataset(self.train_dataset)
+            video_paths = self.train_dataset.dataset.video_clips.video_paths
+            rank_zero_info("First 5 training video paths:")
+            for p in video_paths[:5]:
+                rank_zero_info(p)
             #torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
             #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")

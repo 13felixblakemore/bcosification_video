@@ -31,6 +31,7 @@ train_dataset = UCF101(
     frames_per_clip=FRAMES_PER_CLIP,
     step_between_clips=STEP_BETWEEN_CLIPS,
     train=True,
+
     #transform=transform,
     _precomputed_metadata=train_md
 )
