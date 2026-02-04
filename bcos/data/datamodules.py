@@ -1,5 +1,6 @@
 import os
 import time
+from random import shuffle
 from typing import List
 
 import pytorchvideo
@@ -112,7 +113,7 @@ class ClassificationDataModule(pl.LightningDataModule):
         return data.DataLoader(
             self.train_dataset,
             self.batch_size,
-            shuffle=False,
+            shuffle=shuffle,
             sampler=train_sampler,
             num_workers=self.num_workers,
             collate_fn=self.train_collate_fn,
