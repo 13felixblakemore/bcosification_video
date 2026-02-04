@@ -25,7 +25,7 @@ def get_parser(add_help=True):
     )
     parser.add_argument(
         "--dataset",
-        choices=["ImageNet", "CIFAR10", "ImageNette"],
+        choices=["ImageNet", "UCF101", "CIFAR10", "ImageNette"],
         default="ImageNet",
         help="The dataset.",
     )
