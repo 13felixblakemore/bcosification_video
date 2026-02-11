@@ -71,8 +71,6 @@ def run_training(args):
             pl_env_plugins.SLURMEnvironment(auto_requeue=False)
         ]
 
-    print("GPUS: ", trainer.num_devices)
-
     trainer = pl.Trainer(
         default_root_dir=save_dir,
         accelerator="auto",
