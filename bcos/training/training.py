@@ -34,7 +34,7 @@ def run_training(args):
     pl.seed_everything(seed, workers=True)
     
     trainer = ClassificationLitModel # For automatic optimization
-    print("GPUS: ", trainer.num_gpus)
+
     bcosify_args = exp.config["model"].get("bcosify_args", None)
     if bcosify_args is not None and bcosify_args.get("manual_optim", False):
         trainer =  BcosifyTrainer
@@ -56,6 +56,8 @@ def run_training(args):
     datamodule = model.experiment.get_datamodule(
         cache_dataset=getattr(args, "cache_dataset", None),
     )
+
+    print("GPUS: ", trainer.num_gpus)
 
     # callbacks
     callbacks = setup_callbacks(args, config)
