@@ -28,7 +28,7 @@ NUM_EVAL_EXAMPLES: int = 3925
 
 # These are mainly based on the recipes from
 # https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
-DEFAULT_BATCH_SIZE = 4  # per GPU - video heavy on memory
+DEFAULT_BATCH_SIZE = 2  # per GPU - video heavy on memory
 DEFAULT_NUM_EPOCHS = 15
 DEFAULT_LR =1e-4
 DEFAULT_CROP_SIZE = 224
@@ -51,7 +51,7 @@ DEFAULTS = dict(
             is_bcos=True,
         ),
         batch_size=DEFAULT_BATCH_SIZE,
-        num_workers=16,
+        num_workers=32,
         num_classes=NUM_CLASSES,
     ),
     model=dict(
