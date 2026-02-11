@@ -57,8 +57,6 @@ def run_training(args):
         cache_dataset=getattr(args, "cache_dataset", None),
     )
 
-    print("GPUS: ", trainer.num_gpus)
-
     # callbacks
     callbacks = setup_callbacks(args, config)
 
@@ -73,6 +71,8 @@ def run_training(args):
             pl_env_plugins.SLURMEnvironment(auto_requeue=False)
         ]
 
+    print("GPUS: ", trainer.num_devices)
+
     trainer = pl.Trainer(
         default_root_dir=save_dir,
         accelerator="auto",
@@ -81,7 +81,7 @@ def run_training(args):
         callbacks=callbacks,
         **trainer_config,
     )
-
+    print("GPUS: ", trainer.num_devices)
     # decide whether to resume
     ckpt_path = None
     if args.resume:
