@@ -282,7 +282,8 @@ class ImageNetteDataModule(ClassificationDataModule):
 
         cache_tar_files_to_shm()
         end = time.perf_counter()
-        print(f"Caching successful! Time taken {end - start:.2f}s")
+
+        (f"Caching successful! Time taken {end - start:.2f}s")
 
     def setup(self, stage: str) -> None:
         # this way changes to the settings are reflected at function call time

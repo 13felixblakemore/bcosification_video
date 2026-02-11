@@ -29,11 +29,11 @@ NUM_EVAL_EXAMPLES: int = 3925
 # These are mainly based on the recipes from
 # https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
 DEFAULT_BATCH_SIZE = 2  # per GPU - video heavy on memory
-DEFAULT_NUM_EPOCHS = 7
+DEFAULT_NUM_EPOCHS = 20
 DEFAULT_LR =1e-4
 DEFAULT_CROP_SIZE = 224
 
-DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered2d)  # bnu-linear
+DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered3d)  # bnu-linear
 DEFAULT_OPTIMIZER = OptimizerFactory(name="Adam", lr=DEFAULT_LR, bcosify=True, b_opt = False)
 DEFAULT_LR_SCHEDULE = LRSchedulerFactory(
     name="cosineannealinglr",
