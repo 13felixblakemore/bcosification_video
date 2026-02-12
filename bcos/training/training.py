@@ -78,7 +78,7 @@ def run_training(args):
         logger=loggers,
         callbacks=callbacks,
         accumulate_grad_batches=8,
-        precision="bf16",
+        precision=16,
         **trainer_config,
     )
     print("GPUS: ", trainer.num_devices)
