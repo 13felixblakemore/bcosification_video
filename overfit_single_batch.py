@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import UCF101
 
 from bcos import settings
+from bcos.data.datamodules import VideoOnlyDataset
 from bcos.data.presets import UCF101ClassificationPresetEval, UCF101ClassificationPresetTrain
 
 train_md = torch.load("ucf101_train_metadata.pt")
@@ -27,6 +28,8 @@ train_dataset = UCF101(
     train=True,
     _precomputed_metadata=train_md,
 )
+
+train_dataset = VideoOnlyDataset(train_dataset)
 
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=16)
 
