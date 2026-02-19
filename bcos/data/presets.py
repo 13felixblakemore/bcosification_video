@@ -325,6 +325,10 @@ class UCF101ClassificationPresetTrain:
         video: Tensor [T, H, W, C] uint8
         returns: Tensor [C, T, H, W] float32
         """
+        if not self.is_bcos:
+            video = video.float() / 255.0
+            video = video.permute(0, 3, 1, 2)
+            return video
 
         # uint8 → float in [0,1]
         video = video.float() / 255.0
@@ -339,9 +343,6 @@ class UCF101ClassificationPresetTrain:
 
         # T C H W → C T H W
         video = video.permute(1, 0, 2, 3)
-
-        if not self.is_bcos:
-            video = self.normalize(video)
 
         return video
 
@@ -367,6 +368,11 @@ class UCF101ClassificationPresetEval:
         returns: Tensor [C, T, H, W] float32
         """
 
+        if not self.is_bcos:
+            video = video.float() / 255.0
+            video = video.permute(0, 3, 1, 2)
+            return video
+
         video = video.float() / 255.0
         video = video.permute(0, 3, 1, 2)
 
@@ -379,9 +385,6 @@ class UCF101ClassificationPresetEval:
         ])
 
         video = video.permute(1, 0, 2, 3)
-
-        if not self.is_bcos:
-            video = self.normalize(video)
 
         return video
 
