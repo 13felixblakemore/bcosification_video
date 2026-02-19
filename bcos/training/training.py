@@ -71,6 +71,9 @@ def run_training(args):
     overfit_batches = args.overfit_batches
     if overfit_batches is not None:
         trainer_config["overfit_batches"] = overfit_batches
+
+    trainer_config["limit_train_batches"] = 0.1  # 10% of training data
+    trainer_config["limit_val_batches"] = 0.1
     # plugin for slurm
     if "SLURM_JOB_ID" in os.environ:  # we're on slurm
         # let submitit handle requeuing
