@@ -1,4 +1,5 @@
 import os
+import warnings
 from pathlib import Path
 
 import pytorch_lightning as pl
@@ -17,7 +18,7 @@ def run_training(args):
     """
     Instantiates everything and runs the training.
     """
-    torchvision.set_video_backend("video_reader")
+    warnings.filterwarnings("ignore", message=".*pts_unit.*")
     base_directory = args.base_directory
     dataset = args.dataset
     base_network = args.base_network
