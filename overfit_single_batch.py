@@ -34,7 +34,7 @@ train_dataset = VideoOnlyDataset(train_dataset)
 train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=16)
 
 # ====== INSPECT VIDEOS & LABELS ======
-for i, (video, audio, label) in enumerate(train_loader):
+for i, (video, label) in enumerate(train_loader):
     # video: [B, T, C, H, W]
     # audio: optional, ignore if not needed
     # label: tensor of size [B]
