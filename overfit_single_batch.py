@@ -12,11 +12,11 @@ train_md = torch.load("ucf101_train_metadata.pt")
 
 train_transform = UCF101ClassificationPresetTrain(
             crop_size=224,
-            is_bcos=True,
+            is_bcos=False,
 )
 eval_transform = UCF101ClassificationPresetEval(
             crop_size=224,
-            is_bcos=True,
+            is_bcos=False,
 )
 
 
@@ -56,6 +56,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 model.train()
 model.cuda()
 
+model.add_channels()
 
 for i in range(epochs):
     optimizer.zero_grad()
