@@ -29,7 +29,7 @@ from torchvision.datasets import ImageFolder
 import bcos.data.transforms as custom_transforms
 import bcos.training.callbacks as custom_callbacks
 from bcos.experiments.utils import Experiment, sanitize_config
-from bcos.settings import DATA_ROOT, IMAGENET_PATH, IMAGENET_RN50_ZEROSHOT_WEIGHTS_PATH
+from bcos.settings import DATA_ROOT, IMAGENET_PATH, IMAGENET_RN50_ZEROSHOT_WEIGHTS_PATH, UCF101_PATH
 from bcos.training.agc import adaptive_clip_grad_
 from bcos.training.ema import ExponentialMovingAverage
 from bcos.training.hooks import Hook, forward_hook_fn
@@ -42,7 +42,7 @@ except ImportError:
 import clip
 
 # Define the path to the ImageNet validation data folder
-val_data_folder = IMAGENET_PATH+'/val'
+val_data_folder = UCF101_PATH+'/val'
 
 def get_imagenet_zeroshot_weights(model_name):
     return torch.load(IMAGENET_RN50_ZEROSHOT_WEIGHTS_PATH)
