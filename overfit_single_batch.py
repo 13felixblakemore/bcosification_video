@@ -40,6 +40,7 @@ for i, (video, label) in enumerate(train_loader):
     # label: tensor of size [B]
     print("Batch", i)
     print("Labels:", label)
+    print("Video:", video)
 
     if i >= 10:  # just first 10 batches
         break
