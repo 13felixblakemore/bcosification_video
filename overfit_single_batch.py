@@ -56,8 +56,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 model.train()
 model.cuda()
 
-model.add_channels()
-
 for i in range(epochs):
     optimizer.zero_grad()
     outputs = model(videos)
