@@ -315,9 +315,9 @@ class UCF101ClassificationPresetTrain:
         self.spatial_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size),
             transforms.RandomHorizontalFlip(),
-            custom_transforms.AddInverse(),
         ])
 
+        self.add_inv = custom_transforms.AddInverse()
         self.normalize = transforms.Normalize(mean, std)
 
     def __call__(self, video):
@@ -325,10 +325,6 @@ class UCF101ClassificationPresetTrain:
         video: Tensor [T, H, W, C] uint8
         returns: Tensor [C, T, H, W] float32
         """
-        if not self.is_bcos:
-            video = video.float() / 255.0
-            video = video.permute(0, 3, 1, 2)
-            return video
 
         # uint8 → float in [0,1]
         video = video.float() / 255.0
@@ -340,6 +336,11 @@ class UCF101ClassificationPresetTrain:
         video = torch.stack([
             self.spatial_transform(frame) for frame in video
         ])
+
+        if self.is_bcos:
+            video = torch.stack([
+                self.add_inv(frame) for frame in video
+            ])
 
         # T C H W → C T H W
         video = video.permute(1, 0, 2, 3)
@@ -368,11 +369,6 @@ class UCF101ClassificationPresetEval:
         returns: Tensor [C, T, H, W] float32
         """
 
-        if not self.is_bcos:
-            video = video.float() / 255.0
-            video = video.permute(0, 3, 1, 2)
-            return video
-
         video = video.float() / 255.0
         video = video.permute(0, 3, 1, 2)
 
@@ -380,9 +376,10 @@ class UCF101ClassificationPresetEval:
             self.center_crop(self.resize(frame)) for frame in video
         ])
 
-        video = torch.stack([
-            self.add_inverse(frame) for frame in video
-        ])
+        if self.is_bcos:
+            video = torch.stack([
+                self.add_inverse(frame) for frame in video
+            ])
 
         video = video.permute(1, 0, 2, 3)
 
