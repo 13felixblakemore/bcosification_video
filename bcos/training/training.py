@@ -58,20 +58,13 @@ def run_training(args):
         cache_dataset=getattr(args, "cache_dataset", None),
     )
 
-    full_loader = datamodule.train_dataloader()
-    single_batch = next(iter(full_loader))
-
-    datamodule.train_dataset = SingleBatchLoader(single_batch)
-    datamodule.train_dataloader = lambda: torch.utils.data.DataLoader(datamodule.train_dataset,
-                                                                      batch_size=len(single_batch[0]))
-
     # callbacks
     callbacks = setup_callbacks(args, config)
 
     # init trainer
     trainer_config = config["trainer"]
     put_trainer_args_into_trainer_config(args, trainer_config)
-
+    trainer_config["overfit_batches"] = 1
     # plugin for slurm
     if "SLURM_JOB_ID" in os.environ:  # we're on slurm
         # let submitit handle requeuing
