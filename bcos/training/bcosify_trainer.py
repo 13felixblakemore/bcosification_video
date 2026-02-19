@@ -8,10 +8,10 @@ try:
     from tqdm.auto import tqdm
 except ImportError:
     tqdm = lambda x: x  # noqa: E731
-from bcos.settings import IMAGENET_PATH
+from bcos.settings import IMAGENET_PATH, UCF101_PATH
 
 # Define the path to the ImageNet validation data folder
-val_data_folder = IMAGENET_PATH+'/val'
+val_data_folder = UCF101_PATH+'/val'
 
 def create_test_loader(transform, val_data_folder=val_data_folder):
 
