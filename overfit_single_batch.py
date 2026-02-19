@@ -48,7 +48,7 @@ train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers
 videos, labels = next(iter(train_loader))
 videos, labels = videos.cuda(), labels.cuda()
 
-model = I3DBcos
+model = I3DBcos()
 epochs = 100
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
