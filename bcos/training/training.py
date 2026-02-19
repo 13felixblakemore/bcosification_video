@@ -6,6 +6,7 @@ import torch
 from pytorch_lightning.plugins import environments as pl_env_plugins
 from pytorch_lightning.utilities import rank_zero_info
 
+from bcos.data.datamodules import SingleBatchLoader
 from bcos.experiments.utils import Experiment, CHECKPOINT_LAST_FILENAME
 from bcos.training.bcosify_trainer import BcosifyTrainer
 from bcos.training.trainer import setup_loggers, ClassificationLitModel, setup_callbacks, \
@@ -57,6 +58,13 @@ def run_training(args):
         cache_dataset=getattr(args, "cache_dataset", None),
     )
 
+    full_loader = datamodule.train_dataloader()
+    single_batch = next(iter(full_loader))
+
+    datamodule.train_dataset = SingleBatchLoader(single_batch)
+    datamodule.train_dataloader = lambda: torch.utils.data.DataLoader(datamodule.train_dataset,
+                                                                      batch_size=len(single_batch[0]))
+
     # callbacks
     callbacks = setup_callbacks(args, config)
 
@@ -74,7 +82,7 @@ def run_training(args):
     trainer = pl.Trainer(
         default_root_dir=save_dir,
         accelerator="auto",
-        devices=3,
+        devices=1,
         logger=loggers,
         callbacks=callbacks,
         **trainer_config,

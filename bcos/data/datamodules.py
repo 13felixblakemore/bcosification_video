@@ -37,7 +37,7 @@ from .transforms import RandomCutmix, RandomMixup, SplitAndGrid
 from .cc3m import (CC3MImg, CC3MText, CustomDataCollatorImg,
                   CustomDataCollatorText)
 
-__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule", "UCF101DataModule"]
+__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule", "UCF101DataModule", "SingleBatchLoader"]
 
 def get_random_cut(dataset, cut_ratio):
     all_indices = [*range(0, len(dataset))]
@@ -421,6 +421,16 @@ class VideoOnlyDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         video, _, label = self.dataset[idx]  # discard audio
         return video, label
+
+class SingleBatchLoader(torch.utils.data.Dataset):
+    def __init__(self, batch):
+        self.inputs, self.labels = batch
+
+    def __len__(self):
+        return 1  # only one batch
+
+    def __getitem__(self, idx):
+        return self.inputs, self.labels
 
 class CIFAR10DataModule(ClassificationDataModule):
     # from https://www.cs.toronto.edu/~kriz/cifar.html

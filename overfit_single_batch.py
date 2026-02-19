@@ -56,11 +56,11 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 model.train()
 model.cuda()
 
-for i in range(epochs):
+"""for i in range(epochs):
     optimizer.zero_grad()
     outputs = model(videos)
     loss = criterion(outputs, labels)
     loss.backward()
     optimizer.step()
     if i % 10 == 0:
-        print(f"Step {i}: loss = {loss.item()}")
+        print(f"Step {i}: loss = {loss.item()}")"""
