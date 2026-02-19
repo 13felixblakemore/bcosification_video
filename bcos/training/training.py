@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytorch_lightning as pl
 import torch
+import torchvision
 from pytorch_lightning.plugins import environments as pl_env_plugins
 from pytorch_lightning.utilities import rank_zero_info
 
@@ -16,6 +17,7 @@ def run_training(args):
     """
     Instantiates everything and runs the training.
     """
+    torchvision.set_video_backend("video_reader")
     base_directory = args.base_directory
     dataset = args.dataset
     base_network = args.base_network
