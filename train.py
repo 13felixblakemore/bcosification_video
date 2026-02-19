@@ -127,6 +127,13 @@ def get_parser(add_help=True):
         help="Enable debugging mode.",
     )
 
+    parser.add_argument(
+        "--overfit_batches",
+        type=int,
+        default=None,
+        help="Enable overfitting batches.",
+    )
+
     return parser
 
 

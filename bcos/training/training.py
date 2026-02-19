@@ -67,7 +67,10 @@ def run_training(args):
     # init trainer
     trainer_config = config["trainer"]
     put_trainer_args_into_trainer_config(args, trainer_config)
-    trainer_config["overfit_batches"] = 1
+
+    overfit_batches = args.overfit_batches
+    if overfit_batches is not None:
+        trainer_config["overfit_batches"] = overfit_batches
     # plugin for slurm
     if "SLURM_JOB_ID" in os.environ:  # we're on slurm
         # let submitit handle requeuing
