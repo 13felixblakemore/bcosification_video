@@ -5,6 +5,8 @@ from pytorchvideo.models.hub import i3d_r50
 import torch
 import torch.nn.functional as F
 
+from bcos.modules.bcosifyconv3d import BcosifyConv3d
+
 ## START: ------------------- For standard models -------------------------------
 class MyResNet(ResNet):
     def _forward_impl(self, x):
@@ -85,7 +87,7 @@ class I3DBcos(nn.Module):
         self.blocks = self.model.blocks
 
         # replace last projection with Conv3d
-        self.blocks[-1].proj = nn.Conv3d(
+        self.blocks[-1].proj = BcosifyConv3d(
             in_channels=2048,
             out_channels=101,  # num_classes
             kernel_size=1,
