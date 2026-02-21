@@ -127,7 +127,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 setattr(model, n, BcosSequential.from_standard_module(module))
             elif isinstance(module, nn.BatchNorm3d) and (norm_layer == 'BnUnc3d' or norm_layer == 'BnUncV2'):
                 ## Add the norms
-                setattr(model, n, BatchNormUncentered3d.from_standard_module(module, model_config))
+                new_module = BatchNormUncentered3d.from_standard_module(module, model_config)
+                setattr(model, n, new_module)
+                new_module.eval()
+                for p in new_module.parameters():
+                    p.requires_grad = False
             else:
                 # rest of the modules are not replaced
                 pass
