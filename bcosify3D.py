@@ -51,12 +51,17 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             BcosifyNetwork.add_channels(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
-        # Freeze everything except the final classifier
-        for name, param in self.model.named_parameters(recurse=True):
-            print(name)
-            exit()
-            if not name.startswith("blocks.6"):
-                param.requires_grad = False
+        self.print_all_params(self.model)
+        exit()
+
+    def print_all_params(self, module, prefix=""):
+        for name, child in module.named_children():
+            # Print all parameters in this child
+            for pname, p in child.__dict__.get("_parameters", {}).items():
+                if p is not None:
+                    print(f"{prefix}{name}.{pname} | requires_grad={p.requires_grad} | shape={p.shape}")
+            # Recurse into children
+            self.print_all_params(child, prefix=prefix + name + ".")
 
     def normalize_video(self, x, mean, std):
         """
