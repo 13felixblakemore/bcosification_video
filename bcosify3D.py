@@ -59,8 +59,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         # Unfreeze head (block 6)
         for p in self.model.blocks[6].parameters():
             p.requires_grad = True
-        self.print_all_params(self.model)
-        exit()
 
     def print_all_params(self, module, prefix=""):
         for name, child in module.named_children():
