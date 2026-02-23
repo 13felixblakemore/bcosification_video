@@ -52,7 +52,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
         # Freeze everything except the final classifier
-        for name, param in self.model.named_parameters():
+        for name, param in self.model.named_parameters(recurse=True):
             print(name)
             exit()
             if not name.startswith("blocks.6"):
