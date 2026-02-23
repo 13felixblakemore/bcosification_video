@@ -117,11 +117,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
             # Freeze blocks 0-5
             for i in range(6):
-                for p in model.model.blocks[i].parameters():
+                for p in model.blocks[i].parameters():
                     p.requires_grad = False
 
             # Unfreeze head (block 6)
-            for p in model.model.blocks[6].parameters():
+            for p in model.blocks[6].parameters():
                 p.requires_grad = True
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
