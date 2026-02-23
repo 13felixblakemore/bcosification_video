@@ -51,6 +51,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             BcosifyNetwork.add_channels(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
+        # Freeze everything except the final classifier
+        for name, param in self.model.named_parameters():
+            if not name.startswith("blocks.6"):
+                param.requires_grad = False
+
     def normalize_video(self, x, mean, std):
         """
         x: (B, C, T, H, W)

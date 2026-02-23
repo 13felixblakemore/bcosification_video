@@ -99,4 +99,3 @@ class I3DBcos(nn.Module):
             x = block(x)
 
         return x  # keep [B, num_classes, T, H, W] shape
-
