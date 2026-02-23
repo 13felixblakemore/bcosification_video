@@ -119,6 +119,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 for p in module.parameters(recurse=True):
                     p.requires_grad = False
             else:
+                print("starts with 6")
                 for p in module.parameters(recurse=True):
                     p.requires_grad = True
 
