@@ -116,7 +116,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                     cls.bcosify(module, model_config)
 
             print(n)
-            exit()
             if not n.startswith("model.blocks.6"):
                 for p in module.parameters(recurse=True):
                     p.requires_grad = False
