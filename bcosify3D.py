@@ -115,14 +115,15 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                     # compound module, go inside it
                     cls.bcosify(module, model_config)
 
-            # Freeze blocks 0-5
-            for i in range(6):
-                for p in model.blocks[i].parameters():
+            print(n)
+            exit()
+            if not n.startswith("model.blocks.6"):
+                for p in module.parameters(recurse=True):
                     p.requires_grad = False
-
-            # Unfreeze head (block 6)
-            for p in model.blocks[6].parameters():
-                p.requires_grad = True
+            else:
+                print("starts with 6")
+                for p in module.parameters(recurse=True):
+                    p.requires_grad = True
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
             # What is global average pooling?
