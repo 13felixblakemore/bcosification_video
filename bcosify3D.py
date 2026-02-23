@@ -116,10 +116,10 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                     cls.bcosify(module, model_config)
 
             if not n.startswith("blocks.6"):
-                for p in module.parameters():
+                for p in module.parameters(recurse=True):
                     p.requires_grad = False
             else:
-                for p in module.parameters():
+                for p in module.parameters(recurse=True):
                     p.requires_grad = True
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
