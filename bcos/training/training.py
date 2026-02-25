@@ -84,7 +84,7 @@ def run_training(args):
     trainer = pl.Trainer(
         default_root_dir=save_dir,
         accelerator="auto",
-        devices=3,
+        devices=2,
         logger=loggers,
         callbacks=callbacks,
         **trainer_config,
