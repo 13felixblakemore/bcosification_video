@@ -19,7 +19,7 @@ from bcos.data.presets import ImageNetClassificationPresetEval, UCF101Classifica
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
-        description="Explain an image", add_help=add_help
+        description="Explain an image/vid", add_help=add_help
     )
     parser.add_argument(
         "--base_directory",
@@ -28,8 +28,8 @@ def get_parser(add_help=True):
     )
     parser.add_argument(
         "--dataset",
-        choices=["ImageNet", "CIFAR10", "ImageNette"],
-        default="ImageNette",
+        choices=["ImageNet", "CIFAR10", "ImageNette", "UCF101"],
+        default="UCF101",
         help="The dataset.",
     )
     parser.add_argument(
@@ -39,7 +39,9 @@ def get_parser(add_help=True):
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument(
-        "--reload", help="What ckpt to load. ['last', 'best', 'epoch_<N>', 'best_any']"
+        "--reload",
+        default="last",
+        help="What ckpt to load. ['last', 'best', 'epoch_<N>', 'best_any']"
     )
     group.add_argument(
         "--weights",
