@@ -1,4 +1,7 @@
 import argparse
+
+import cv2
+
 from bcos.common import get_inx2label_imagenette as idx2label
 from pathlib import Path
 from evaluate import evaluate, load_model_and_config
@@ -11,7 +14,8 @@ try:
 except ImportError:
     tqdm = lambda x: x  # noqa: E731
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from bcos.data.presets import ImageNetClassificationPresetEval
+from bcos.data.presets import ImageNetClassificationPresetEval, UCF101ClassificationPresetEval
+
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
@@ -99,6 +103,49 @@ def explain_image(args, image_path):
     # Saving the plot
     plt.savefig(path_to_save, bbox_inches='tight')
     plt.close()
+
+def explain_video(args, video_path):
+    global device
+    if args.no_cuda:
+        device = torch.device("cpu")
+
+    if device == torch.device("cuda"):
+        torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
+
+    cap = cv2.VideoCapture(video_path)
+    frames = []
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frames.append(frame)
+    cap.release()
+
+    transform = UCF101ClassificationPresetEval(
+        crop_size=224,
+        is_bcos=True,
+    )
+
+    frames = [transform(Image.fromarray(f)) for f in frames]  # list of [C,H,W]
+
+    # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
+    video_tensor = torch.stack(frames, dim=0).permute(1, 0, 2, 3).unsqueeze(0)  # [1, C, T, H, W]
+    video_tensor = video_tensor.to(device)
+
+    model, config = load_model_and_config(args)
+    model.eval()
+
+    expl_out = model.explain(video_tensor)
+    #print("Prediction:", idx2label[expl_out["prediction"]])
+
+    grad_video = expl_out["explanation"]  # list of [H,W,4] or array [T,H,W,4]
+    for t, frame_expl in enumerate(grad_video):
+        plt.imshow(frame_expl)
+        plt.axis('off')
+        plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+        plt.close()
 
 if __name__ == "__main__":
     parser = get_parser()

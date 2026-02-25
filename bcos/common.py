@@ -187,6 +187,136 @@ class BcosUtilMixin:
 
         return result
 
+    def explain_video(
+        self,
+        in_tensor,
+        idx=None,
+        **grad2vid_kwargs,
+    ) -> "Dict[str, Any]":
+        """
+        Generates an explanation for the given input tensor.
+        This is not a generic explanation method, but rather a helper for simply getting explanations.
+        It is intended for simple use cases (simple exploration, debugging, etc.).
+
+        Parameters
+        ----------
+        in_tensor : Tensor
+            The input tensor to explain. Must be 4-dimensional and have batch size of 1.
+        idx : int, optional
+            The index of the output to explain. If None, the prediction is explained.
+        grad2img_kwargs : Any
+            Additional keyword arguments passed to `gradient_to_image` method
+            for generating the explanation.
+
+        Examples
+        --------
+        Here is an example of how to use this method to generate and visualize an explanation and a contribution map:
+
+        >>> model = ...  # instantiate some B-cos model
+        >>> img = ...  # instantiate some input image tensor
+        >>> expl_out = model.explain(img)
+        >>> expl_out["prediction"]
+        932
+
+        >>> import matplotlib.pyplot as plt
+        >>> plt.imshow(expl_out["explanation"])
+        >>> plt.show()  # show the explanation
+
+        >>> model.plot_contribution_map(expl_out["contribution_map"])
+        >>> plt.show()  # show the contribution map
+
+        Warnings
+        --------
+        This method is NOT optimized for speed.
+        Also, on a more general note: Care should be taken when generating explanations during training,
+        as the gradients might be different from during inference.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A dictionary containing the explanation and additional information.
+            Namely, the following keys are present:
+            - "prediction": The prediction of the model.
+            - "explained_class_idx": The class (index) of the explained output.
+            - "dynamic_linear_weights": The dynamic linear weights of the model (`in_tensor.grad`).
+            - "contribution_map": The contribution map of the model prediction.
+            - "explanation": The explanation of the model prediction.
+        """
+        if in_tensor.ndim == 4:
+            raise ValueError("Expected 5-dimensional input tensor")
+        if in_tensor.shape[0] != 1:
+            raise ValueError("Expected batch size of 1")
+        if not in_tensor.requires_grad:
+            warnings.warn(
+                "Input tensor did not require grad! Has been set automatically to True!"
+            )
+            in_tensor.requires_grad = True  # nonsense otherwise
+        if self.training:  # noqa
+            warnings.warn(
+                "Model is in training mode! "
+                "This might lead to unexpected results! Use model.eval()!"
+            )
+
+        result = dict()
+        with torch.enable_grad(), self.explanation_mode():
+            # fwd + prediction
+            out = self(in_tensor)  # noqa
+            pred_out = out.max(1)
+            result["prediction"] = pred_out.indices.item()
+
+            # select output (logit) to explain
+            if idx is None:  # explain prediction
+                to_be_explained_logit = pred_out.values
+                result["explained_class_idx"] = pred_out.indices.item()
+            else:  # user specified idx
+                to_be_explained_logit = out[0, idx]
+                result["explained_class_idx"] = idx
+
+            to_be_explained_logit.backward(inputs=[in_tensor])
+
+        # get weights and contribution map
+        result["dynamic_linear_weights"] = in_tensor.grad
+        result["contribution_map"] = (in_tensor * in_tensor.grad).sum(1)
+
+        # generate (color) explanation
+        result["explanation"] = gradient_to_video(
+            in_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
+        )
+
+        return result
+
+    @staticmethod  # to make it easier when using torch.hub
+    def gradient_to_image(
+            video: "Tensor",
+            linear_mapping: "Tensor",
+            smooth: int = 15,
+            alpha_percentile: float = 99.5,
+    ) -> "np.ndarray":
+        """
+        From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
+        Computing color image from dynamic linear mapping of B-cos models.
+
+        Parameters
+        ----------
+        image: Tensor
+            Original input image (encoded with 6 color channels)
+            Shape: [C, H, W] with C=6
+        linear_mapping: Tensor
+            Linear mapping W_{1\rightarrow l} of the B-cos model
+            Shape: [C, H, W] same as image
+        smooth: int
+            Kernel size for smoothing the alpha values
+        alpha_percentile: float
+            Cut-off percentile for the alpha value
+
+        Returns
+        -------
+        np.ndarray
+            image explanation of the B-cos model.
+            Shape: [H, W, C] (C=4 ie RGBA)
+        """
+        return gradient_to_video(video, linear_mapping, smooth, alpha_percentile)
+
     @staticmethod  # to make it easier when using torch.hub
     def gradient_to_image(
         image: "Tensor",
@@ -383,6 +513,74 @@ class explanation_mode(_DecoratorContextManager):
         for m in self.expl_modules:
             m.set_explanation_mode(False)
 
+
+def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
+    """
+    From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
+    Computing color image from dynamic linear mapping of B-cos models.
+
+    Parameters
+    ----------
+    image: Tensor
+        Original input video (encoded with 6 color channels)
+        Shape: [C, T, H, W] with C=6
+    linear_mapping: Tensor
+        Linear mapping W_{1\rightarrow l} of the B-cos model
+        Shape: [C, T, H, W] same as video
+    smooth: int
+        Kernel size for smoothing the alpha values
+    alpha_percentile: float
+        Cut-off percentile for the alpha value. In range [0, 100].
+
+    Returns
+    -------
+    np.ndarray
+        image explanation of the B-cos model.
+        Shape: [H, T, W, C] (C=4 ie RGBA)
+    """
+    print("Video shape: ", video.shape)
+    print("Linear Mapping shape: ", linear_mapping.shape)
+    # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
+    contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
+    print("Contribs shape: ", contribs.shape)
+    # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
+    rgb_grad = linear_mapping / (
+        linear_mapping.abs().max(0, keepdim=True).values + 1e-12
+    )
+    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+    rgb_grad = rgb_grad.clamp(min=0)
+    # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
+    rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, T, H, W]
+
+    print("RGB grad shape: ", rgb_grad.shape)
+
+    # Set alpha value to the strength (L2 norm) of each location's gradient
+    alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
+    # Only show positive contributions
+    alpha = torch.where(contribs < 0, 1e-12, alpha)
+    if smooth:
+        kT = 3
+        kH = 5
+        kW = 5
+        alpha = F.avg_pool3d(
+            alpha,
+            kernel_size=(kT, kH, kW),
+            stride=1,
+            padding=((kT - 1) // 2, (kH - 1) // 2, (kW - 1) // 2)
+        )
+    alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
+
+    rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
+    print("Expected [4,t,h,w]: ", rgb_grad.shape)
+    T = rgb_grad.shape[1]
+
+    # Reshaping to [T, H, W, C]
+    grad_video = [rgb_grad[t].permute(1,2,0).detach().cpu().numpy() for t in range(T)]
+    print("Grad video: ", grad_video.shape)
+    if return_contribs:
+        return grad_video.detach().cpu().numpy(), contribs.detach().cpu().numpy()
+    else:
+        return grad_video.detach().cpu().numpy()
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
     """
