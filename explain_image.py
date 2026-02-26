@@ -130,16 +130,15 @@ def explain_video(args, video_path):
         is_bcos=True,
     )
 
-    frames = [transform(Image.fromarray(f)) for f in frames]  # list of [C,H,W]
-
     # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
     video_tensor = torch.stack(frames, dim=0).permute(1, 0, 2, 3).unsqueeze(0)  # [1, C, T, H, W]
+    video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
 
     model, config = load_model_and_config(args)
     model.eval()
 
-    expl_out = model.explain(video_tensor)
+    expl_out = model.explain_video(video_tensor)
     #print("Prediction:", idx2label[expl_out["prediction"]])
 
     grad_video = expl_out["explanation"]  # list of [H,W,4] or array [T,H,W,4]

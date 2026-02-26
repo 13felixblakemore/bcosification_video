@@ -322,7 +322,6 @@ class ImageNetteDataModule(ClassificationDataModule):
 
 
 class UCF101DataModule(ClassificationDataModule):
-    # from https://image-net.org/download.php
     NUM_CLASSES: int = 101
 
     NUM_TRAIN_EXAMPLES: int = 50000 # Not sure
@@ -334,8 +333,6 @@ class UCF101DataModule(ClassificationDataModule):
     _TRAIN_PATH = "ucfTrainTestlist"
     _TEST_PATH = "ucfTrainTestlist"
     _CLIP_DURATION = 2  # Duration of sampled clip for each video
-    _BATCH_SIZE = 1
-    _NUM_WORKERS = 1  # Number of parallel processes fetching data
 
     def setup(self, stage: str) -> None:
         train_md = torch.load("ucf101_train_metadata.pt")
@@ -427,7 +424,7 @@ class SingleBatchLoader(torch.utils.data.Dataset):
         self.inputs, self.labels = batch
 
     def __len__(self):
-        return 1  # only one batch
+        return 1
 
     def __getitem__(self, idx):
         return self.inputs, self.labels

@@ -7,7 +7,6 @@ config = exp.config
 
 datamodule = UCF101DataModule(config["data"])
 
-# IMPORTANT: Lightning requires setup()
 datamodule.setup("fit")
 
 loader = datamodule.train_dataloader()

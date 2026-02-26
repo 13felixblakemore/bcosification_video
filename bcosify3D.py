@@ -26,8 +26,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         self.model = model
         self.model_config = model_config
 
-        # Setting logit layer
-        # What does logit bias do? And does it need to be changed depending on num_classes?
         self.logit_layer = None
         if logit_layer:
             self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(101 - 1), )
@@ -80,15 +78,14 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         return out
 
     def forward(self, x):
-        out = self.bcosifynormalize(x)  # [B, 101, 1, 1, 1]
+        out = self.bcosifynormalize(x)
         out = self.model(out)
         if self.logit_layer:
-            out = self.logit_layer(out)  # now applied to correct shape
+            out = self.logit_layer(out)
         return out
 
     @classmethod
     def add_channels(cls, model):
-        # Might need to change dimensions +1 for time
         found_conv_layer = False
         for module in model.modules():
             if not isinstance(module, nn.Conv3d):
@@ -122,12 +119,10 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                     cls.bcosify(module, model_config)
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
-            # What is global average pooling?
             gap = model_config['bcosify_args'].get('gap',
                                                    True)  # Global Average Pooling reorder works with conv1x1 for the last linear layer
             last_layer_name = model_config.get('last_layer_name', 'NoLastLayerName')
             if isinstance(module, nn.Conv3d):
-                # perhaps use Unit3Dpy from i3d
                 # replace Conv3d with BcosConv3d
                 setattr(model, n, BcosifyConv3d.from_standard_module(module, model_config))
             elif isinstance(module, nn.Linear) and (n != last_layer_name or clip_kd or (
