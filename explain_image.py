@@ -142,6 +142,7 @@ def explain_video(args, video_path):
     model, config = load_model_and_config(args)
     model.eval()
 
+    video_tensor = video_tensor.unsqueeze(0)
     expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label[expl_out["prediction"]])
 
