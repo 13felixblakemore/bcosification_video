@@ -132,11 +132,12 @@ def explain_video(args, video_path):
     )
 
     # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
-    video_tensor = torch.tensor(np.stack(frames))
+    video_tensor = torch.tensor(np.stack(frames)) # T, H, W, C
     print(video_tensor.shape)
-    video_tensor = torch.stack(torch.tensor(frames), dim=0).permute(1, 0, 2, 3).unsqueeze(0)  # [1, C, T, H, W]
-    video_tensor = video_tensor.permute(0, 3, 1, 2)  # [T, 3, H, W]
-    video_tensor = video_tensor.unsqueeze(0)  # [1, T, 3, H, W]
+    video_tensor = video_tensor.permute(0, 3, 1, 2)  # [T, C, H, W]
+    print(video_tensor.shape)
+    video_tensor = video_tensor.unsqueeze(0)  # [1, T, C, H, W]
+    print(video_tensor.shape)
 
     # If model expects [B, C, T, H, W]:
     video_tensor = video_tensor.permute(0, 2, 1, 3, 4)
@@ -148,7 +149,7 @@ def explain_video(args, video_path):
     model.eval()
 
     expl_out = model.explain_video(video_tensor)
-    #print("Prediction:", idx2label[expl_out["prediction"]])
+    print("Prediction:", idx2label[expl_out["prediction"]])
 
     grad_video = expl_out["explanation"]  # list of [H,W,4] or array [T,H,W,4]
     for t, frame_expl in enumerate(grad_video):
