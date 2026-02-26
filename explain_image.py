@@ -134,15 +134,9 @@ def explain_video(args, video_path):
     # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
     video_tensor = torch.tensor(np.stack(frames)) # T, H, W, C
     print(video_tensor.shape)
-    video_tensor = video_tensor.permute(0, 3, 1, 2)  # [T, C, H, W]
-    print(video_tensor.shape)
-    video_tensor = video_tensor.unsqueeze(0)  # [1, T, C, H, W]
-    print(video_tensor.shape)
-
-    # If model expects [B, C, T, H, W]:
-    video_tensor = video_tensor.permute(0, 2, 1, 3, 4)
 
     video_tensor = transform(video_tensor)
+    print(video_tensor.shape)
     video_tensor = video_tensor.to(device)
 
     model, config = load_model_and_config(args)
