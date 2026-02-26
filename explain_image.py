@@ -1,6 +1,7 @@
 import argparse
 
 import cv2
+import numpy as np
 
 from bcos.common import get_inx2label_imagenette as idx2label
 from pathlib import Path
@@ -131,7 +132,15 @@ def explain_video(args, video_path):
     )
 
     # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
-    video_tensor = torch.stack(frames, dim=0).permute(1, 0, 2, 3).unsqueeze(0)  # [1, C, T, H, W]
+    video_tensor = torch.tensor(np.stack(frames))
+    print(video_tensor.shape)
+    video_tensor = torch.stack(torch.tensor(frames), dim=0).permute(1, 0, 2, 3).unsqueeze(0)  # [1, C, T, H, W]
+    video_tensor = video_tensor.permute(0, 3, 1, 2)  # [T, 3, H, W]
+    video_tensor = video_tensor.unsqueeze(0)  # [1, T, 3, H, W]
+
+    # If model expects [B, C, T, H, W]:
+    video_tensor = video_tensor.permute(0, 2, 1, 3, 4)
+
     video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
 
