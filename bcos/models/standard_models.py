@@ -88,8 +88,7 @@ class I3DBcos(nn.Module):
 
         self.blocks[-1].proj = nn.Linear(2048, 101, bias=False)
         print(self.blocks[-1])
-        # manually define a BCOS-friendly classifier
-        self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
+        #self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
 
 
     def forward(self, x):
