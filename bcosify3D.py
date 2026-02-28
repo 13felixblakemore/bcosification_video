@@ -78,8 +78,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         return out
 
     def forward(self, x):
+        print("shape before norm:", x.shape)
         out = self.bcosifynormalize(x)
+        print("shape after norm:", out.shape)
         out = self.model(out)
+        print("shape after model:", out.shape)
         if self.logit_layer:
             out = self.logit_layer(out)
         return out
