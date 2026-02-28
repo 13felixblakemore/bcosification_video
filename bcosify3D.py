@@ -84,7 +84,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         out = self.bcosifynormalize(x)
         for i, block in enumerate(self.model.blocks):
             out = block(out)
-            print(f"after block {i}: {out.shape}")
         if self.logit_layer:
             out = self.logit_layer(out)
         return out

@@ -87,7 +87,6 @@ class I3DBcos(nn.Module):
         self.blocks = self.model.blocks
 
         self.blocks[-1].proj = nn.Linear(2048, 101, bias=False)
-        print(self.blocks[-1])
         #self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
 
 
