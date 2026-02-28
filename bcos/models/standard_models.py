@@ -91,7 +91,7 @@ class I3DBcos(nn.Module):
             kernel_size=1,
             bias=False,
         )
-        self.blocks[-1].output_pool = nn.Identity()
+        self.blocks[-1].output_pool = nn.AdaptiveAvgPool3d((1, 1, 1))
 
     def forward(self, x):
         # x: (B, C, T, H, W)
