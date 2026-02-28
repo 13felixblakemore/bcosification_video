@@ -40,10 +40,10 @@ class BcosifyConv3d(BcosConv3d):
         """
         Forward pass implementation.
         Args:
-            in_tensor: Input tensor. Expected shape: (B, C, H, W)
+            in_tensor: Input tensor. Expected shape: (B, C, T, H, W)
 
         Returns:
-            BcosConv2d output on the input tensor.
+            BcosConv3d output on the input tensor.
         """
         return self.forward_impl(in_tensor)
 
@@ -51,14 +51,16 @@ class BcosifyConv3d(BcosConv3d):
         """
         Forward pass.
         Args:
-            in_tensor: Input tensor. Expected shape: (B, C, H, W)
+            in_tensor: Input tensor. Expected shape: (B, C, T, H, W)
 
         Returns:
-            BcosConv2d output on the input tensor.
+            BcosConv3d output on the input tensor.
         """
         if in_tensor.shape[1] == 1 and in_tensor.shape[-1] == self.linear.in_channels:
             # assumes shape is (B, 1, 1, 1, C)
             in_tensor = in_tensor.permute(0, 4, 1, 2, 3)
+
+        print("tensor shape:", in_tensor.shape)
 
         # For clamping
         if self.clamping:
