@@ -357,33 +357,49 @@ class UCF101ClassificationPresetEval:
         std=IMAGENET_STD,
         is_bcos=False,
     ):
-        self.resize = transforms.Resize(resize_size)
-        self.center_crop = transforms.CenterCrop(crop_size)
-        self.normalize = transforms.Normalize(mean, std)
-        self.add_inverse = custom_transforms.AddInverse()
+        self.resize_size = resize_size
+        self.crop_size = crop_size
+
+        self.mean = torch.tensor(mean).view(1, -1, 1, 1)
+        self.std  = torch.tensor(std).view(1, -1, 1, 1)
+
         self.is_bcos = is_bcos
+        self.add_inverse = custom_transforms.AddInverse()
 
     def __call__(self, video):
         """
-        video: Tensor [T, H, W, C] uint8
-        returns: Tensor [C, T, H, W] float32
+        video: [T, H, W, C] uint8
+        returns: [C, T, H, W] float32
         """
 
-        video = video.float() / 255.0
-        video = video.permute(0, 3, 1, 2)
+        # T H W C → T C H W
+        video = video.permute(0, 3, 1, 2).float() / 255.0
+        # shape: (T, C, H, W)
 
-        video = torch.stack([
-            self.center_crop(self.resize(frame)) for frame in video
-        ])
+        # --- 1) Resize all frames in a batched way ----
+        video = torch.nn.functional.interpolate(
+            video, size=self.resize_size, mode="bilinear", align_corners=False
+        )  # (T, C, resize_size, resize_size)
 
+        # --- 2) Center crop (no loops) ----
+        h, w = video.shape[-2:]
+        ch = (h - self.crop_size) // 2
+        cw = (w - self.crop_size) // 2
+        video = video[:, :, ch:ch+self.crop_size, cw:cw+self.crop_size]
+
+        # --- 3) Add inverse channel (still no loops) ----
         if self.is_bcos:
-            video = torch.stack([
-                self.add_inverse(frame) for frame in video
-            ])
+            inv = self.add_inverse(video)  # AddInverse must support batched input
+            video = torch.cat([video, inv], dim=1)  # concatenate channels
 
+        # --- 4) Normalize all frames in batch ----
+        # video is (T, C, H, W), want broadcast as (1,C,1,1)
+        video = (video - self.mean.to(video)) / self.std.to(video)
+
+        # --- 5) Return (C, T, H, W) ----
         video = video.permute(1, 0, 2, 3)
-
         return video
+
 
 
 CIFAR10_MEAN = (0.49139968, 0.48215841, 0.44653091)
