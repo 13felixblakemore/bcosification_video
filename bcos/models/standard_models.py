@@ -83,19 +83,16 @@ class I3DBcos(nn.Module):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
         self.blocks = self.model.blocks
-
-        # replace last projection with Conv3d
-        self.blocks[-1].proj = nn.Conv3d(
-            in_channels=2048,
-            out_channels=101,  # num_classes
-            kernel_size=1,
-            bias=False,
-        )
-        self.blocks[-1].output_pool = nn.AdaptiveAvgPool3d((1, 1, 1))
-
+        # Apply pooling yourself
+        self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
+        # A clean classifier
+        self.fc = nn.Conv3d(2048, 101, kernel_size=1, bias=False)
     def forward(self, x):
-        # x: (B, C, T, H, W)
         for block in self.blocks:
+            print(x.shape)
             x = block(x)
-
-        return x  # keep [B, num_classes, T, H, W] shape
+        x = self.global_pool(x)   # (B,2048,1,1,1)
+        print(x.shape)
+        x = self.fc(x)            # (B,101,1,1,1)
+        print(x.shape)
+        return x
