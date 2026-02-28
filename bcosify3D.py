@@ -82,8 +82,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x : (B, C, T, H, W)
         """
         out = self.bcosifynormalize(x)
-        out = self.model(out)
-        out = out.mean(dim=2) # flatten over T
+        for i, block in enumerate(self.model.blocks):
+            out = block(out)
+            print(f"after block {i}: {out.shape}")
         if self.logit_layer:
             out = self.logit_layer(out)
         return out
