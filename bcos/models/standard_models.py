@@ -82,17 +82,20 @@ class I3DBcos(nn.Module):
     def __init__(self, pretrained=True):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
+
+        # keep block 6 intact
         self.blocks = self.model.blocks
-        # Apply pooling yourself
+
+        # manually define a BCOS-friendly classifier
         self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
-        # A clean classifier
-        self.fc = nn.Conv3d(2048, 101, kernel_size=1, bias=False)
+        self.fc = nn.Linear(2048, 101, bias=False)
+
     def forward(self, x):
         for block in self.blocks:
-            print(x.shape)
             x = block(x)
-        x = self.global_pool(x)   # (B,2048,1,1,1)
-        print(x.shape)
-        x = self.fc(x)            # (B,101,1,1,1)
-        print(x.shape)
+
+        x = self.global_pool(x)
+        x = x.flatten(1)
+        x = self.fc(x)
+
         return x
