@@ -83,7 +83,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x : (B, C, T, H, W)
         """
         out = self.bcosifynormalize(x)
-        for i, block in enumerate(self.blocks):
+        for i, block in enumerate(self.model.blocks):
             t0 = time.time()
             out = block(out)
             print(f"block {i} took", time.time() - t0)
