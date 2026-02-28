@@ -363,10 +363,10 @@ class UCF101DataModule(ClassificationDataModule):
         self.eval_dataset = UCF101(
             root=settings.UCF101_PATH,
             annotation_path=self._TRAIN_PATH,
-            frames_per_clip=16,
+            frames_per_clip=32,
             fold=2,
             transform=self.config["test_transform"],
-            step_between_clips=32,
+            step_between_clips=64,
             train=False,
             _precomputed_metadata=val_md,
         )
