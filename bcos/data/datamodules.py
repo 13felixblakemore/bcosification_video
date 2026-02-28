@@ -340,30 +340,13 @@ class UCF101DataModule(ClassificationDataModule):
         if stage == "fit":
             rank_zero_info("Setting up UCF101 train dataset...")
             start = time.perf_counter()
-            """    train_transform = Compose(
-                [
-                    ApplyTransformToKey(
-                        key="video",
-                        transform=Compose(
-                            [
-                                UniformTemporalSubsample(8),
-                                Lambda(lambda x: x / 255.0),
-                                Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
-                                RandomShortSideScale(min_size=256, max_size=320),
-                                RandomCrop(244),
-                                RandomHorizontalFlip(p=0.5),
-                            ]
-                        ),
-                    ),
-                ]
-            )"""
             self.train_dataset = UCF101(
                 root=settings.UCF101_PATH,
                 annotation_path=self._TRAIN_PATH,
-                frames_per_clip=8,
+                frames_per_clip=64,
                 fold=2,
                 transform=self.config["train_transform"],
-                step_between_clips=16,
+                step_between_clips=32,
                 train=True,
                 _precomputed_metadata=train_md,
             )
@@ -378,27 +361,13 @@ class UCF101DataModule(ClassificationDataModule):
 
         start = time.perf_counter()
         rank_zero_info("Setting up UCF101 val dataset...")
-        """    val_transform = Compose(
-            [
-                ApplyTransformToKey(
-                    key="video",
-                    transform=Compose(
-                        [
-                            UniformTemporalSubsample(8),
-                            Lambda(lambda x: x / 255.0),
-                            Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
-                        ]
-                    ),
-                ),
-            ]
-        )"""
         self.eval_dataset = UCF101(
             root=settings.UCF101_PATH,
             annotation_path=self._TRAIN_PATH,
-            frames_per_clip=8,
+            frames_per_clip=64,
             fold=2,
             transform=self.config["test_transform"],
-            step_between_clips=16,
+            step_between_clips=32,
             train=False,
             _precomputed_metadata=val_md,
         )
@@ -449,20 +418,6 @@ class CIFAR10DataModule(ClassificationDataModule):
             )
             assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
 
-        """    val_transform = Compose(
-            [
-                ApplyTransformToKey(
-                    key="video",
-                    transform=Compose(
-                        [
-                            UniformTemporalSubsample(8),
-                            Lambda(lambda x: x / 255.0),
-                            Normalize((0.45, 0.45, 0.45), (0.225, 0.225, 0.225)),
-                        ]
-                    ),
-                ),
-            ]
-        )"""
         val_dataset = pytorchvideo.data.Kinetics(
             data_path=self._TRAIN_PATH,
             clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self._CLIP_DURATION),
