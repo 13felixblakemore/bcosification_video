@@ -60,8 +60,6 @@ class BcosifyConv3d(BcosConv3d):
             # assumes shape is (B, 1, 1, 1, C)
             in_tensor = in_tensor.permute(0, 4, 1, 2, 3)
 
-        print("tensor shape:", in_tensor.shape)
-
         # For clamping
         if self.clamping:
             b = self.b.clamp(1 + 1e-6)

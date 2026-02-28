@@ -83,6 +83,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         """
         out = self.bcosifynormalize(x)
         out = self.model(out)
+        out = out.mean(dim=2) # flatten over T
         if self.logit_layer:
             out = self.logit_layer(out)
         return out
