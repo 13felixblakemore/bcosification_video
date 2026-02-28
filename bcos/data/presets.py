@@ -322,17 +322,15 @@ class UCF101ClassificationPresetTrain:
 
     def __call__(self, video):
         """
-        video: Tensor [T, H, W, C] uint8
-        returns: Tensor [C, T, H, W] float32
+        video: Tensor [T, H, W, C]
+        returns: Tensor [C, T, H, W]
         """
 
-        # uint8 → float in [0,1]
         video = video.float() / 255.0
 
-        # T H W C → T C H W
+
         video = video.permute(0, 3, 1, 2)
 
-        # apply spatial transforms frame-wise
         video = torch.stack([
             self.spatial_transform(frame) for frame in video
         ])
@@ -342,7 +340,6 @@ class UCF101ClassificationPresetTrain:
                 self.add_inv(frame) for frame in video
             ])
 
-        # T C H W → C T H W
         video = video.permute(1, 0, 2, 3)
 
         return video
@@ -365,28 +362,23 @@ class UCF101ClassificationPresetEval:
 
     def __call__(self, video):
         """
-        video: Tensor [T, H, W, C] uint8
-        returns: Tensor [C, T, H, W] float32
+        video: Tensor [T, H, W, C]
+        returns: Tensor [C, T, H, W]
         """
 
         video = video.float() / 255.0
         video = video.permute(0, 3, 1, 2)
 
-        # video: (T, C, H, W)
-        # resize all frames in one shot
         video = torch.nn.functional.interpolate(
             video, size=self.resize_size, mode="bilinear", align_corners=False
         )
 
-        # center crop (vectorized)
         h, w = video.shape[-2:]
         ch = (h - self.crop_size) // 2
         cw = (w - self.crop_size) // 2
         video = video[:, :, ch:ch + self.crop_size, cw:cw + self.crop_size]
 
-        # add inverse (batched)
         if self.is_bcos:
-            # AddInverse must support batched input: (T,C,H,W) → (T,C',H,W)
             video = self.add_inverse(video)
 
         video = video.permute(1, 0, 2, 3)

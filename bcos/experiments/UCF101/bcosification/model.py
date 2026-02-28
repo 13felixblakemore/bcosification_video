@@ -37,12 +37,6 @@ def get_torch_model_modified(arch_name: str, model_config):
         return tv_model
     if arch_name == "i3d":
         model = I3DBcos(pretrained=True)
-        """  model.blocks[-1].proj = nn.Conv3d(
-            in_channels=2048,
-            out_channels=model_config["args"]["num_classes"],
-            kernel_size=1,
-            bias=False,
-        )"""
         return model
 
 def get_model(model_config) -> nn.Module:

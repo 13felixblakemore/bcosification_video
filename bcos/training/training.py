@@ -8,7 +8,6 @@ import torchvision
 from pytorch_lightning.plugins import environments as pl_env_plugins
 from pytorch_lightning.utilities import rank_zero_info
 
-from bcos.data.datamodules import SingleBatchLoader
 from bcos.experiments.utils import Experiment, CHECKPOINT_LAST_FILENAME
 from bcos.training.bcosify_trainer import BcosifyTrainer
 from bcos.training.trainer import setup_loggers, ClassificationLitModel, setup_callbacks, \

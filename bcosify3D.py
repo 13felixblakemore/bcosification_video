@@ -140,7 +140,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             elif isinstance(module, nn.Linear) and n == last_layer_name and gap:
                 # replace Linear with BcosConv3d (conv1x1x1) for the last layer
                 setattr(model, n, BcosifyConv3d.from_standard_module_linear(module, model_config))
-                print('Last Linear Layer Bcosified (Conv1x1) with GAP')
+                print('Last Linear Layer Bcosified (Conv1x1x1) with GAP')
             elif isinstance(module, nn.Sequential):
                 # replace Sequential with BcosSequential
                 # batch norm 3d?

@@ -83,11 +83,9 @@ class I3DBcos(nn.Module):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
 
-        # keep block 6 intact
         self.blocks = self.model.blocks
 
         self.blocks[-1].proj = nn.Linear(2048, 101, bias=False)
-        #self.global_pool = nn.AdaptiveAvgPool3d((1,1,1))
 
 
     def forward(self, x):

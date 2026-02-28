@@ -23,12 +23,10 @@ from bcos.optim import LRSchedulerFactory, OptimizerFactory
 __all__ = ["CONFIGS"]
 
 NUM_CLASSES = 101
-NUM_TRAIN_EXAMPLES: int = 50000
-NUM_EVAL_EXAMPLES: int = 3925
+NUM_TRAIN_EXAMPLES: int = 50000 # not sure
+NUM_EVAL_EXAMPLES: int = 3925 # not sure
 
-# These are mainly based on the recipes from
-# https://github.com/pytorch/vision/blob/93723b481d1f6e/references/classification/README.md
-DEFAULT_BATCH_SIZE = 2  # per GPU - video heavy on memory
+DEFAULT_BATCH_SIZE = 16  # could be causing noisy gradients?
 DEFAULT_NUM_EPOCHS = 20
 DEFAULT_LR =1e-5
 DEFAULT_CROP_SIZE = 224
