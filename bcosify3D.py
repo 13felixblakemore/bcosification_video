@@ -83,12 +83,13 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x : (B, C, T, H, W)
         """
         out = self.bcosifynormalize(x)
+        print(out.shape)
         for i, block in enumerate(self.model.blocks):
-            #t0 = time.time()
             out = block(out)
-            #print(f"block {i} took", time.time() - t0)
+            print(out.shape)
         if self.logit_layer:
             out = self.logit_layer(out)
+            print("logit layer: ", out.shape)
         return out
 
     @classmethod
