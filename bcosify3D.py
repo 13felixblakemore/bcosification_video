@@ -50,14 +50,14 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             BcosifyNetwork.add_channels(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
-        """        # Freeze blocks 0-5
-        for i in range(6):
+        # Freeze blocks 0-5
+        for i in range(1):
             for p in self.model.blocks[i].parameters():
                 p.requires_grad = False
 
         # Unfreeze head (block 6)
-        for p in self.model.blocks[6].parameters():
-            p.requires_grad = True"""
+        #for p in self.model.blocks[6].parameters():
+        #    p.requires_grad = True
 
     def print_all_params(self, module, prefix=""):
         for name, child in module.named_children():
