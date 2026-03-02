@@ -51,9 +51,12 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
         # Freeze blocks 0-5
-        for i in range(5):
+        for i in range(4):
             for p in self.model.blocks[i].parameters():
                 p.requires_grad = False
+
+        for p in self.model.blocks[4].parameters():
+            p.requires_grad = True
 
         for p in self.model.blocks[5].parameters():
             p.requires_grad = True
