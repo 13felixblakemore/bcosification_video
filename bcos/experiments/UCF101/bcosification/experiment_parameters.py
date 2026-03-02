@@ -27,8 +27,8 @@ NUM_TRAIN_EXAMPLES: int = 50000 # not sure
 NUM_EVAL_EXAMPLES: int = 3925 # not sure
 
 DEFAULT_BATCH_SIZE = 4  # could be causing noisy gradients?
-DEFAULT_NUM_EPOCHS = 30
-DEFAULT_LR =1e-4
+DEFAULT_NUM_EPOCHS = 45
+DEFAULT_LR =1e-3
 DEFAULT_CROP_SIZE = 224
 
 DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered3d)  # bnu-linear
