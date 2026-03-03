@@ -336,9 +336,7 @@ class UCF101ClassificationPresetTrain:
         ])
 
         if self.is_bcos:
-            video = torch.stack([
-                self.add_inv(frame) for frame in video
-            ])
+            video = self.add_inv(video)
 
         video = video.permute(1, 0, 2, 3)
 
