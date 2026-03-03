@@ -312,10 +312,10 @@ class UCF101ClassificationPresetTrain:
         self.std = std
         self.is_bcos = is_bcos
 
-        self.spatial_transform = transforms.Compose([
+        """self.spatial_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size),
             transforms.RandomHorizontalFlip(),
-        ])
+        ])"""
 
         self.add_inv = custom_transforms.AddInverse()
         self.normalize = transforms.Normalize(mean, std)
@@ -331,9 +331,23 @@ class UCF101ClassificationPresetTrain:
 
         video = video.permute(0, 3, 1, 2)
 
-        video = torch.stack([
-            self.spatial_transform(frame) for frame in video
-        ])
+        T, C, H, W = video.shape  # [T, C, H, W]
+
+        # Make sure crop fits
+        crop_size = self.crop_size
+        top_max = H - crop_size
+        left_max = W - crop_size
+
+        # Pick a random top-left corner
+        top = torch.randint(0, top_max + 1, (1,)).item()  # +1 because randint is exclusive
+        left = torch.randint(0, left_max + 1, (1,)).item()
+
+        # Apply the crop to all frames
+        video = video[:, :, top:top + crop_size, left:left + crop_size]
+
+        # video: [T, C, H, W]
+        if torch.rand(1) < 0.5:  # 50% chance
+            video = torch.flip(video, dims=[3])  # flip width dimension
 
         if self.is_bcos:
             video = self.add_inv(video)
