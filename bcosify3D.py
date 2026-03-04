@@ -57,9 +57,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         for p in self.model.blocks[0].parameters():
             p.requires_grad = True
 
-        for p in self.model.blocks[1].parameters():
-            p.requires_grad = True
-
         for p in self.model.blocks[6].parameters():
             p.requires_grad = True
 
