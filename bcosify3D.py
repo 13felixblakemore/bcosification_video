@@ -5,6 +5,8 @@ import warnings
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
+from torch.utils.checkpoint import checkpoint
+
 from CLIP.clip.model import AttentionPool2d
 
 from bcos.common import BcosUtilMixin
@@ -83,7 +85,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         """
         out = self.bcosifynormalize(x)
         for i, block in enumerate(self.model.blocks):
-            out = block(out)
+            out = checkpoint(block, out)
         if self.logit_layer:
             out = self.logit_layer(out)
         return out
