@@ -52,13 +52,10 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
         for i in range(7):
             for p in self.model.blocks[i].parameters():
-                p.requires_grad = True
+                p.requires_grad = False
 
-        for p in self.model.blocks[5].parameters():
-            p.requires_grad = False
-
-        for p in self.model.blocks[4].parameters():
-            p.requires_grad = False
+        for p in self.model.blocks[6].parameters():
+            p.requires_grad = True
 
 
     def print_all_params(self, module, prefix=""):
