@@ -86,6 +86,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 out = block(out)
             else:
                 out = checkpoint(block, out)
+
+            print(i, out.requires_grad)
         if self.logit_layer:
             out = self.logit_layer(out)
         return out
