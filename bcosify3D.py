@@ -81,6 +81,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x : (B, C, T, H, W)
         """
         out = self.bcosifynormalize(x)
+        out.requires_grad = True
         for i, block in enumerate(self.model.blocks):
             out = checkpoint(block, out)
         if self.logit_layer:
