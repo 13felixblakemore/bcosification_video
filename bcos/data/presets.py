@@ -333,21 +333,19 @@ class UCF101ClassificationPresetTrain:
 
         T, C, H, W = video.shape  # [T, C, H, W]
 
-        # Make sure crop fits
+        # crop
         crop_size = self.crop_size
         top_max = H - crop_size
         left_max = W - crop_size
 
-        # Pick a random top-left corner
-        top = torch.randint(0, top_max + 1, (1,)).item()  # +1 because randint is exclusive
+
+        top = torch.randint(0, top_max + 1, (1,)).item()
         left = torch.randint(0, left_max + 1, (1,)).item()
 
-        # Apply the crop to all frames
         video = video[:, :, top:top + crop_size, left:left + crop_size]
 
-        # video: [T, C, H, W]
-        if torch.rand(1) < 0.5:  # 50% chance
-            video = torch.flip(video, dims=[3])  # flip width dimension
+        if torch.rand(1) < 0.5:
+            video = torch.flip(video, dims=[3])  # horizontal flip
 
         if self.is_bcos:
             video = self.add_inv(video)

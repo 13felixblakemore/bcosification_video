@@ -131,8 +131,7 @@ def explain_video(args, video_path):
         is_bcos=True,
     )
 
-    # 3. Stack frames → [T, C, H, W] and batch dim → [1, T, C, H, W]
-    video_tensor = torch.tensor(np.stack(frames)) # T, H, W, C
+    video_tensor = torch.tensor(np.stack(frames))
     print(video_tensor.shape)
 
     video_tensor = transform(video_tensor)
@@ -146,7 +145,7 @@ def explain_video(args, video_path):
     expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label[expl_out["prediction"]])
 
-    grad_video = expl_out["explanation"]  # list of [H,W,4] or array [T,H,W,4]
+    grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
         plt.axis('off')

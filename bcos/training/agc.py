@@ -13,13 +13,13 @@ def unitwise_norm(x: torch.Tensor, norm_type: float = 2.0) -> torch.Tensor:
     if x.squeeze().ndim <= 1:
         dim = None
         keepdim = False
-    elif x.ndim in (2, 3):  # Linear / 1D conv
+    elif x.ndim in (2, 3):
         dim = 1
         keepdim = True
-    elif x.ndim == 4:  # Conv2D OIHW
+    elif x.ndim == 4:
         dim = (1, 2, 3)
         keepdim = True
-    elif x.ndim == 5:  # Conv3D OIHTW
+    elif x.ndim == 5:
         dim = (1, 2, 3, 4)
         keepdim = True
     else:
