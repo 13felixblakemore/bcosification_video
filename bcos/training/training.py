@@ -39,6 +39,7 @@ def run_training(args):
     trainer = ClassificationLitModel # For automatic optimization
 
     bcosify_args = exp.config["model"].get("bcosify_args", None)
+    bcosify_args = None
     if bcosify_args is not None and bcosify_args.get("manual_optim", False):
         trainer =  BcosifyTrainer
 
