@@ -40,11 +40,11 @@ def get_torch_model_modified(arch_name: str, model_config):
         return model
 
 def get_model(model_config) -> nn.Module:
-    assert model_config.get("is_bcos", True), "Should be False!"
+    assert model_config.get("is_bcos", False), "Should be False!"
     # extract args
     arch_name = model_config["name"]
 
-    model = BcosifyNetwork(get_torch_model_modified(arch_name, model_config), model_config, add_channels=True, logit_layer=True) 
+    model = BcosifyNetwork(get_torch_model_modified(arch_name, model_config), model_config, add_channels=True, logit_layer=True)
 
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
