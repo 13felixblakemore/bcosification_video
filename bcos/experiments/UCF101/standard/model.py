@@ -44,18 +44,7 @@ def get_model(model_config) -> nn.Module:
     # extract args
     arch_name = model_config["name"]
 
-    model = BcosifyNetwork(get_torch_model_modified(arch_name, model_config), model_config, add_channels=True, logit_layer=True)
-
-    # For standard changes
-    standard_changes = model_config.get("standard_changes", None)
-    #for k,v in standard_changes.items():
-    #    print("Changing maxpool to avgpool")
-    #    exec(f'model.model.{k} = v')
-    
-    # Making all the bias parameters None
-    print("Removing bias parameters (making None)")
-    for mod in model.modules():
-        if hasattr(mod, "bias") and mod.bias is not None:
-            mod.bias = None
+    model = get_torch_model_modified(arch_name, model_config)
+    print("model retrieved")
 
     return model
