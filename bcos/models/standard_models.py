@@ -70,7 +70,8 @@ class I3D(nn.Module):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
         self.blocks = self.model.blocks
-        self.head = getattr(self.model, "head", None)
+
+        self.blocks[-1].proj = nn.Linear(2048, 101, bias=False)
 
     def forward(self, x):
         # x: (B, C, T, H, W)
