@@ -26,7 +26,7 @@ NUM_CLASSES = 101
 NUM_TRAIN_EXAMPLES: int = 50000 # not sure
 NUM_EVAL_EXAMPLES: int = 3925 # not sure
 
-DEFAULT_BATCH_SIZE = 16 # could be causing noisy gradients?
+DEFAULT_BATCH_SIZE = 8 # could be causing noisy gradients?
 DEFAULT_NUM_EPOCHS = 45
 DEFAULT_LR =1e-4
 DEFAULT_CROP_SIZE = 224
@@ -49,7 +49,7 @@ DEFAULTS = dict(
             is_bcos=False,
         ),
         batch_size=DEFAULT_BATCH_SIZE,
-        num_workers=12,
+        num_workers=8,
         num_classes=NUM_CLASSES,
     ),
     model=dict(
