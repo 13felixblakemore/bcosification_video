@@ -40,7 +40,8 @@ def get_torch_model_modified(arch_name: str, model_config):
         return model
 
 def get_model(model_config) -> nn.Module:
-    assert model_config.get("is_bcos", True), "Should be False!"
+    print(model_config["is_bcos"])
+    assert model_config.get("is_bcos", False), "Should be False!"
     # extract args
     arch_name = model_config["name"]
 
