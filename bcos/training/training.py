@@ -87,7 +87,7 @@ def run_training(args):
         devices=1,
         logger=loggers,
         callbacks=callbacks,
-        accumulate_grad_batches=4,
+        accumulate_grad_batches=2,
         precision=16,
         **trainer_config,
     )
