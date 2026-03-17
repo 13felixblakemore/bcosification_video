@@ -42,18 +42,18 @@ DEFAULTS = dict(
     data=dict(
         train_transform=UCF101ClassificationPresetTrain(
             crop_size=DEFAULT_CROP_SIZE,
-            is_bcos=False,
+            is_bcos=True,
         ),
         test_transform=UCF101ClassificationPresetEval(
             crop_size=DEFAULT_CROP_SIZE,
-            is_bcos=False,
+            is_bcos=True,
         ),
         batch_size=DEFAULT_BATCH_SIZE,
         num_workers=12,
         num_classes=NUM_CLASSES,
     ),
     model=dict(
-        is_bcos=False,
+        is_bcos=True,
         args=dict(
             num_classes=NUM_CLASSES,
             norm_layer=DEFAULT_NORM_LAYER,
