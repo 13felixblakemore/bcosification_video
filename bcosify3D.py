@@ -163,8 +163,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 class BcosifyNormalize(nn.Module):
     def __init__(self, mean, std):
         super().__init__()
-        self.mean = torch.tensor(mean).view(1, -1, 1, 1, 1)
-        self.std = torch.tensor(std).view(1, -1, 1, 1, 1)
+        self.mean = torch.tensor(mean).view(1, -1, 1, 1, 1).to("cuda")
+        self.std = torch.tensor(std).view(1, -1, 1, 1, 1).to("cuda")
 
     def forward(self, x):
         mean = self.mean
