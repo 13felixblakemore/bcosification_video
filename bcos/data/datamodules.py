@@ -366,7 +366,7 @@ class UCF101DataModule(ClassificationDataModule):
             frames_per_clip=16,
             fold=2,
             transform=self.config["test_transform"],
-            step_between_clips=64,
+            step_between_clips=32,
             train=False,
             _precomputed_metadata=val_md,
         )
