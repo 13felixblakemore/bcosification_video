@@ -170,6 +170,6 @@ class BcosifyNormalize(nn.Module):
         mean = self.mean
         std  = self.std
         print(x.min().item(), x.max().item())
-        out = (x.float() / 255.0 - mean) / std
+        out = (x.float() - mean) / std
         print("out:" ,out.min().item(), out.max().item())
         return out
