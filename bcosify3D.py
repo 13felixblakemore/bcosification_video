@@ -169,7 +169,7 @@ class BcosifyNormalize(nn.Module):
     def forward(self, x):
         mean = self.mean
         std  = self.std
-        print(x.min().item(), x.max().item())
+         #print(x.min().item(), x.max().item())
         out = (x.float() - mean) / std
-        print("out:" ,out.min().item(), out.max().item())
+        #print("out:" ,out.min().item(), out.max().item())
         return out
