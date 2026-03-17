@@ -29,11 +29,13 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         self.model = model
         self.model_config = model_config
 
+        self.register_buffer("mean", torch.tensor(IMAGENET_MEAN_ADDINVERSE).view(1, -1, 1, 1, 1))
+        self.register_buffer("std", torch.tensor(IMAGENET_STD_ADDINVERSE).view(1, -1, 1, 1, 1))
+
         self.logit_layer = None
         if logit_layer:
             self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(101 - 1), )
 
-        # Must create new model config for I3D
         # Setting clip_kd
         self.clip_kd = model_config['bcosify_args'].get('clip_kd', None)
         self.bfy_mean_zero = model_config.get('bfy_mean_zero', False)
@@ -52,10 +54,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             BcosifyNetwork.add_channels(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
 
-        for i in range(7):
-            for p in self.model.blocks[i].parameters():
-                p.requires_grad = True
-
 
     def print_all_params(self, module, prefix=""):
         for name, child in module.named_children():
@@ -71,9 +69,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x: (B, C, T, H, W)
         mean, std: tuple of length C
         """
-        mean = torch.tensor(mean, device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
-        std  = torch.tensor(std,  device=x.device, dtype=x.dtype).view(1, -1, 1, 1, 1)
+        mean = self.mean
+        std  = self.std
+        print(x.min().item(), x.max().item())
         out = (x.float() / 255.0 - mean) / std
+        print("out:" ,out.min().item(), out.max().item())
         return out
 
     def forward(self, x):
@@ -81,11 +81,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         x : (B, C, T, H, W)
         """
         out = self.bcosifynormalize(x)
-        for i, block in enumerate(self.model.blocks):
-            if i == 0:
-                out = block(out)
-            else:
-                out = checkpoint(block, out)
+        for block in self.model.blocks:
+            out = block(out)
         if self.logit_layer:
             out = self.logit_layer(out)
         return out

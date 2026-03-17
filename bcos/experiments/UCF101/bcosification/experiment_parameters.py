@@ -141,7 +141,7 @@ i3ds = {
                     use_bias = False, # No bias
                     norm_layer = "BnUncV2", # Modified Batch Norm
                     manual_optim=False, # For manual optimization of b values
-                    gap = True, # Global Average Pooling reorder works with conv1x1 for the last linear layer
+                    gap = True, # Global Average Pooling reorder works with conv1x1x1 for the last linear layer
                     act_layer = True, # ReLU activation layer
                 ),
                 standard_changes = {"features[3]": nn.AvgPool3d(kernel_size=3, stride=2, padding=1)},
