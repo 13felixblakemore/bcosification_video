@@ -29,8 +29,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         self.model = model
         self.model_config = model_config
 
-        self.mean = torch.tensor(IMAGENET_MEAN_ADDINVERSE).view(1, -1, 1, 1, 1)
-        self.std = torch.tensor(IMAGENET_STD_ADDINVERSE).view(1, -1, 1, 1, 1)
+        self.mean = torch.tensor(IMAGENET_MEAN_ADDINVERSE).view(1, -1, 1, 1, 1).to(model.device)
+        self.std = torch.tensor(IMAGENET_STD_ADDINVERSE).view(1, -1, 1, 1, 1).to(model.device)
 
         self.logit_layer = None
         if logit_layer:
