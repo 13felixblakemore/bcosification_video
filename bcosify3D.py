@@ -111,6 +111,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         bcosify_args = model_config.get("bcosify_args", None)
         clip_kd = bcosify_args.get("clip_kd", False) if bcosify_args is not None else False
         for n, module in model.named_children():
+            print(n, module)
             if len(list(module.children())) > 0:
                 # Write BcosAttentionPool3D and replace
                 if clip_kd and n == 'attnpool' and isinstance(module, AttentionPool2d):
@@ -143,14 +144,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 setattr(model, n, BcosSequential.from_standard_module(module))
             elif isinstance(module, nn.BatchNorm3d) and (norm_layer == 'BnUnc3d' or norm_layer == 'BnUncV2'):
                 ## Add the norms
-                #new_module = BatchNormUncentered3d.from_standard_module(module, model_config)
-                #setattr(model, n, new_module)
-                #new_module.eval()
-                #for p in new_module.parameters():
-                #    p.requires_grad = False
-                module.eval()
-                for p in module.parameters():
-                    p.requires_grad = False
+                setattr(model, n, BatchNormUncentered3d.from_standard_module(module, model_config))
             else:
                 # rest of the modules are not replaced
                 pass
@@ -159,6 +153,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 act_layer = model_config['bcosify_args'].get('act_layer', True)
                 if not act_layer:
                     setattr(model, n, nn.Identity())
+        for n, module in model.named_children():
+            print("Bcosified:")
+            print(n, module)
 
 class BcosifyNormalize(nn.Module):
     def __init__(self, mean, std):
