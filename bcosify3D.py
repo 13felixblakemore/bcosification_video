@@ -114,15 +114,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         bcosify_args = model_config.get("bcosify_args", None)
         clip_kd = bcosify_args.get("clip_kd", False) if bcosify_args is not None else False
         for n, module in model.named_children():
+            if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d)):
+                continue
             if len(list(module.children())) > 0:
-                # Write BcosAttentionPool3D and replace
-                if clip_kd and n == 'attnpool' and isinstance(module, AttentionPool2d):
-                    setattr(model, n, BcosAttentionPool2d.from_standard_module(model, module, model_config))
-                    cls.bcosify(model.attnpool,
-                                model_config)  # For Bcosifying the linear layers inside the BcosAttentionPool2d
-                else:
-                    # compound module, go inside it
-                    cls.bcosify(module, model_config)
+                # compound module, go inside it
+                cls.bcosify(module, model_config)
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
             gap = model_config['bcosify_args'].get('gap',
