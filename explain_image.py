@@ -156,4 +156,4 @@ if __name__ == "__main__":
     parser = get_parser()
     args = parser.parse_args()
     image = args.image_path
-    explain_image(args, image)
+    explain_video(args, image)
