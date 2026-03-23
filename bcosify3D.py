@@ -52,12 +52,12 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         # Add channels to the first convolutional layer to allow for 6 channel inputs
         if add_channels:
             BcosifyNetwork.add_channels(self.model)
+        print("Standard")
         for n, mod in self.model.named_modules():
-            print("Standard")
             print(n, mod)
         BcosifyNetwork.bcosify(self.model, self.model_config)
+        print("B-Cos")
         for n, mod in self.model.named_modules():
-            print("B-Cos")
             print(n, mod)
 
     def print_all_params(self, module, prefix=""):

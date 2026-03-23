@@ -153,7 +153,6 @@ class BcosifyConv3d(BcosConv3d):
         weights = model_config.get("weights", None)
         if weights is not None:
             new_mod.linear.weight.data = mod.weight.data
-            print("weights working")
             if mod.bias is not None:
                 new_mod.linear.bias = nn.Parameter(mod.bias.data)
         return new_mod
