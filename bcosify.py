@@ -45,7 +45,11 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         # Add channels to the first convolutional layer to allow for 6 channel inputs
         if add_channels:
             BcosifyNetwork.add_channels(self.model)
+        print("Standard Resnet18")
+        print(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
+        print("Bcos resnet18")
+        print(self.model)
 
     def forward(self, x):
         if self.logit_layer:
