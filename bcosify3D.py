@@ -53,12 +53,10 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         if add_channels:
             BcosifyNetwork.add_channels(self.model)
         print("Standard")
-        for n, mod in self.model.named_modules():
-            print(n, mod)
+        print(self.model)
         BcosifyNetwork.bcosify(self.model, self.model_config)
         print("B-Cos")
-        for n, mod in self.model.named_modules():
-            print(n, mod)
+        print(self.model)
 
     def print_all_params(self, module, prefix=""):
         for name, child in module.named_children():
