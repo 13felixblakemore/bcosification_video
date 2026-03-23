@@ -28,7 +28,7 @@ class NormedConv3d(nn.Conv3d):
         # For toggling weight normalisation
         if self.use_weight_norm:
             # dims need changing here, at time
-            w = self.weight / LA.vector_norm(self.weight, dim=(1, 2, 3), # dim=(1, 2, 3, 4) [out_channels, in_channels, time/frames, height, width]
+            w = self.weight / LA.vector_norm(self.weight, dim=(1, 2, 3, 4), # dim=(1, 2, 3, 4) [out_channels, in_channels, time/frames, height, width]
                                              keepdim=True)  # [out_channels, in_channels, height, width]
         else:
             w = self.weight
@@ -40,7 +40,7 @@ class NormedConv3d(nn.Conv3d):
 
     def set_scale(self, weight: Tensor, trainable=False):
         # change dim
-        self.scale = nn.Parameter(weight.norm(p=2, dim=(1, 2, 3), keepdim=True), requires_grad=trainable)
+        self.scale = nn.Parameter(weight.norm(p=2, dim=(1, 2, 3, 4), keepdim=True), requires_grad=trainable)
 
     def toggle_weight_norm(self, use_weight_norm):
         self.use_weight_norm = use_weight_norm
@@ -149,7 +149,7 @@ class BcosConv3d(DetachableModule):
         """
         Forward pass implementation.
         Args:
-            in_tensor: Input tensor. Expected shape: (B, C, H, W)
+            in_tensor: Input tensor. Expected shape: (B, C, T, H, W)
 
         Returns:
             BcosConv2d output on the input tensor.

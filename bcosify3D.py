@@ -153,8 +153,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 act_layer = model_config['bcosify_args'].get('act_layer', True)
                 if not act_layer:
                     setattr(model, n, nn.Identity())
+        print("Bcosified:")
         for n, module in model.named_children():
-            print("Bcosified:")
             print(n, module)
 
 class BcosifyNormalize(nn.Module):
