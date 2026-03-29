@@ -33,7 +33,7 @@ DEFAULT_CROP_SIZE = 224
 
 DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered3d)  # bnu-linear
 #DEFAULT_NORM_LAYER = nn.BatchNorm3d
-DEFAULT_OPTIMIZER = OptimizerFactory(name="Adam", lr=DEFAULT_LR, bcosify=True, b_opt = False, weight_decay=1e-3)
+DEFAULT_OPTIMIZER = OptimizerFactory(name="Adam", lr=DEFAULT_LR, bcosify=True, b_opt = False, weight_decay=1e-4)
 DEFAULT_LR_SCHEDULE = LRSchedulerFactory(
     name="cosineannealinglr",
     epochs=DEFAULT_NUM_EPOCHS,
@@ -61,7 +61,7 @@ DEFAULTS = dict(
             logit_bias=-math.log(NUM_CLASSES - 1),
         ),
         bcos_args=dict(
-            b=2,
+            b=1,
             max_out=1,
         ),
     ),

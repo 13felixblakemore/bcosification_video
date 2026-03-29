@@ -277,7 +277,7 @@ def batch_norm_uncentered_3d(
         detach: bool = False,
 ):
     """
-    Uncentered BN. Accepts only batched color image tensors.
+    Uncentered BN. Accepts only batched color video tensors.
     """
     assert input.dim() == 5, "input should be a 5d tensor!"
 
