@@ -145,7 +145,7 @@ def explain_video(args, video_path):
 
     video_tensor = video_tensor.unsqueeze(0)
     expl_out = model.explain_video(video_tensor)
-    print("Prediction:", idx2label[expl_out["prediction"]])
+    #print("Prediction:", idx2label[expl_out["prediction"]])
 
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
