@@ -126,6 +126,8 @@ def explain_video(args, video_path):
         frames.append(frame)
     cap.release()
 
+    frames = frames[:8]
+
     transform = UCF101ClassificationPresetEval(
         crop_size=224,
         is_bcos=True,
