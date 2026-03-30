@@ -114,7 +114,7 @@ def explain_video(args, video_path):
 
     if device == torch.device("cuda"):
         torch.backends.cudnn.benchmark = False
-    torch.use_deterministic_algorithms(True)
+    # torch.use_deterministic_algorithms(True)
 
     cap = cv2.VideoCapture(video_path)
     frames = []
