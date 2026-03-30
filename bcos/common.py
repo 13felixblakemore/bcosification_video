@@ -286,7 +286,7 @@ class BcosUtilMixin:
         return result
 
     @staticmethod  # to make it easier when using torch.hub
-    def gradient_to_image(
+    def gradient_to_video(
             video: "Tensor",
             linear_mapping: "Tensor",
             smooth: int = 15,

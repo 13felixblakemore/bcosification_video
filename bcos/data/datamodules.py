@@ -342,7 +342,7 @@ class UCF101DataModule(ClassificationDataModule):
             self.train_dataset = UCF101(
                 root=settings.UCF101_PATH,
                 annotation_path=self._TRAIN_PATH,
-                frames_per_clip=8,
+                frames_per_clip=16,
                 fold=2,
                 transform=self.config["train_transform"],
                 step_between_clips=32,
