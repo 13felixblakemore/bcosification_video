@@ -538,8 +538,8 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         image explanation of the B-cos model.
         Shape: [H, T, W, C] (C=4 ie RGBA)
     """
-    print("Video shape: ", video.shape)
-    print("Linear Mapping shape: ", linear_mapping.shape)
+    print("Video shape: ", video.shape) # C,T,H,W
+    print("Linear Mapping shape: ", linear_mapping.shape) # C,T,H,W
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     print("Contribs shape: ", contribs.shape)
@@ -552,7 +552,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, T, H, W]
 
-    print("RGB grad shape: ", rgb_grad.shape)
+    print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
@@ -575,7 +575,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     T = rgb_grad.shape[1]
 
     # Reshaping to [T, H, W, C]
-    grad_video = [rgb_grad[t].permute(1,2,0).detach().cpu().numpy() for t in range(T)]
+    grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     #print("Grad video: ", grad_video.shape)
     if return_contribs:
         return grad_video.detach().cpu().numpy(), contribs.detach().cpu().numpy()
