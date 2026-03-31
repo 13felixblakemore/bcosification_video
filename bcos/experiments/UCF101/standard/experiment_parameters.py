@@ -90,7 +90,7 @@ resnets = {
                 weights=f"ResNet{depth}_Weights.DEFAULT" if weight == "V2" else f"IMAGENET1K_V1" if weight=='V1' and depth==50 else None,
                 bcosify_args = dict(
                     fix_b = True, # Fixed b value (=2)
-                    use_bias = False, # No bias
+                    use_bias = True, # No bias
                     norm_layer = "BnUncV2", # Modified Batch Norm
                     manual_optim=False, # For manual optimization of b values
                     gap = True, # Global Average Pooling reorder works with conv1x1 for the last linear layer
