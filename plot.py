@@ -34,4 +34,20 @@ def plot_multiple_scalars(log_dir, tags, smoothing=0.0):
     plt.tight_layout()
     plt.show()
 
-plot_multiple_scalars("tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7", ["Acc"])
+
+
+def print_all_tensorboard_tags(log_dir):
+    ea = event_accumulator.EventAccumulator(log_dir)
+    ea.Reload()
+
+    tags = ea.Tags()
+
+    print("\n=== TensorBoard Tags ===\n")
+    for tag_type, tag_list in tags.items():
+        print(f"{tag_type.upper()}:")
+        for tag in tag_list:
+            print(f"  - {tag}")
+        print()
+log_dir = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7"
+#plot_multiple_scalars(log_dir, ["Acc"])
+print_all_tensorboard_tags(log_dir)
