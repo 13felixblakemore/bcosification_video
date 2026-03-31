@@ -48,6 +48,8 @@ def print_all_tensorboard_tags(log_dir):
         for tag in tag_list:
             print(f"  - {tag}")
         print()
+
 log_dir = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7"
-#plot_multiple_scalars(log_dir, ["Acc"])
-print_all_tensorboard_tags(log_dir)
+tags = ["val_acc1"]
+
+plot_multiple_scalars(log_dir, tags)
