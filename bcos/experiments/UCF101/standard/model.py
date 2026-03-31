@@ -1,3 +1,4 @@
+from lightning_utilities.core.rank_zero import rank_zero_info
 from torch import nn
 from torchvision.models.densenet import DenseNet121_Weights, _load_state_dict
 from torchvision.models.resnet import (
@@ -47,5 +48,5 @@ def get_model(model_config) -> nn.Module:
 
     model = get_torch_model_modified(arch_name, model_config)
     print("model retrieved")
-
+    rank_zero_info(f"Model: {repr(model.model)}")
     return model
