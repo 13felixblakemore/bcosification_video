@@ -48,5 +48,5 @@ def get_model(model_config) -> nn.Module:
 
     model = get_torch_model_modified(arch_name, model_config)
     print("model retrieved")
-    rank_zero_info(f"Model: {repr(model.model)}")
+    #rank_zero_info(f"Model: {repr(model.model)}")
     return model
