@@ -32,7 +32,8 @@ def plot_multiple_scalars(log_dir, tags, smoothing=0.0):
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    plt.savefig("plot.png", bbox_inches="tight", dpi=300)
+    plt.close()
 
 
 
