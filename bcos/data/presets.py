@@ -1,7 +1,7 @@
 import torch
-from torchvision.transforms import autoaugment, transforms
+from torchvision.transforms import autoaugment, transforms, ColorJitter
 from torchvision.transforms.functional import InterpolationMode
-
+import torch.nn.functional as F
 import bcos.data.transforms as custom_transforms
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
@@ -298,60 +298,113 @@ class ImageNetClassificationPresetEval:
         result["interpolation"] = str(result["interpolation"])
         return result
 
-
 class UCF101ClassificationPresetTrain:
     def __init__(
         self,
         crop_size=224,
+        min_scale=256,          # short side lower bound
+        max_scale=320,          # short side upper bound
         mean=IMAGENET_MEAN,
         std=IMAGENET_STD,
         is_bcos=False,
+        do_color_jitter=True,
+        color_jitter_strength=0.2,
     ):
         self.crop_size = crop_size
+        self.min_scale = min_scale
+        self.max_scale = max_scale
         self.mean = mean
         self.std = std
         self.is_bcos = is_bcos
-
-        """self.spatial_transform = transforms.Compose([
-            transforms.RandomResizedCrop(crop_size),
-            transforms.RandomHorizontalFlip(),
-        ])"""
+        self.do_color_jitter = do_color_jitter
 
         self.add_inv = custom_transforms.AddInverse()
-        self.normalize = transforms.Normalize(mean, std)
 
-    def __call__(self, video):
-        """
-        video: Tensor [T, H, W, C]
-        returns: Tensor [C, T, H, W]
-        """
+        # torchvision ColorJitter works on tensors shaped [..., C, H, W]
+        # so [T, C, H, W] is fine, and it applies the same sampled params
+        # across the whole clip in one call.
+        self.color_jitter = ColorJitter(
+            brightness=color_jitter_strength,
+            contrast=color_jitter_strength,
+            saturation=color_jitter_strength,
+            hue=min(0.05, color_jitter_strength / 4),
+        )
 
+    def _resize_short_side(self, video: torch.Tensor, short_side: int) -> torch.Tensor:
+        """
+        video: [T, C, H, W]
+        returns: [T, C, H_new, W_new]
+        """
+        T, C, H, W = video.shape
+        if H < W:
+            new_h = short_side
+            new_w = int(round(W * short_side / H))
+        else:
+            new_w = short_side
+            new_h = int(round(H * short_side / W))
+
+        return F.interpolate(
+            video,
+            size=(new_h, new_w),
+            mode="bilinear",
+            align_corners=False,
+        )
+
+    def __call__(self, video: torch.Tensor) -> torch.Tensor:
+        """
+        video: [T, H, W, C], uint8 or float-like
+        returns: [C, T, H, W]
+        """
+        # to [0,1]
         video = video.float() / 255.0
 
-
+        # [T, H, W, C] -> [T, C, H, W]
         video = video.permute(0, 3, 1, 2)
 
-        T, C, H, W = video.shape  # [T, C, H, W]
+        # 1) random resize on short side
+        short_side = torch.randint(self.min_scale, self.max_scale + 1, (1,)).item()
+        video = self._resize_short_side(video, short_side)
 
-        # crop
+        # 2) random crop, same crop for all frames
+        T, C, H, W = video.shape
         crop_size = self.crop_size
-        top_max = H - crop_size
-        left_max = W - crop_size
 
+        if H < crop_size or W < crop_size:
+            # safety fallback
+            video = F.interpolate(
+                video,
+                size=(max(H, crop_size), max(W, crop_size)),
+                mode="bilinear",
+                align_corners=False,
+            )
+            T, C, H, W = video.shape
 
-        top = torch.randint(0, top_max + 1, (1,)).item()
-        left = torch.randint(0, left_max + 1, (1,)).item()
-
+        top = torch.randint(0, H - crop_size + 1, (1,)).item()
+        left = torch.randint(0, W - crop_size + 1, (1,)).item()
         video = video[:, :, top:top + crop_size, left:left + crop_size]
 
-        if torch.rand(1) < 0.5:
-            video = torch.flip(video, dims=[3])  # horizontal flip
+        # 3) random horizontal flip, same for all frames
+        if torch.rand(1).item() < 0.5:
+            video = torch.flip(video, dims=[3])
 
+        # 4) light color jitter, same sampled params for the whole clip
+        if self.do_color_jitter and torch.rand(1).item() < 0.8:
+            video = self.color_jitter(video)
+
+        # clamp after jitter
+        video = video.clamp(0.0, 1.0)
+
+        # 5) B-cos channel expansion if needed
         if self.is_bcos:
-            video = self.add_inv(video)
+            video = self.add_inv(video)  # expected: [T, 6, H, W]
+        else:
+            # standard path: normalize here if you are NOT normalizing in-model
+            mean = torch.tensor(self.mean, device=video.device).view(1, -1, 1, 1)
+            std = torch.tensor(self.std, device=video.device).view(1, -1, 1, 1)
+            video = (video - mean) / std
 
-        video = video.permute(1, 0, 2, 3)
-
+        # [T, C, H, W] -> [C, T, H, W]
+        video = video.permute(1, 0, 2, 3).contiguous()
         return video
 
 
@@ -359,40 +412,60 @@ class UCF101ClassificationPresetEval:
     def __init__(
         self,
         crop_size=224,
-        resize_size=256,
+        resize_short_side=256,
         mean=IMAGENET_MEAN,
         std=IMAGENET_STD,
         is_bcos=False,
     ):
-        self.resize_size = resize_size
         self.crop_size = crop_size
-        self.normalize = transforms.Normalize(mean, std)
-        self.add_inverse = custom_transforms.AddInverse()
+        self.resize_short_side = resize_short_side
+        self.mean = mean
+        self.std = std
         self.is_bcos = is_bcos
+        self.add_inv = custom_transforms.AddInverse()
 
-    def __call__(self, video):
-        """
-        video: Tensor [T, H, W, C]
-        returns: Tensor [C, T, H, W]
-        """
+    def _resize_short_side(self, video: torch.Tensor, short_side: int) -> torch.Tensor:
+        T, C, H, W = video.shape
+        if H < W:
+            new_h = short_side
+            new_w = int(round(W * short_side / H))
+        else:
+            new_w = short_side
+            new_h = int(round(H * short_side / W))
 
-        video = video.float() / 255.0
-        video = video.permute(0, 3, 1, 2)
-
-        video = torch.nn.functional.interpolate(
-            video, size=self.resize_size, mode="bilinear", align_corners=False
+        return F.interpolate(
+            video,
+            size=(new_h, new_w),
+            mode="bilinear",
+            align_corners=False,
         )
 
-        h, w = video.shape[-2:]
-        ch = (h - self.crop_size) // 2
-        cw = (w - self.crop_size) // 2
-        video = video[:, :, ch:ch + self.crop_size, cw:cw + self.crop_size]
+    def __call__(self, video: torch.Tensor) -> torch.Tensor:
+        """
+        video: [T, H, W, C]
+        returns: [C, T, H, W]
+        """
+        video = video.float() / 255.0
+        video = video.permute(0, 3, 1, 2)  # [T, C, H, W]
+
+        video = self._resize_short_side(video, self.resize_short_side)
+
+        T, C, H, W = video.shape
+        crop_size = self.crop_size
+        top = max((H - crop_size) // 2, 0)
+        left = max((W - crop_size) // 2, 0)
+        video = video[:, :, top:top + crop_size, left:left + crop_size]
+
+        video = video.clamp(0.0, 1.0)
 
         if self.is_bcos:
-            video = self.add_inverse(video)
+            video = self.add_inv(video)
+        else:
+            mean = torch.tensor(self.mean, device=video.device).view(1, -1, 1, 1)
+            std = torch.tensor(self.std, device=video.device).view(1, -1, 1, 1)
+            video = (video - mean) / std
 
-        video = video.permute(1, 0, 2, 3)
-
+        video = video.permute(1, 0, 2, 3).contiguous()
         return video
 
 

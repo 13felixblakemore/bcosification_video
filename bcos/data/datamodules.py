@@ -347,7 +347,7 @@ class UCF101DataModule(ClassificationDataModule):
                 transform=self.config["train_transform"],
                 step_between_clips=32,
                 train=True,
-                _precomputed_metadata=train_md,
+                #_precomputed_metadata=train_md,
             )
             self.train_dataset = VideoOnlyDataset(self.train_dataset)
             video_paths = self.train_dataset.dataset.video_clips.video_paths
@@ -368,7 +368,7 @@ class UCF101DataModule(ClassificationDataModule):
             transform=self.config["test_transform"],
             step_between_clips=32,
             train=False,
-            _precomputed_metadata=val_md,
+            #_precomputed_metadata=val_md,
         )
         self.eval_dataset = VideoOnlyDataset(self.eval_dataset)
         #torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
