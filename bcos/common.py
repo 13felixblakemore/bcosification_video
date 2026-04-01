@@ -585,7 +585,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     if return_contribs:
         return np.array(grad_video), np.array(frame_scores.detach().cpu()), contribs.detach().cpu().numpy()
     else:
-        return np.array(grad_video), np.array(frame_scores.detach(),cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
     """
