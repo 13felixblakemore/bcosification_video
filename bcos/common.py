@@ -548,6 +548,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
+    contribs.squeeze(0)
     pos = contribs.clamp_min(0)
     flat = pos.flatten(1)  # [T, H*W]
     print("flat: ", flat.shape)
