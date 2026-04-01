@@ -3,7 +3,8 @@ import argparse
 import cv2
 import numpy as np
 
-from bcos.common import get_inx2label_imagenette as idx2label
+from bcos.common import get_inx2label_imagenette
+from bcos.common import get_inx2label_ucf101 as idx2label
 from pathlib import Path
 from evaluate import evaluate, load_model_and_config
 from PIL import Image
@@ -145,7 +146,7 @@ def explain_video(args, video_path):
 
     video_tensor = video_tensor.unsqueeze(0)
     expl_out = model.explain_video(video_tensor)
-    #print("Prediction:", idx2label[expl_out["prediction"]])
+    print("Prediction:", idx2label(expl_out["prediction"]))
 
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):

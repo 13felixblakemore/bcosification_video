@@ -521,7 +521,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
 
     Parameters
     ----------
-    image: Tensor
+    video: Tensor
         Original input video (encoded with 6 color channels)
         Shape: [C, T, H, W] with C=6
     linear_mapping: Tensor
@@ -547,6 +547,11 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
+
+    frame_scores = contribs.clamp_min(0).sum(dim=(1, 2))
+    print(frame_scores)
+    print(frame_scores.shape)
+
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
@@ -723,8 +728,13 @@ def get_inx2label_imagenet(index: int):
     idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
     return idx2label[index]
 
-from bcos.data.categories import IMAGENETTE_CATEGORIES
+from bcos.data.categories import IMAGENETTE_CATEGORIES, UCF101_CATEGORIES
+
 
 def get_inx2label_imagenette(index: int):
     label = IMAGENETTE_CATEGORIES[index]
+    return label
+
+def get_inx2label_ucf101(index: int):
+    label = UCF101_CATEGORIES[index]
     return label
