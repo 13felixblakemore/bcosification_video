@@ -549,7 +549,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     )
 
     contribs.squeeze(0)
+    print("Squontribs: ", contribs.shape)
     pos = contribs.clamp_min(0)
+    print("posL, ", pos.shape)
     flat = pos.flatten(1, 2)  # [T, H*W]
     print("flat: ", flat.shape)
     top_percent = 2.0
