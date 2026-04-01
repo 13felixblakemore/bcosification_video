@@ -550,7 +550,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
 
     contribs.squeeze(0)
     pos = contribs.clamp_min(0)
-    flat = pos.flatten(1)  # [T, H*W]
+    flat = pos.flatten(1, 2)  # [T, H*W]
     print("flat: ", flat.shape)
     top_percent = 2.0
     k = max(1, int(flat.shape[1] * top_percent / 100.0))
