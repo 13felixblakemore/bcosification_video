@@ -135,8 +135,20 @@ def explain_video(args, video_path):
         crop_size=224,
         is_bcos=True,
     )
+    # choose which frame to keep
+    t_keep = 3  # change this manually each run
 
-    video_tensor = torch.tensor(np.stack(frames))
+    # replacement (use mean frame for stability)
+    mean_frame = np.mean(np.stack(frames), axis=0).astype(frames[0].dtype)
+
+    new_frames = []
+    for i in range(len(frames)):
+        if i == t_keep:
+            new_frames.append(frames[i])  # real frame
+        else:
+            new_frames.append(mean_frame)  # replace others
+
+    video_tensor = torch.tensor(np.stack(new_frames))  # [T,H,W,C]
     print(video_tensor.shape)
 
     video_tensor = transform(video_tensor)
