@@ -128,7 +128,7 @@ def explain_video(args, video_path):
         frames.append(frame)
     cap.release()
 
-    x = 40
+    x = 0
     frames = frames[x:x+12]
 
     transform = UCF101ClassificationPresetEval(
