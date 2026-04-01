@@ -548,8 +548,8 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
-    contribs = contribs.squeeze(0)
-    print("Squontribs: ", contribs.shape)
+    squeezed_contribs = contribs.squeeze(0)
+    print("Squontribs: ", squeezed_contribs.shape)
     pos = contribs.clamp_min(0)
     print("posL, ", pos.shape)
     flat = pos.flatten(1, 2)  # [T, H*W]
@@ -558,7 +558,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     k = max(1, int(flat.shape[1] * top_percent / 100.0))
     topk_vals = flat.topk(k, dim=1).values
 
-    frame_scores = topk_vals
+    frame_scores = topk_vals.sum(dim=1).squeeze(1)
     print(frame_scores)
     print(frame_scores.shape)
 
