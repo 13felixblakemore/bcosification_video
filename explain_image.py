@@ -170,6 +170,11 @@ def explain_video(args, video_path):
     print("Predicted class:", pred_idx.item())
     print("Logit value:", pred_val.item())
 
+    class_idx = 9
+    target_logit = logits[0, class_idx]
+
+    print("BasketballDunk logit:", target_logit.item())
+
     expl_out = model.explain_video(video_tensor, idx=9)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
