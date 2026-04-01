@@ -271,6 +271,7 @@ class BcosUtilMixin:
             else:  # user specified idx
                 to_be_explained_logit = out[0, idx]
                 result["explained_class_idx"] = idx
+                print("Explaining class: ", idx)
 
             to_be_explained_logit.backward(inputs=[in_tensor])
 
