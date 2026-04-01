@@ -210,9 +210,11 @@ def plot_frame_importance_with_frames(
     plt.tight_layout()
 
     if save_path is not None:
+        print("Save path: ", save_path)
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()
     else:
+        print("show")
         plt.show()
 
 if __name__ == "__main__":
