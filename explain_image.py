@@ -165,9 +165,8 @@ def explain_video(args, video_path):
     model.eval()
     video_tensor = video_tensor.unsqueeze(0)
     logits = max(model(video_tensor))
-    pred_val, pred_idx = logits.max(dim=1)
+    pred_val = logits.max(dim=0)
 
-    print("Predicted class:", pred_idx.item())
     print("Logit value:", pred_val.item())
 
     expl_out = model.explain_video(video_tensor, idx=9)
