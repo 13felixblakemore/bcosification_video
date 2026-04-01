@@ -548,7 +548,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
-    frame_scores = contribs.clamp_min(0).sum(dim=(1,3,4))
+    frame_scores = contribs.clamp_min(0).sum(dim=(2,3))
     print(frame_scores)
     print(frame_scores.shape)
 
