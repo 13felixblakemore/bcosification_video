@@ -149,6 +149,8 @@ def explain_video(args, video_path):
         else:
             new_frames.append(black)  # replace others
 
+    frames = new_frames
+
     video_tensor = torch.tensor(np.stack(new_frames))  # [T,H,W,C]
     print(video_tensor.shape)
     if video_tensor.grad is not None:
