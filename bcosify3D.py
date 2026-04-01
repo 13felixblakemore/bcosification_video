@@ -29,9 +29,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         self.model = model
         self.model_config = model_config
 
-        self.mean = torch.tensor(IMAGENET_MEAN_ADDINVERSE).view(1, -1, 1, 1, 1).to("cuda")
-        self.std = torch.tensor(IMAGENET_STD_ADDINVERSE).view(1, -1, 1, 1, 1).to("cuda")
-
         self.logit_layer = None
         if logit_layer:
             self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(101 - 1), )
@@ -66,18 +63,6 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                     print(f"{prefix}{name}.{pname} | requires_grad={p.requires_grad} | shape={p.shape}")
             # Recurse into children
             self.print_all_params(child, prefix=prefix + name + ".")
-
-    def normalize_video(self, x, mean, std):
-        """
-        x: (B, C, T, H, W)
-        mean, std: tuple of length C
-        """
-        mean = self.mean
-        std  = self.std
-        print(x.min().item(), x.max().item())
-        out = (x.float() / 255.0 - mean) / std
-        print("out:" ,out.min().item(), out.max().item())
-        return out
 
     def forward(self, x):
         """
@@ -155,8 +140,12 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 class BcosifyNormalize(nn.Module):
     def __init__(self, mean, std):
         super().__init__()
-        self.mean = torch.tensor(mean).view(1, -1, 1, 1, 1).to("cuda")
-        self.std = torch.tensor(std).view(1, -1, 1, 1, 1).to("cuda")
+        if torch.cuda.is_available():
+            self.mean = torch.tensor(mean).view(1, -1, 1, 1, 1).to("cuda")
+            self.std = torch.tensor(std).view(1, -1, 1, 1, 1).to("cuda")
+        else:
+            self.mean = torch.tensor(mean).view(1, -1, 1, 1, 1).to("cpu")
+            self.std = torch.tensor(std).view(1, -1, 1, 1, 1).to("cpu")
 
     def forward(self, x):
         mean = self.mean

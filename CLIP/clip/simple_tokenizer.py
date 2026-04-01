@@ -3,7 +3,7 @@ import html
 import os
 from functools import lru_cache
 
-import ftfy
+#import ftfy
 import regex as re
 
 

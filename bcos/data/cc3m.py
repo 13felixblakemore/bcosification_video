@@ -3,7 +3,7 @@ import clip
 import torch 
 import numpy as np
 import matplotlib.pyplot as plt
-import webdataset as wds
+#import webdataset as wds
 
 from bcos.settings import CC3M_PATH
 
