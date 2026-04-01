@@ -548,11 +548,14 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
-    flat = contribs.clamp_min(0).flatten(1)
+    pos = contribs.clamp_min(0)
+    flat = pos.flatten(1)  # [T, H*W]
     print("flat: ", flat.shape)
-    k = max(1, flat.shape[1] // 100)
-    print("k: ", k)
-    frame_scores = flat.topk(k, dim=1).values.mean(dim=1)
+    top_percent = 2.0
+    k = max(1, int(flat.shape[1] * top_percent / 100.0))
+    topk_vals = flat.topk(k, dim=1).values
+
+    frame_scores = contribs.clamp_min(0).sum(dim=(2,3))
     print(frame_scores)
     print(frame_scores.shape)
 
@@ -587,7 +590,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     #print("Grad video: ", grad_video.shape)
     if return_contribs:
-        return np.array(grad_video), np.array(frame_scores.detach().cpu()), contribs.detach().cpu().numpy()
+        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
     else:
         return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
