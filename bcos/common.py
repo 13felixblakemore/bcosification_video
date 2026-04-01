@@ -550,7 +550,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
 
     squeezed_contribs = contribs.squeeze(0)
     print("Squontribs: ", squeezed_contribs.shape)
-    pos = contribs.clamp_min(0)
+    pos = squeezed_contribs.clamp_min(0)
     print("posL, ", pos.shape)
     flat = pos.flatten(1, 2)  # [T, H*W]
     print("flat: ", flat.shape)
