@@ -175,7 +175,7 @@ def explain_video(args, video_path):
 
     print("BasketballDunk logit:", target_logit.item())
 
-    expl_out = model.explain_video(video_tensor, idx=9)
+    expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
     frame_scores = expl_out["frame_scores"]
