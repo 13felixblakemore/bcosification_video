@@ -130,7 +130,7 @@ def explain_video(args, video_path):
 
     print(len(frames))
     time.sleep(3)
-    frames = frames[64:72]
+    frames = frames[52:61]
 
     transform = UCF101ClassificationPresetEval(
         crop_size=224,
