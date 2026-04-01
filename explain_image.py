@@ -149,12 +149,71 @@ def explain_video(args, video_path):
     expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
+    frame_scores = expl_out["frame_scores"]
+
+    frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
+    plot_frame_importance_with_frames(frames, frame_scores, frame_path)
+
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
         plt.close()
+
+def plot_frame_importance_with_frames(
+    frames,
+    frame_scores,
+    save_path=None,
+    title="Frame importance over time",
+):
+    """
+    frames: array-like of shape [T, H, W, 3]
+    frame_scores: array-like of shape [T]
+    """
+    frames = np.asarray(frames)
+    frame_scores = np.asarray(frame_scores).squeeze()
+    T = len(frame_scores)
+
+    fig = plt.figure(figsize=(2 * T, 5))
+    gs = fig.add_gridspec(2, T, height_ratios=[2, 1])
+
+    # Top plot
+    ax_plot = fig.add_subplot(gs[0, :])
+    x = np.arange(T)
+    ax_plot.plot(x, frame_scores, marker="o")
+    ax_plot.set_xticks(x)
+    ax_plot.set_xlabel("Frame index")
+    ax_plot.set_ylabel("Importance")
+    ax_plot.set_title(title)
+    ax_plot.grid(True, alpha=0.3)
+
+    # Highlight max frame
+    max_idx = int(np.argmax(frame_scores))
+    ax_plot.axvline(max_idx, linestyle="--", alpha=0.7)
+    ax_plot.scatter([max_idx], [frame_scores[max_idx]], s=80)
+
+    # Bottom row: frames
+    for t in range(T):
+        ax_img = fig.add_subplot(gs[1, t])
+        ax_img.imshow(frames[t])
+        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
+        ax_img.axis("off")
+
+        # Highlight most important frame
+        if t == max_idx:
+            for spine in ax_img.spines.values():
+                spine.set_edgecolor("red")
+                spine.set_linewidth(3)
+                spine.set_visible(True)
+
+    plt.tight_layout()
+
+    if save_path is not None:
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        plt.show()
 
 if __name__ == "__main__":
     parser = get_parser()
