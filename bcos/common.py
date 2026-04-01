@@ -548,7 +548,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
-    contribs.squeeze(0)
+    contribs = contribs.squeeze(0)
     print("Squontribs: ", contribs.shape)
     pos = contribs.clamp_min(0)
     print("posL, ", pos.shape)
