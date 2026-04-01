@@ -164,7 +164,7 @@ def explain_video(args, video_path):
     model.eval()
 
     video_tensor = video_tensor.unsqueeze(0)
-    expl_out = model.explain_video(video_tensor)
+    expl_out = model.explain_video(video_tensor, idx=9)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
     frame_scores = expl_out["frame_scores"]
