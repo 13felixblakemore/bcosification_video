@@ -265,7 +265,8 @@ def _print_information_of_loaded_state_dict(
             if epoch_i == epoch:
                 val_acc = val_acc_i
                 break
-        assert val_acc is not None, "Unable to find val acc!"
+        if val_acc is None:
+            print("Val acc is not found")
         print(f"With validation accuracy: {val_acc:.2%}")
     except MetricsNotFoundError:
         print("No validation accuracy metrics found in checkpoint!")
