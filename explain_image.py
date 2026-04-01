@@ -136,7 +136,7 @@ def explain_video(args, video_path):
         is_bcos=True,
     )
     # choose which frame to keep
-    t_keep = 0  # change this manually each run
+    t_keep = [0, 6]  # change this manually each run
 
     # replacement (use mean frame for stability)
     mean_frame = np.mean(np.stack(frames), axis=0).astype(frames[0].dtype)
@@ -144,7 +144,7 @@ def explain_video(args, video_path):
 
     new_frames = []
     for i in range(len(frames)):
-        if i == t_keep:
+        if i in t_keep:
             new_frames.append(frames[i])  # real frame
         else:
             new_frames.append(black)  # replace others
