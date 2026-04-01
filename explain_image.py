@@ -129,7 +129,7 @@ def explain_video(args, video_path):
     cap.release()
 
     start = 12
-    length = 8
+    length = 10
     frames = frames[start:start+length]
 
     transform = UCF101ClassificationPresetEval(
@@ -137,7 +137,7 @@ def explain_video(args, video_path):
         is_bcos=True,
     )
     # choose which frame to keep
-    t_keep = [0,1,2,3,4,5,6,7]  # change this manually each run
+    t_keep = [1,2,3,4,5,6,7,8]  # change this manually each run
 
     # replacement (use mean frame for stability)
     mean_frame = np.mean(np.stack(frames), axis=0).astype(frames[0].dtype)
