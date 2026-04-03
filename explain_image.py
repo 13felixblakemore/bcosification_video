@@ -128,7 +128,7 @@ def explain_video(args, video_path):
         frames.append(frame)
     cap.release()
 
-    start = 2
+    start = 16
     length = 10
     frames = frames[start:start+length]
 
