@@ -597,10 +597,18 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     #print("Grad video: ", grad_video.shape)
+
+    grad_images = []
+    for i in range(video.size(1)):
+        image = video[:, i, :, :]
+        l_m = linear_mapping[i, :, :]
+        grad_image = gradient_to_image(image, l_m)
+        grad_images.append(grad_image)
+
     if return_contribs:
-        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
+        return np.array(grad_images), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
     else:
-        return np.array(grad_video), np.array(frame_scores.detach().cpu())
+        return np.array(grad_images), np.array(frame_scores.detach().cpu())
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
     """
