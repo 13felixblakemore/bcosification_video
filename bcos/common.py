@@ -581,8 +581,8 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     alpha = torch.where(contribs < 0, 1e-12, alpha)
     if smooth:
         kT = 1
-        kH = 5
-        kW = 5
+        kH = 3
+        kW = 3
         alpha = F.avg_pool3d(
             alpha,
             kernel_size=(kT, kH, kW),
