@@ -548,6 +548,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
+    print("RGB grad shape: ", rgb_grad.shape)
 
     squeezed_contribs = contribs.squeeze(0)
     print("Squontribs: ", squeezed_contribs.shape)
@@ -608,9 +609,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         grad_images.append(grad_image)
 
     if return_contribs:
-        return np.array(grad_images), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
     else:
-        return np.array(grad_images), np.array(frame_scores.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
     """
