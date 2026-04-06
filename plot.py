@@ -50,7 +50,7 @@ def print_all_tensorboard_tags(log_dir):
             print(f"  - {tag}")
         print()
 
-log_dir = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7"
+log_dir = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_10"
 tags = ["val_loss", "train_acc1_step"]
 
 plot_multiple_scalars(log_dir, tags)
