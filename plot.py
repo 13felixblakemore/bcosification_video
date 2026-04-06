@@ -66,7 +66,7 @@ SCALARS:
 """
 
 
-log_dir = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_10"
+log_dir = "tb_logs/experiments/UCF101/standard/i3d/i3d/standard"
 tags = ["train_acc1_step"]
 
 plot_multiple_scalars(log_dir, tags)
