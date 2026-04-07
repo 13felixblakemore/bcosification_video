@@ -170,12 +170,12 @@ def explain_video(args, video_path):
         video_tensor.grad.zero_()
     logits = model(video_tensor)  # [1, num_classes]
     print(logits)
-    sys.exit()
+
     pred_val, pred_idx = logits.max(dim=1)
 
     print("Predicted class:", pred_idx.item())
     print("Logit value:", pred_val.item())
-
+    sys.exit()
     class_indices = range(15)
     for class_idx in class_indices:
         target_logit = logits[:, class_idx]
