@@ -175,10 +175,20 @@ def explain_video(args, video_path):
 
     print("BasketballDunk logit:", target_logit.item())
 
-    expl_out = model.explain_video(video_tensor, 17)
+    expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
     frame_scores = expl_out["frame_scores"]
+
+    linear_map = expl_out["dynamic_linear_weights"]
+    lm_logits = video_tensor * linear_map
+
+    torch.testing.assert_close(
+        logits,
+        lm_logits,
+        rtol=1e-4,
+        atol=1e-5
+    )
 
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
