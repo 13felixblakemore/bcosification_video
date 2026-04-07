@@ -172,7 +172,7 @@ def explain_video(args, video_path):
 
     pred_val, pred_idx = logits.max(dim=1)
 
-    print("Predicted class:", pred_idx.item())
+    print("Predicted class:", pred_idx.item(), idx2label(pred_idx))
     print("Logit value:", pred_val.item())
     logits = model(video_tensor)[0]
 
