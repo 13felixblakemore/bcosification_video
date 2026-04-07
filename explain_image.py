@@ -184,7 +184,7 @@ def explain_video(args, video_path):
     topk_vals, topk_idx = torch.topk(logits, k=5)
     print("top5 vals:", topk_vals)
     print("top5 idx :", topk_idx)
-    sys.exit()
+
     class_indices = range(15)
     for class_idx in class_indices:
         target_logit = logits[:, class_idx]
