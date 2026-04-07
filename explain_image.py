@@ -1,4 +1,5 @@
 import argparse
+import sys
 import time
 
 import cv2
@@ -184,13 +185,14 @@ def explain_video(args, video_path):
         linear_map = expl_out["dynamic_linear_weights"]
         lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
         print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
-"""        torch.testing.assert_close(
+        """torch.testing.assert_close(
             target_logit,
             lm_logit,
             rtol=1e-4,
             atol=1e-5
         )"""
 
+    sys.exit()
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
 
