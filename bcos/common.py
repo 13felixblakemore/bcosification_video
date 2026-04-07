@@ -260,6 +260,8 @@ class BcosUtilMixin:
         result = dict()
         with torch.enable_grad(), self.explanation_mode():
             # fwd + prediction
+            if in_tensor.grad is not None:
+                in_tensor.grad = None
             out = self(in_tensor)  # noqa
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
