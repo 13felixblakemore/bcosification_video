@@ -181,7 +181,7 @@ def explain_video(args, video_path):
     frame_scores = expl_out["frame_scores"]
 
     linear_map = expl_out["dynamic_linear_weights"]
-    lm_logits = video_tensor * linear_map
+    lm_logits = (video_tensor * linear_map).sum(1,2,3,4)
 
     torch.testing.assert_close(
         logits,
