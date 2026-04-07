@@ -174,6 +174,16 @@ def explain_video(args, video_path):
 
     print("Predicted class:", pred_idx.item())
     print("Logit value:", pred_val.item())
+    logits = model(video_tensor)[0]
+
+    print("min :", logits.min().item())
+    print("max :", logits.max().item())
+    print("mean:", logits.mean().item())
+    print("std :", logits.std().item())
+
+    topk_vals, topk_idx = torch.topk(logits, k=5)
+    print("top5 vals:", topk_vals)
+    print("top5 idx :", topk_idx)
     sys.exit()
     class_indices = range(15)
     for class_idx in class_indices:
