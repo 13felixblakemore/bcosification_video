@@ -165,6 +165,8 @@ def explain_video(args, video_path):
     model, config = load_model_and_config(args)
     model.eval()
     video_tensor = video_tensor.unsqueeze(0)
+    if video_tensor.grad is not None:
+        video_tensor.grad.zero_()
     logits = model(video_tensor)  # [1, num_classes]
     print(logits)
     sys.exit()
