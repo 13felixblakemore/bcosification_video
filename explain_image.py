@@ -187,7 +187,7 @@ def explain_video(args, video_path):
 
     class_indices = range(15)
     for class_idx in class_indices:
-        target_logit = logits[:, class_idx]
+        target_logit = logits[class_idx]
 
         #print("BasketballDunk logit:", target_logit.item())
 
