@@ -175,17 +175,17 @@ def explain_video(args, video_path):
 
     print("BasketballDunk logit:", target_logit.item())
 
-    expl_out = model.explain_video(video_tensor)
+    expl_out = model.explain_video(video_tensor, class_idx)
     print("Prediction:", idx2label(expl_out["prediction"]))
 
     frame_scores = expl_out["frame_scores"]
 
     linear_map = expl_out["dynamic_linear_weights"]
-    lm_logits = (video_tensor * linear_map).sum(dim=(1,2,3,4))
+    lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
 
     torch.testing.assert_close(
-        logits,
-        lm_logits,
+        target_logit,
+        lm_logit,
         rtol=1e-4,
         atol=1e-5
     )
