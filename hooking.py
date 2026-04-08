@@ -152,7 +152,7 @@ def main() -> None:
     print("Input video tensor shape:", tuple(video_tensor.shape))
 
     # Hook top-level blocks
-    saved_blocks, block_handles = register_block_hooks(model)
+    saved_blocks, block_handles = register_block_hooks(model.model)
 
     # Optional: hook all BNUncentered layers too
     bn_handles = []
