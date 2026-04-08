@@ -114,6 +114,48 @@ def remove_hooks(handles: List[Any]) -> None:
     for handle in handles:
         handle.remove()
 
+def run_suffix(blocks, start_idx, x):
+    for i in range(start_idx, len(blocks)):
+        x = blocks[i](x)
+    return x
+
+def test_suffix_exactness(block_owner, saved_blocks, class_idx):
+    blocks = block_owner.blocks
+
+    print("\n=== Suffix exactness tests ===")
+    for i in range(len(blocks)):
+        key = f"block_{i}"
+        if key not in saved_blocks:
+            continue
+
+        a = saved_blocks[key]["output"].clone().detach().requires_grad_(True)
+
+        # run remaining suffix after this block
+        out = run_suffix(blocks, i + 1, a)
+
+        # make sure out is [1, num_classes]
+        if out.ndim != 2:
+            print(f"{key}: unexpected output shape {out.shape}")
+            continue
+
+        target = out[0, class_idx]
+
+        # clear grads
+        block_owner.zero_grad(set_to_none=True)
+        if a.grad is not None:
+            a.grad = None
+
+        target.backward()
+
+        recon = (a * a.grad).sum()
+        diff = (target - recon).item()
+
+        print(
+            f"{key}: "
+            f"target={target.item():.6f}, "
+            f"recon={recon.item():.6f}, "
+            f"diff={diff:.6f}"
+        )
 
 def print_saved_summary(saved: Dict[str, Dict[str, torch.Tensor]]) -> None:
     print("\nSaved activations summary:")
@@ -140,7 +182,6 @@ def main() -> None:
     if device.type == "cuda":
         torch.backends.cudnn.benchmark = False
 
-    # Replace with however you normally load your model/config
     model, config = load_model_and_config(args)
     model = model.to(device)
     model.eval()
@@ -151,13 +192,16 @@ def main() -> None:
 
     print("Input video tensor shape:", tuple(video_tensor.shape))
 
+    # The module that actually owns `.blocks`
+    block_owner = model.model
+
     # Hook top-level blocks
-    saved_blocks, block_handles = register_block_hooks(model.model)
+    saved_blocks, block_handles = register_block_hooks(block_owner)
 
     # Optional: hook all BNUncentered layers too
-    bn_handles = []
-    saved_bn = {}
-    saved_bn, bn_handles = register_named_hooks_by_type(model, "BatchNormUncentered3d")
+    saved_bn, bn_handles = register_named_hooks_by_type(
+        block_owner, "BatchNormUncentered3d"
+    )
 
     with torch.no_grad():
         logits = model(video_tensor)
@@ -169,12 +213,14 @@ def main() -> None:
     remove_hooks(block_handles)
     remove_hooks(bn_handles)
 
+    pred_class = logits.argmax(dim=1).item()
+    test_suffix_exactness(block_owner, saved_blocks, pred_class)
+
     print_saved_summary(saved_blocks)
 
     print("\nSaved BatchNormUncentered3d activations summary:")
     print_saved_summary(saved_bn)
 
-    # Optional: save activations to disk for later debugging
     out_path = Path("debug_saved_activations.pt")
     torch.save(
         {
