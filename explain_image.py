@@ -143,7 +143,7 @@ def debug(model, video_tensor):
     block_6 = model.model.blocks[6]
 
     # Forward through only the first conv
-    y = model.model(x)
+    y = model(x)
     f = y.sum()                  # scalar
 
     # Backward
