@@ -262,7 +262,7 @@ class BcosUtilMixin:
             # fwd + prediction
             if in_tensor.grad is not None:
                 in_tensor.grad = None
-            out = self(in_tensor)  # noqa
+            out = self.logit_layer(self.model(in_tensor))  # noqa
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
 
