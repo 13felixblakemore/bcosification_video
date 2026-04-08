@@ -255,14 +255,13 @@ def explain_video(args, video_path):
     print("video shape:", video_tensor.shape)
     print("lm shape:", linear_map.shape)
 
-    lm_logit = (video_tensor * linear_map).sum(dim=(1, 2, 3, 4))
+    lm_logit = (bcos_norm_tensor * linear_map).sum(dim=(1, 2, 3, 4))
     print("target_logit:", target_logit.item())
     print("lm_logit:", lm_logit.item())
     print("reconstructed_logit:", reconstructed_logit.item())
     print("difference:", (target_logit - lm_logit).item())
 
     debug_out = debug(model, video_tensor)
-    sys.exit()
 
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
