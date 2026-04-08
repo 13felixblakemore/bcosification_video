@@ -278,10 +278,11 @@ class BcosUtilMixin:
             to_be_explained_logit.backward(inputs=[in_tensor])
 
         # get weights and contribution map
-        result["dynamic_linear_weights"] = in_tensor.grad
-        lm_logit = (in_tensor * in_tensor.grad).sum(dim=(1, 2, 3, 4))
+        grad = in_tensor.grad.detach().clone()
+        result["dynamic_linear_weights"] = grad
+        lm_logit = (in_tensor * grad).sum(dim=(1, 2, 3, 4))
         print("Explained logit: ", lm_logit)
-        result["contribution_map"] = (in_tensor * in_tensor.grad).sum(1)
+        result["contribution_map"] = (in_tensor * grad).sum(1)
 
         # generate (color) explanation
         result["explanation"], result["frame_scores"] = gradient_to_video(
