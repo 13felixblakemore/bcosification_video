@@ -237,7 +237,7 @@ def explain_video(args, video_path):
 
     bcos_norm_tensor = model.bcosifynormalize(video_tensor)
 
-    expl_out = model.explain_video(bcos_norm_tensor, video_tensor)
+    expl_out = model.explain_video(bcos_norm_tensor, bcos_norm_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
