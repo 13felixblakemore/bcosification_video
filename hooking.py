@@ -171,9 +171,8 @@ def main() -> None:
 
     print_saved_summary(saved_blocks)
 
-    if args.hook_bn:
-        print("\nSaved BatchNormUncentered3d activations summary:")
-        print_saved_summary(saved_bn)
+    print("\nSaved BatchNormUncentered3d activations summary:")
+    print_saved_summary(saved_bn)
 
     # Optional: save activations to disk for later debugging
     out_path = Path("debug_saved_activations.pt")
