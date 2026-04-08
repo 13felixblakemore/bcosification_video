@@ -279,6 +279,8 @@ class BcosUtilMixin:
 
         # get weights and contribution map
         result["dynamic_linear_weights"] = in_tensor.grad
+        lm_logit = (in_tensor * in_tensor.grad).sum(dim=(1, 2, 3, 4))
+        print("Explained logit: ", lm_logit)
         result["contribution_map"] = (in_tensor * in_tensor.grad).sum(1)
 
         # generate (color) explanation
