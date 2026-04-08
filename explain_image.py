@@ -141,8 +141,7 @@ def explain_video(args, video_path):
     t_keep = [0,1,2,3,4,5,6,7,8,9]  # change this manually each run
 
     # replacement (use mean frame for stability)
-    mean_frame = np.mean(np.stack(frames), axis=0).astype(frames[0].dtype)
-    black = np.zeros_like(mean_frame)
+    black = np.zeros_like(frames[0])
 
     new_frames = []
     for i in range(len(frames)):
@@ -154,60 +153,34 @@ def explain_video(args, video_path):
     frames = new_frames
 
     video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
-    print(video_tensor.shape)
-    if video_tensor.grad is not None:
-        video_tensor.grad.zero_()
-
     video_tensor = transform(video_tensor)
-    print(video_tensor.shape)
     video_tensor = video_tensor.to(device)
-
-    model, config = load_model_and_config(args)
-    model.eval()
     video_tensor = video_tensor.unsqueeze(0)
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
-    logits = model(video_tensor)  # [1, num_classes]
-    print(logits)
 
+    model, config = load_model_and_config(args)
+    model.eval()
+
+    logits = model(video_tensor)  # [1, num_classes]
     pred_val, pred_idx = logits.max(dim=1)
 
     print("Predicted class:", pred_idx.item(), idx2label(pred_idx))
     print("Logit value:", pred_val.item())
-    logits = model(video_tensor)[0]
+    logits = logits[0]
 
-    print("min :", logits.min().item())
-    print("max :", logits.max().item())
-    print("mean:", logits.mean().item())
-    print("std :", logits.std().item())
+    expl_out = model.explain_video(video_tensor)
+    print("Prediction:", idx2label(expl_out["prediction"]))
 
-    topk_vals, topk_idx = torch.topk(logits, k=5)
-    print("top5 vals:", topk_vals)
-    print("top5 idx :", topk_idx)
+    target_logit = logits[expl_out["prediction"]]
 
-    class_indices = range(15)
-    for class_idx in class_indices:
-        target_logit = logits[class_idx]
-
-        #print("BasketballDunk logit:", target_logit.item())
-
-        expl_out = model.explain_video(video_tensor, class_idx)
-        print("Prediction:", idx2label(expl_out["prediction"]))
-
-        frame_scores = expl_out["frame_scores"]
-
-        linear_map = expl_out["dynamic_linear_weights"]
-        lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
-        print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
-        """torch.testing.assert_close(
-            target_logit,
-            lm_logit,
-            rtol=1e-4,
-            atol=1e-5
-        )"""
+    linear_map = expl_out["dynamic_linear_weights"]
+    lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
+    print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
 
     sys.exit()
 
+    frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
 
