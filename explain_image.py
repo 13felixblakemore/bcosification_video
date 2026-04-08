@@ -110,6 +110,59 @@ def explain_image(args, image_path):
     plt.savefig(path_to_save, bbox_inches='tight')
     plt.close()
 
+def debug_stem_conv(model, video_tensor):
+    """
+    Test Euler reconstruction on the first B-Cos conv only.
+
+    Checks whether:
+        f(x) = sum(stem.conv(x))
+    satisfies:
+        f(x) == <x, grad_x f>
+
+    Parameters
+    ----------
+    model : nn.Module
+        Your loaded B-Cosified I3D model.
+    video_tensor : torch.Tensor
+        Input video tensor of shape [1, C, T, H, W]
+    """
+    model.eval()
+
+    # Fresh leaf tensor with grad enabled
+    x = video_tensor.detach().clone().requires_grad_(True)
+
+    # Get first block and first conv
+    stem = model.model.blocks[0]
+    conv = stem.conv
+
+    # Forward through only the first conv
+    y = conv(x)                  # shape [1, C_out, T', H', W']
+    f = y.sum()                  # scalar
+
+    # Backward
+    if x.grad is not None:
+        x.grad.zero_()
+    f.backward()
+
+    grad = x.grad.detach().clone()
+    recon = (x * grad).sum()
+
+    print("=== Debug: stem conv only ===")
+    print("input shape: ", x.shape)
+    print("conv output shape:", y.shape)
+    print("scalar f = sum(conv(x)):", f.item())
+    print("reconstructed <x, grad>:", recon.item())
+    print("difference f - recon:", (f - recon).item())
+    print("max abs grad:", grad.abs().max().item())
+
+    return {
+        "scalar": f.detach(),
+        "reconstruction": recon.detach(),
+        "difference": (f - recon).detach(),
+        "grad": grad,
+        "output": y.detach(),
+    }
+
 def explain_video(args, video_path):
     global device
     if args.no_cuda:
@@ -193,6 +246,7 @@ def explain_video(args, video_path):
     print("reconstructed_logit:", reconstructed_logit.item())
     print("difference:", (target_logit - lm_logit).item())
 
+    debug_out = debug_stem_conv(model, video_tensor)
     sys.exit()
 
     frame_scores = expl_out["frame_scores"]
