@@ -558,22 +558,15 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     print("RGB grad shape: ", rgb_grad.shape)
 
     squeezed_contribs = contribs.squeeze(0)
-    print("Squontribs: ", squeezed_contribs.shape)
     pos = squeezed_contribs.clamp_min(0)
-    print("posL, ", pos.shape)
     flat = pos.flatten(1, 2)  # [T, H*W]
-    print("flat: ", flat.shape)
     top_percent = 2.0
     k = max(1, int(flat.shape[1] * top_percent / 100.0))
     topk_vals = flat.topk(k, dim=1).values
-    print("topkvals:,", topk_vals.shape)
 
-    frame_scores = topk_vals.sum(dim=1)
+    frame_scores2 = topk_vals.sum(dim=1)
 
     frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
-
-    print(frame_scores)
-    print(frame_scores.shape)
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
@@ -609,9 +602,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     grad_images = []
     for i in range(video.size(1)):
         image = video[:, i, :, :]
-        #print("image", image.shape)
         l_m = linear_mapping[:,i, :, :]
-        #print("lm", l_m.shape)
         grad_image = gradient_to_image(image, l_m)
         grad_images.append(grad_image)
 
