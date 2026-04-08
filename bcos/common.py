@@ -563,9 +563,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     k = max(1, int(flat.shape[1] * top_percent / 100.0))
     topk_vals = flat.topk(k, dim=1).values
 
-    frame_scores2 = topk_vals.sum(dim=1)
+    frame_scores = topk_vals.sum(dim=1)
 
-    frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
+    #frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
