@@ -157,8 +157,7 @@ def main() -> None:
     # Optional: hook all BNUncentered layers too
     bn_handles = []
     saved_bn = {}
-    if args.hook_bn:
-        saved_bn, bn_handles = register_named_hooks_by_type(model, "BatchNormUncentered3d")
+    saved_bn, bn_handles = register_named_hooks_by_type(model, "BatchNormUncentered3d")
 
     with torch.no_grad():
         logits = model(video_tensor)
