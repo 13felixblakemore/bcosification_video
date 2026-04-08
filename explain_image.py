@@ -207,6 +207,7 @@ def explain_video(args, video_path):
         )"""
 
     sys.exit()
+
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
 
