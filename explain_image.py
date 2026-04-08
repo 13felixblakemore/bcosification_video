@@ -165,6 +165,9 @@ def debug(model, video_tensor):
     print("difference f - recon:", (f - recon).item())
     print("max abs grad:", grad.abs().max().item())
 
+    import inspect
+    print(inspect.getsource(model.bcosifynormalize.forward))
+
     return {
         "scalar": f.detach(),
         "reconstruction": recon.detach(),
