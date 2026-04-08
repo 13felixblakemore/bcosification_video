@@ -132,6 +132,7 @@ def debug(model, video_tensor):
     # Fresh leaf tensor with grad enabled
     x = video_tensor.detach().clone().requires_grad_(True)
 
+    print(model.model)
     # Get first block and first conv
     block_0 = model.model.blocks[0]
     block_1 = model.model.blocks[1]
