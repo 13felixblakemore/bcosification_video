@@ -273,15 +273,13 @@ class BcosUtilMixin:
             else:  # user specified idx
                 to_be_explained_logit = out[0, idx]
                 result["explained_class_idx"] = idx
-                print("Explaining class: ", idx)
 
+            result["explained_logit"] = to_be_explained_logit.detach().clone()
             to_be_explained_logit.backward(inputs=[in_tensor])
 
-        # get weights and contribution map
         grad = in_tensor.grad.detach().clone()
         result["dynamic_linear_weights"] = grad
-        lm_logit = (in_tensor * grad).sum(dim=(1, 2, 3, 4))
-        print("Explained logit: ", lm_logit)
+        result["reconstructed_logit"] = (in_tensor * grad).sum(dim=(1, 2, 3, 4)).detach().clone()
         result["contribution_map"] = (in_tensor * grad).sum(1)
 
         # generate (color) explanation

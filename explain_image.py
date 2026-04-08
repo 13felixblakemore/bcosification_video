@@ -152,9 +152,8 @@ def explain_video(args, video_path):
 
     frames = new_frames
 
-    video = torch.tensor(np.stack(frames))  # [T,H,W,C]
-    video = video.unsqueeze(0)
-    video_tensor = transform(video)
+    video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
+    video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
     video_tensor = video_tensor.unsqueeze(0)
     if video_tensor.grad is not None:
@@ -170,11 +169,13 @@ def explain_video(args, video_path):
     print("Logit value:", pred_val.item())
     logits = logits[0]
 
-    expl_out = model.explain_video(video)
+    expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
     target_logit = logits[expl_out["prediction"]]
+
+    reconstructed_logit = expl_out["reconstructed_logit"]
 
     linear_map = expl_out["dynamic_linear_weights"]
     lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
@@ -189,6 +190,7 @@ def explain_video(args, video_path):
     lm_logit = (video_tensor * linear_map).sum(dim=(1, 2, 3, 4))
     print("target_logit:", target_logit.item())
     print("lm_logit:", lm_logit.item())
+    print("reconstructed_logit:", reconstructed_logit.item())
     print("difference:", (target_logit - lm_logit).item())
 
     sys.exit()
