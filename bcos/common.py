@@ -549,6 +549,8 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     print("Contribs shape: ", contribs.shape)
+    logit = contribs.sum(dim=(1,2,3))
+    print("Logit shape: ", logit, logit.shape)
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
