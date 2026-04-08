@@ -110,7 +110,7 @@ def explain_image(args, image_path):
     plt.savefig(path_to_save, bbox_inches='tight')
     plt.close()
 
-def debug_stem_conv(model, video_tensor):
+def debug(model, video_tensor):
     """
     Test Euler reconstruction on the first B-Cos conv only.
 
@@ -136,7 +136,7 @@ def debug_stem_conv(model, video_tensor):
     conv = stem.conv
 
     # Forward through only the first conv
-    y = conv(x)                  # shape [1, C_out, T', H', W']
+    y = stem.norm(conv(x) )
     f = y.sum()                  # scalar
 
     # Backward
@@ -246,7 +246,7 @@ def explain_video(args, video_path):
     print("reconstructed_logit:", reconstructed_logit.item())
     print("difference:", (target_logit - lm_logit).item())
 
-    debug_out = debug_stem_conv(model, video_tensor)
+    debug_out = debug(model, video_tensor)
     sys.exit()
 
     frame_scores = expl_out["frame_scores"]
