@@ -228,7 +228,8 @@ def explain_video(args, video_path):
     model, config = load_model_and_config(args)
     model.eval()
 
-    logits = model(video_tensor)  # [1, num_classes]
+    x = video_tensor / model.bcosifynormalize.std
+    logits = model.logit_layer(model.model(x))  # [1, num_classes]
     pred_val, pred_idx = logits.max(dim=1)
 
     print("Predicted class:", pred_idx.item(), idx2label(pred_idx))
