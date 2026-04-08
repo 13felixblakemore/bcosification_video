@@ -246,7 +246,7 @@ def explain_video(args, video_path):
     reconstructed_logit = expl_out["reconstructed_logit"]
 
     linear_map = expl_out["dynamic_linear_weights"]
-    lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
+    lm_logit = (bcos_norm_tensor * linear_map).sum(dim=(1,2,3,4))
     print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
 
     print("TESTING------------------------")
