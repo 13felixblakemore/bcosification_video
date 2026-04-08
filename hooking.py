@@ -230,6 +230,15 @@ def main() -> None:
         },
         out_path,
     )
+    pred_class = logits.argmax(dim=1).item()
+    print("outer logits pred class:", pred_class)
+    print("outer pred logit:", logits[0, pred_class].item())
+
+    # compare with block_0 suffix target directly
+    a = saved_blocks["block_0"]["output"].clone().detach().requires_grad_(True)
+    out_suffix = run_suffix(block_owner.blocks, 1, a)
+    print("suffix output shape:", out_suffix.shape)
+    print("suffix pred class logit:", out_suffix[0, pred_class].item())
     print(f"\nSaved activations to {out_path.resolve()}")
 
 
