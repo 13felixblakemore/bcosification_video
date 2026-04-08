@@ -134,9 +134,12 @@ def debug(model, video_tensor):
     # Get first block and first conv
     block_0 = model.model.blocks[0]
     block_1 = model.model.blocks[1]
+    block_2 = model.model.blocks[2]
+    block_3 = model.model.blocks[3]
+    block_4 = model.model.blocks[4]
 
     # Forward through only the first conv
-    y = block_1(block_0(x))
+    y = block_4(block_3(block_2(block_1(block_0(x)))))
     f = y.sum()                  # scalar
 
     # Backward
