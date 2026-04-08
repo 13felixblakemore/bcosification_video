@@ -142,6 +142,9 @@ def debug(model, video_tensor):
     block_5 = model.model.blocks[5]
     block_6 = model.model.blocks[6]
 
+    print(type(model))
+    print(model.__class__.__name__)
+
     # Forward through only the first conv
     y = model(x)
     f = y.sum()                  # scalar
