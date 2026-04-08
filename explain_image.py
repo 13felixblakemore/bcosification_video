@@ -153,6 +153,7 @@ def explain_video(args, video_path):
     frames = new_frames
 
     video = torch.tensor(np.stack(frames))  # [T,H,W,C]
+    video = video.unsqueeze(0)
     video_tensor = transform(video)
     video_tensor = video_tensor.to(device)
     video_tensor = video_tensor.unsqueeze(0)
