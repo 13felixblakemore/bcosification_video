@@ -146,7 +146,7 @@ def debug(model, video_tensor):
         print(name, "->", module.__class__.__name__)
 
     # Forward through only the first conv
-    y = model(x)
+    y = model.bcosifynormalize(x)
     f = y.sum()                  # scalar
 
     # Backward
