@@ -259,7 +259,6 @@ class BcosUtilMixin:
 
         result = dict()
         with torch.enable_grad():
-            self.eval()
             # fwd + prediction
             if in_tensor.grad is not None:
                 in_tensor.grad = None
