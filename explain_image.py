@@ -132,11 +132,11 @@ def debug(model, video_tensor):
     x = video_tensor.detach().clone().requires_grad_(True)
 
     # Get first block and first conv
-    stem = model.model.blocks[0]
-    conv = stem.conv
+    block_0 = model.model.blocks[0]
+    block_1 = model.model.blocks[1]
 
     # Forward through only the first conv
-    y = model(x)
+    y = block_1(block_0(x))
     f = y.sum()                  # scalar
 
     # Backward
