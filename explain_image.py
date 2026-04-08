@@ -136,7 +136,7 @@ def debug(model, video_tensor):
     conv = stem.conv
 
     # Forward through only the first conv
-    y = stem(x)
+    y = model(x)
     f = y.sum()                  # scalar
 
     # Backward
