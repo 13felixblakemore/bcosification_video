@@ -171,12 +171,24 @@ def explain_video(args, video_path):
 
     expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
+    print(pred_idx.item(), expl_out["prediction"])
 
     target_logit = logits[expl_out["prediction"]]
 
     linear_map = expl_out["dynamic_linear_weights"]
     lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
     print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
+
+    print("TESTING------------------------")
+    print("pred_idx:", pred_idx.item())
+    print("expl_pred:", expl_out["prediction"])
+    print("video shape:", video_tensor.shape)
+    print("lm shape:", linear_map.shape)
+
+    lm_logit = (video_tensor * linear_map).sum(dim=(1, 2, 3, 4))
+    print("target_logit:", target_logit.item())
+    print("lm_logit:", lm_logit.item())
+    print("difference:", (target_logit - lm_logit).item())
 
     sys.exit()
 
