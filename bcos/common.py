@@ -190,6 +190,7 @@ class BcosUtilMixin:
     def explain_video(
         self,
         in_tensor,
+        unnorm_tensor,
         idx=None,
         **grad2vid_kwargs,
     ) -> "Dict[str, Any]":
@@ -284,7 +285,7 @@ class BcosUtilMixin:
 
         # generate (color) explanation
         result["explanation"], result["frame_scores"] = gradient_to_video(
-            in_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
+            unnorm_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
         )
 
         return result
