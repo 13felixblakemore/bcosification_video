@@ -280,8 +280,8 @@ class BcosUtilMixin:
         result["contribution_map"] = (in_tensor * grad).sum(1)
 
         # generate (color) explanation
-        result["explanation"], result["frame_scores"] = gradient_to_video(
-            in_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
+        result["explanation"], result["frame_scores"], result["contribution_map"] = gradient_to_video(
+            in_tensor[0], in_tensor.grad[0], return_contribs=True, **grad2vid_kwargs
         )
 
         return result

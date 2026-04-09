@@ -266,6 +266,14 @@ def explain_video(args, video_path):
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
 
+    contribs = expl_out["contribution_map"].squeeze(0)
+
+    for t, frame in enumerate(contribs):
+        plt.imshow(frame)
+        plt.axis('off')
+        plt.savefig(os.path.join(args.base_directory, f"contrib{t:03d}.png"), bbox_inches='tight')
+        plt.close()
+
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
