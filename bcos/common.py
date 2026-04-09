@@ -576,6 +576,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     alpha = torch.where(contribs < 0, 1e-12, alpha)
     # [1, T, H, W] -> [T, 1, H, W]
     alpha_2d = alpha.permute(1, 0, 2, 3)
+    smooth=1
     alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=smooth, stride=1, padding=(smooth - 1) // 2)
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
     alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
