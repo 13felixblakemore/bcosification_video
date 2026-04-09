@@ -190,7 +190,6 @@ class BcosUtilMixin:
     def explain_video(
         self,
         in_tensor,
-        unnorm_tensor,
         idx=None,
         **grad2vid_kwargs,
     ) -> "Dict[str, Any]":
@@ -260,10 +259,7 @@ class BcosUtilMixin:
 
         result = dict()
         with torch.enable_grad():
-            # fwd + prediction
-            if in_tensor.grad is not None:
-                in_tensor.grad = None
-            out = self.logit_layer(self.model(in_tensor))  # noqa
+            out = self(in_tensor)  # noqa
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
 
@@ -285,7 +281,7 @@ class BcosUtilMixin:
 
         # generate (color) explanation
         result["explanation"], result["frame_scores"] = gradient_to_video(
-            unnorm_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
+            in_tensor[0], in_tensor.grad[0], **grad2vid_kwargs
         )
 
         return result
@@ -598,12 +594,12 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     print("Grad video: ", np.array(grad_video).shape)
 
-    grad_images = []
-    for i in range(video.size(1)):
-        image = video[:, i, :, :]
-        l_m = linear_mapping[:,i, :, :]
-        grad_image = gradient_to_image(image, l_m)
-        grad_images.append(grad_image)
+    #grad_images = []
+    #for i in range(video.size(1)):
+    #   image = video[:, i, :, :]
+    #    l_m = linear_mapping[:,i, :, :]
+    #    grad_image = gradient_to_image(image, l_m)
+    #    grad_images.append(grad_image)
 
     if return_contribs:
         return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
