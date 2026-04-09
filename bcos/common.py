@@ -258,8 +258,8 @@ class BcosUtilMixin:
             )
 
         result = dict()
-        with torch.enable_grad():
-            out = self(in_tensor)  # noqa
+        with torch.enable_grad(), self.explanation_mode():
+            out = self.logit_layer(self.model(in_tensor))  # noqa
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
 
@@ -515,7 +515,7 @@ class explanation_mode(_DecoratorContextManager):
             m.set_explanation_mode(False)
 
 
-def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=99.5, return_contribs=False):
+def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.5, return_contribs=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
