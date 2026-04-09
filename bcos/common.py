@@ -574,16 +574,10 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
     alpha = torch.where(contribs < 0, 1e-12, alpha)
-    if smooth:
-        kT = 1
-        kH = 3
-        kW = 3
-        alpha = F.avg_pool3d(
-            alpha,
-            kernel_size=(kT, kH, kW),
-            stride=1,
-            padding=((kT - 1) // 2, (kH - 1) // 2, (kW - 1) // 2)
-        )
+    # [1, T, H, W] -> [T, 1, H, W]
+    alpha_2d = alpha.permute(1, 0, 2, 3)
+    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=smooth, stride=1, padding=(smooth - 1) // 2)
+    alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
     alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
@@ -602,9 +596,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=99.5, r
         grad_images.append(grad_image)
 
     if return_contribs:
-        return np.array(grad_images), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
     else:
-        return np.array(grad_images), np.array(frame_scores.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
     """
