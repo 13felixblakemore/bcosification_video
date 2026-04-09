@@ -235,9 +235,8 @@ def explain_video(args, video_path):
     print("Logit value:", pred_val.item())
     logits = logits[0]
 
-    bcos_norm_tensor = model.bcosifynormalize(video_tensor)
 
-    expl_out = model.explain_video(bcos_norm_tensor, bcos_norm_tensor)
+    expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
@@ -246,7 +245,7 @@ def explain_video(args, video_path):
     reconstructed_logit = expl_out["reconstructed_logit"]
 
     linear_map = expl_out["dynamic_linear_weights"]
-    lm_logit = (bcos_norm_tensor * linear_map).sum(dim=(1,2,3,4))
+    lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
     print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
 
     print("TESTING------------------------")
@@ -255,7 +254,7 @@ def explain_video(args, video_path):
     print("video shape:", video_tensor.shape)
     print("lm shape:", linear_map.shape)
 
-    lm_logit = (bcos_norm_tensor * linear_map).sum(dim=(1, 2, 3, 4))
+    lm_logit = (video_tensor * linear_map).sum(dim=(1, 2, 3, 4))
     print("target_logit:", target_logit.item())
     print("lm_logit:", lm_logit.item())
     print("reconstructed_logit:", reconstructed_logit.item())
