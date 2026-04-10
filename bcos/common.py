@@ -565,6 +565,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=50.0, re
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
+    print(rgb_grad.shape)
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, T, H, W]
 
