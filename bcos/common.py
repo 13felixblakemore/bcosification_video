@@ -567,8 +567,9 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     rgb_grad = rgb_grad.clamp(min=0)
     print(rgb_grad.shape) #6,10,224,224
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, T, H, W]
-    rgb_grad = torch.where((rgb_grad[:3] + rgb_grad[3:]) > 1e-3, rgb_grad, torch.full_like(rgb_grad, 0.5))
+    pair = rgb_grad[:3] + rgb_grad[3:]
+    rgb = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
