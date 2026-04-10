@@ -565,7 +565,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=50.0, re
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
-    print(rgb_grad.shape)
+    print(rgb_grad.shape) #6,10,224,224
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, T, H, W]
 
@@ -584,6 +584,8 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=50.0, re
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     print("Expected [4,t,h,w]: ", rgb_grad.shape)
     T = rgb_grad.shape[1]
+
+    print("rgb_grad min/max:", rgb_grad.min().item(), rgb_grad.max().item())
 
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
@@ -632,7 +634,7 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
-    rgb_grad = rgb_grad.clamp(min=0)
+    rgb_grad = rgb_grad.clamp(min=0) # 6,224,224
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, H, W]
 
