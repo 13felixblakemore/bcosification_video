@@ -66,7 +66,7 @@ class DenseNetBcos(DenseNet):
 
 
 class I3D(nn.Module):
-    def __init__(self, pretrained=True):
+    def __init__(self, pretrained=False):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
         self.blocks = self.model.blocks
@@ -80,7 +80,7 @@ class I3D(nn.Module):
 
 
 class I3DBcos(nn.Module):
-    def __init__(self, pretrained=True):
+    def __init__(self, pretrained=False):
         super().__init__()
         self.model = i3d_r50(pretrained=pretrained)
 
