@@ -36,7 +36,7 @@ def get_torch_model_modified(arch_name: str, model_config):
             _load_state_dict(model=tv_model, weights=weights, progress=False)
         return tv_model
     if arch_name == "i3d":
-        model = I3DBcos(pretrained=False)
+        model = I3DBcos(pretrained=True)
         return model
 
 def get_model(model_config) -> nn.Module:
