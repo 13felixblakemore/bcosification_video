@@ -240,11 +240,11 @@ def explain_video(args, video_path):
             print(name, module)
             break
 
-    module = model.model.conv1.weight
-    print(module.shape)
-    symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
-    print(symmetry)
-    sys.exit()
+    #module = model.model.conv1.weight
+    #print(module.shape)
+    #symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
+    #print(symmetry)
+    #sys.exit()
     model.eval()
 
     logits = model(video_tensor)
