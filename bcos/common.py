@@ -5,6 +5,7 @@ None of this is "essential" to training or doing inference with the models.
 However, they are useful for e.g. visualizing the explanations etc.
 So essentially it's a collection of convenience/helper functions/classes.
 """
+import sys
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
@@ -546,6 +547,9 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     print("Contribs shape: ", contribs.shape)
     logit = contribs.sum(dim=(1,2,3))
     print("Logit shape: ", logit, logit.shape)
+    for i in range(10):
+        print(linear_mapping[:, 0, i, 0])
+    sys.exit()
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
@@ -566,12 +570,14 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     #rgb_grad = rgb_grad.clamp(min=0)
     print(rgb_grad.shape) #6,10,224,
-    for i in range(224):
+    for i in range(10):
         print(rgb_grad[:, 0, i, 0])
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
     rgb = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
     rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
+    for i in range(10):
+        print(rgb_grad[:, 0, i, 0])
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
