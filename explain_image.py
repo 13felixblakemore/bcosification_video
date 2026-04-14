@@ -231,7 +231,7 @@ def explain_video(args, video_path):
             print(name, module)
             break
 
-    module = model.model.conv1.weights
+    module = model.model.conv1.weight
     print(module.shape)
     symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
     print(symmetry)
