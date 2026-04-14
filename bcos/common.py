@@ -549,6 +549,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     print("Logit shape: ", logit, logit.shape)
     for i in range(10):
         print(linear_mapping[:, 0, i, 0])
+    print(linear_mapping.abs().max(0, keepdim=True).values)
     sys.exit()
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
