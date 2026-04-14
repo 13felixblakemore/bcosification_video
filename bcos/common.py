@@ -651,10 +651,14 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, r
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
+    for i in range(10):
+        print(rgb_grad[:, i, 0])
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0) # 6,224,224
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, H, W]
+    for i in range(10):
+        print(rgb_grad[:, i, 0])
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
