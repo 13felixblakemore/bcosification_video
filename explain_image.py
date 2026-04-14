@@ -230,7 +230,11 @@ def explain_video(args, video_path):
         if isinstance(module, torch.nn.Conv3d):
             print(name, module)
             break
-    print(model.model.blocks[0])
+
+    module = model.model.blocks[0].conv.weight
+    print(module.shape)
+    symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
+    print(symmetry)
     sys.exit()
     model.eval()
 
