@@ -550,7 +550,6 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     for i in range(10):
         print(linear_mapping[:, 0, i, 0])
     print(linear_mapping.abs().max(0, keepdim=True).values)
-    sys.exit()
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
@@ -581,6 +580,10 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
         print(rgb_grad[:, 0, i, 0])
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
+    rgb = linear_mapping[:3]
+    rgb = rgb / (rgb.abs().max() + 1e-6)
+    rgb = (rgb + 1) / 2
+
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
@@ -592,13 +595,14 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
+    rgb = torch.concat([rgb, alpha], dim=0)
     print("Expected [4,t,h,w]: ", rgb_grad.shape)
     T = rgb_grad.shape[1]
 
     print("rgb_grad min/max:", rgb_grad.min().item(), rgb_grad.max().item())
 
     # Reshaping to [T, H, W, C]
-    grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
+    grad_video = [rgb[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     print("Grad video: ", np.array(grad_video).shape)
 
     grad_images = []
