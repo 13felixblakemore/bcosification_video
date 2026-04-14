@@ -670,6 +670,18 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, r
     rgb_grad = rgb_grad[:3] / (rgb_grad[:3] + rgb_grad[3:] + 1e-12)  # [3, H, W]
     for i in range(10):
         print(rgb_grad[:, i, 0])
+    black = 0
+    white = 0
+    other = 0
+    for i in range(224):
+        for j in range(224):
+            if torch.all(rgb_grad[:, i, j] == 1.0):
+                white += 1
+            elif torch.all(rgb_grad[:, i, j] == 0.0):
+                black += 1
+            else:
+                other += 1
+    print(black, white, other)
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
