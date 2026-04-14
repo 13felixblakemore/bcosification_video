@@ -630,7 +630,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     else:
         return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
-def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, return_contribs=False):
+def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, return_contribs=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
