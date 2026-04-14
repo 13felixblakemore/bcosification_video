@@ -645,6 +645,8 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=99.5, r
     """
     # shape of img and linmap is [C, H, W], summing over first dimension gives the contribution map per location
     contribs = (image * linear_mapping).sum(0, keepdim=True)  # [H, W]
+    for i in range(10):
+        print(linear_mapping[:, i, 0])
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12

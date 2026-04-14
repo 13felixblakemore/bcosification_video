@@ -99,6 +99,15 @@ def explain_image(args, image_path):
     img = img.to(device)
 
     model, config = load_model_and_config(args)
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv2d):
+            print(name, module)
+            break
+
+    module = model.model.conv1.weight
+    print(module.shape)
+    symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
+    print(symmetry)
     model.eval()
 
     expl_out = model.explain(img)
