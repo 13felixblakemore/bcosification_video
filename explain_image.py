@@ -226,6 +226,12 @@ def explain_video(args, video_path):
         video_tensor.grad.zero_()
 
     model, config = load_model_and_config(args)
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv3d):
+            print(name, module)
+            break
+    print(model.model.blocks[0])
+    sys.exit()
     model.eval()
 
     logits = model(video_tensor)
