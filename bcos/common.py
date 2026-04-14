@@ -581,7 +581,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
     rgb = linear_mapping[:3]
-    rgb = rgb / (rgb.abs().max() + 1e-6)
+    rgb = rgb / (rgb.abs().max(0, keepdim=True) + 1e-6)
     #rgb = (rgb + 1) / 2
     for i in range(10):
         print(rgb[:, 0, i, 0])
