@@ -461,8 +461,8 @@ class UCF101ClassificationPresetEval:
         video = video.clamp(0.0, 1.0)
 
         print("Video shape: ", video.shape)
-        print(video[0].max)
-        print(video[0].mean)
+        print(video[0].max())
+        print(video[0].mean())
         if self.is_bcos:
             video = self.add_inv(video)
             print("Video shape: ", video.shape)
