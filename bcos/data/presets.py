@@ -471,7 +471,6 @@ class UCF101ClassificationPresetEval:
             for i in range(224):
                 print("bcos: ", video[0,:,i,0])
                 print("standard: ", standard[0,:,i,0])
-            sys.exit()
         else:
             mean = torch.tensor(self.mean, device=video.device).view(1, -1, 1, 1)
             std = torch.tensor(self.std, device=video.device).view(1, -1, 1, 1)
