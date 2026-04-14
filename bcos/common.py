@@ -568,14 +568,20 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     #frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
-    #rgb_grad = rgb_grad.clamp(min=0)
+    rgb_grad = rgb_grad.clamp(min=0)
     print(rgb_grad.shape) #6,10,224,
-    for i in range(10):
-        print(rgb_grad[:, 0, i, 0])
+
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
-    rgb = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
-    rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
+    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    black = 0
+    white = 0
+    other = 0
+    for i in range(224):
+        for j in range(224):
+            if rgb_grad[:, 0, i, j] == 1:
+                pass
+    #rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
     for i in range(10):
         print(rgb_grad[:, 0, i, 0])
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
@@ -604,7 +610,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     print("rgb_grad min/max:", rgb_grad.min().item(), rgb_grad.max().item())
 
     # Reshaping to [T, H, W, C]
-    grad_video = [rgb[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
+    grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     print("Grad video: ", np.array(grad_video).shape)
 
     grad_images = []
