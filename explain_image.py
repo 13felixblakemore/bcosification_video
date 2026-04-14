@@ -227,7 +227,7 @@ def explain_video(args, video_path):
 
     model, config = load_model_and_config(args)
     for name, module in model.named_modules():
-        if isinstance(module, torch.nn.Conv3d):
+        if isinstance(module, torch.nn.Conv2d):
             print(name, module)
             break
 
