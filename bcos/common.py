@@ -579,8 +579,13 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     other = 0
     for i in range(224):
         for j in range(224):
-            if rgb_grad[:, 0, i, j] == 1:
-                pass
+            if torch.all(rgb_grad[:, 0, i, j] == 1.0):
+                white += 1
+            elif torch.all(rgb_grad[:, 0, i, j] == 0.0):
+                black += 1
+            else:
+                other += 1
+    print(black, white, other)
     #rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
     for i in range(10):
         print(rgb_grad[:, 0, i, 0])
