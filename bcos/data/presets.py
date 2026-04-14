@@ -466,8 +466,8 @@ class UCF101ClassificationPresetEval:
         if self.is_bcos:
             video = self.add_inv(video)
             print("Video shape: ", video.shape)
-            print(video[0].max)
-            print(video[0].mean)
+            print(video[0].max())
+            print(video[0].mean())
             sys.exit()
         else:
             mean = torch.tensor(self.mean, device=video.device).view(1, -1, 1, 1)
