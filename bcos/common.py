@@ -564,7 +564,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     #frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
-    rgb_grad = rgb_grad.clamp(min=0)
+    #rgb_grad = rgb_grad.clamp(min=0)
     print(rgb_grad.shape) #6,10,224,
     for i in range(224):
         print(rgb_grad[:, 0, i, 0])
