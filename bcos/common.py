@@ -583,6 +583,8 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     rgb = linear_mapping[:3]
     rgb = rgb / (rgb.abs().max() + 1e-6)
     rgb = (rgb + 1) / 2
+    for i in range(10):
+        print(rgb[:, 0, i, 0])
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
