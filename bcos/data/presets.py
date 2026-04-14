@@ -466,6 +466,7 @@ class UCF101ClassificationPresetEval:
             print("Video shape: ", video.shape)
             print(video[0].max)
             print(video[0].mean)
+            sys.exit()
         else:
             mean = torch.tensor(self.mean, device=video.device).view(1, -1, 1, 1)
             std = torch.tensor(self.std, device=video.device).view(1, -1, 1, 1)
