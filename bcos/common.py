@@ -260,7 +260,7 @@ class BcosUtilMixin:
 
         result = dict()
         with torch.enable_grad(), self.explanation_mode():
-            out = self.logit_layer(self.model(in_tensor))  # noqa
+            out = self(in_tensor)  # noqa
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
 
