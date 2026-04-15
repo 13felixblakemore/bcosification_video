@@ -7,7 +7,7 @@ import torch.linalg as LA
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn.modules.utils import _pair
+from torch.nn.modules.utils import _pair, _triple
 
 from .common import DetachableModule
 
@@ -111,11 +111,10 @@ class BcosConv3d(DetachableModule):
         # save everything
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.kernel_size = kernel_size
-
-        self.stride = stride
-        self.padding = padding
-        self.dilation = _pair(dilation)
+        self.kernel_size = _triple(kernel_size)
+        self.stride = _triple(stride)
+        self.padding = _triple(padding)
+        self.dilation = _triple(dilation)
         self.groups = groups
         self.padding_mode = padding_mode
         self.device = device
