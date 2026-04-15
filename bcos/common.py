@@ -585,15 +585,11 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
                 other += 1"""
     print(black, white, other)
     #rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
-    for i in range(10):
-        print(rgb_grad[:, 0, i, 0])
     print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
 
     rgb = linear_mapping[:3]
     rgb = rgb / (rgb.abs().max(0, keepdim=True).values + 1e-6)
     rgb = rgb.clamp_min(0)
-    for i in range(10):
-        print(rgb[:, 0, i, 0])
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
