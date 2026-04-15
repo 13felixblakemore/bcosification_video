@@ -213,7 +213,7 @@ def explain_video(args, video_path):
         is_bcos=True,
     )
     # choose which frame to keep
-    t_keep = [0,1,2,3,4,5,6,7]  # change this manually each run
+    t_keep = [4]  # change this manually each run
 
     # replacement (use mean frame for stability)
     black = np.zeros_like(frames[0])
@@ -280,7 +280,7 @@ def explain_video(args, video_path):
     print("reconstructed_logit:", reconstructed_logit.item())
     print("difference:", (target_logit - lm_logit).item())
 
-    debug_out = debug(model, video_tensor)
+    #debug_out = debug(model, video_tensor)
 
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
@@ -288,12 +288,12 @@ def explain_video(args, video_path):
 
     contribs = expl_out["contribution_map"].squeeze(0)
 
-    for t, frame in enumerate(contribs):
+    """for t, frame in enumerate(contribs):
         plt.imshow(frame)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"contrib{t:03d}.png"), bbox_inches='tight')
         plt.close()
-
+    """
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)

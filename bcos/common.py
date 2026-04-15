@@ -547,8 +547,6 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     print("Contribs shape: ", contribs.shape)
     logit = contribs.sum(dim=(1,2,3))
     print("Logit shape: ", logit, logit.shape)
-    for i in range(10):
-        print(linear_mapping[:, 0, i, 0])
     print(linear_mapping.abs().max(0, keepdim=True).values)
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
@@ -577,14 +575,14 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=95.0, re
     black = 0
     white = 0
     other = 0
-    for i in range(224):
+    """    for i in range(224):
         for j in range(224):
             if torch.all(rgb_grad[:, 0, i, j] == 1.0):
                 white += 1
             elif torch.all(rgb_grad[:, 0, i, j] == 0.0):
                 black += 1
             else:
-                other += 1
+                other += 1"""
     print(black, white, other)
     #rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
     for i in range(10):
