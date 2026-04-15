@@ -540,19 +540,15 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
         image explanation of the B-cos model.
         Shape: [H, T, W, C] (C=4 ie RGBA)
     """
-    print("Video shape: ", video.shape) # C,T,H,W
-    print("Linear Mapping shape: ", linear_mapping.shape) # C,T,H,W
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
-    print("Contribs shape: ", contribs.shape)
     logit = contribs.sum(dim=(1,2,3))
-    print("Logit shape: ", logit, logit.shape)
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
-    print("RGB grad shape: ", rgb_grad.shape)
 
+    # Compute frame contribution scores
     squeezed_contribs = contribs.squeeze(0)
     pos = squeezed_contribs.clamp_min(0)
     flat = pos.flatten(1, 2)  # [T, H*W]
@@ -562,33 +558,12 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
 
     frame_scores = topk_vals.sum(dim=1)
 
-    #frame_scores = contribs.squeeze(0).clamp_min(0).sum(dim=(1, 2))
-
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
-    print(rgb_grad.shape) #6,10,224,
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
     rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
-    black = 0
-    white = 0
-    other = 0
-    """    for i in range(224):
-        for j in range(224):
-            if torch.all(rgb_grad[:, 0, i, j] == 1.0):
-                white += 1
-            elif torch.all(rgb_grad[:, 0, i, j] == 0.0):
-                black += 1
-            else:
-                other += 1"""
-    print(black, white, other)
-    #rgb_grad = torch.where(pair > 1e-3, rgb, torch.full_like(rgb, 0.5))
-    print("RGB grad shape: ", rgb_grad.shape) # 3,T,H,W
-
-    rgb = linear_mapping[:3]
-    rgb = rgb / (rgb.abs().max(0, keepdim=True).values + 1e-6)
-    rgb = rgb.clamp_min(0)
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
@@ -601,22 +576,10 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
-    rgb = torch.concat([rgb, alpha], dim=0)
-    print("Expected [4,t,h,w]: ", rgb_grad.shape)
     T = rgb_grad.shape[1]
-
-    print("rgb_grad min/max:", rgb_grad.min().item(), rgb_grad.max().item())
 
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
-    print("Grad video: ", np.array(grad_video).shape)
-
-    grad_images = []
-    for i in range(video.size(1)):
-        image = video[:, i, :, :]
-        l_m = linear_mapping[:,i, :, :]
-        grad_image = gradient_to_image(image, l_m)
-        grad_images.append(grad_image)
 
     if return_contribs:
         return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())

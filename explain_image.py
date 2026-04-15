@@ -212,39 +212,15 @@ def explain_video(args, video_path):
         crop_size=224,
         is_bcos=True,
     )
-    # choose which frame to keep
-    t_keep = [4]  # change this manually each run
 
-    # replacement (use mean frame for stability)
-    black = np.zeros_like(frames[0])
-
-    new_frames = []
-    for i in range(len(frames)):
-        if i in t_keep:
-            new_frames.append(frames[i])  # real frame
-        else:
-            new_frames.append(black)  # replace others
-
-    frames = new_frames
-
-    og = torch.tensor(np.stack(frames))  # [T,H,W,C]
-    video_tensor = transform(og)
+    video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
+    video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
     video_tensor = video_tensor.unsqueeze(0)
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
 
     model, config = load_model_and_config(args)
-    for name, module in model.named_modules():
-        if isinstance(module, torch.nn.Conv2d):
-            print(name, module)
-            break
-
-    #module = model.model.conv1.weight
-    #print(module.shape)
-    #symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
-    #print(symmetry)
-    #sys.exit()
     model.eval()
 
     logits = model(video_tensor)
@@ -260,40 +236,18 @@ def explain_video(args, video_path):
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
-    target_logit = logits[expl_out["prediction"]]
-
-    reconstructed_logit = expl_out["reconstructed_logit"]
-
-    linear_map = expl_out["dynamic_linear_weights"]
-    lm_logit = (video_tensor * linear_map).sum(dim=(1,2,3,4))
-    print(f"Actual vs reconstructed: {target_logit} ({lm_logit})")
-
-    print("TESTING------------------------")
-    print("pred_idx:", pred_idx.item())
-    print("expl_pred:", expl_out["prediction"])
-    print("video shape:", video_tensor.shape)
-    print("lm shape:", linear_map.shape)
-
-    lm_logit = (video_tensor * linear_map).sum(dim=(1, 2, 3, 4))
-    print("target_logit:", target_logit.item())
-    print("lm_logit:", lm_logit.item())
-    print("reconstructed_logit:", reconstructed_logit.item())
-    print("difference:", (target_logit - lm_logit).item())
-
-    #debug_out = debug(model, video_tensor)
-
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
     plot_frame_importance_with_frames(frames, frame_scores, frame_path)
 
     contribs = expl_out["contribution_map"].squeeze(0)
 
-    """for t, frame in enumerate(contribs):
+    for t, frame in enumerate(contribs):
         plt.imshow(frame)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"contrib{t:03d}.png"), bbox_inches='tight')
         plt.close()
-    """
+
     grad_video = expl_out["explanation"]
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
