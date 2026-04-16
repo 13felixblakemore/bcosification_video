@@ -1052,8 +1052,8 @@ def setup_callbacks(args, config):
     # callbacks.append(custom_callbacks.InitialValidationCallback())
     callbacks.append(TeacherAlwaysEvalMode())
     callbacks.append(FreezeTeacher())
-    callbacks.append(ImageNetEval())
-    callbacks.append(ZeroshotEval())
+    #callbacks.append(ImageNetEval())
+    #callbacks.append(ZeroshotEval())
     print('new callbacks')
 
     return callbacks
