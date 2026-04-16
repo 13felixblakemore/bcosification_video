@@ -19,7 +19,8 @@ model = BcosifyNetwork(model, config["model"])
 
 # If checkpoint contains only state_dict
 if "state_dict" in checkpoint:
-    model.load_state_dict(checkpoint["state_dict"])
+    pass
+    #model.load_state_dict(checkpoint["state_dict"])
 else:
     model.load_state_dict(checkpoint)
 
