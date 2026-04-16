@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 import os
 
+
 def plot_multiple_scalars(log_dir, tags, smoothing=0.0):
     plt.figure(figsize=(8, 5))
 
@@ -36,6 +37,46 @@ def plot_multiple_scalars(log_dir, tags, smoothing=0.0):
     plt.close()
 
 
+def compare_scalar_between_runs(log_dir1, log_dir2, tag="val_acc1",
+                                label1="Standard",
+                                label2="B-Cos",
+                                smoothing=0.0,
+                                save_path="comparison_plot.png"):
+
+    plt.figure(figsize=(8, 5))
+
+    for log_dir, label in [(log_dir1, label1), (log_dir2, label2)]:
+
+        ea = event_accumulator.EventAccumulator(
+            log_dir,
+            size_guidance={event_accumulator.SCALARS: 0}
+        )
+        ea.Reload()
+
+        events = ea.Scalars(tag)
+
+        steps = [e.step for e in events]
+        values = [e.value for e in events]
+
+        if smoothing > 0:
+            smoothed = []
+            last = values[0]
+            for v in values:
+                last = smoothing * last + (1 - smoothing) * v
+                smoothed.append(last)
+            values = smoothed
+
+        plt.plot(steps, values, label=label)
+
+    plt.xlabel("Epoch / Step")
+    plt.ylabel(tag)
+    plt.title(f"{tag} Comparison")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(save_path, bbox_inches="tight", dpi=300)
+    plt.close()
+
 
 def print_all_tensorboard_tags(log_dir):
     ea = event_accumulator.EventAccumulator(log_dir)
@@ -50,23 +91,7 @@ def print_all_tensorboard_tags(log_dir):
             print(f"  - {tag}")
         print()
 
-"""
-SCALARS:
-  - hp_metric
-  - lr-AdamW
-  - train_loss
-  - train_acc1_step
-  - train_acc5_step
-  - epoch
-  - val_loss
-  - val_acc1
-  - val_acc5
-  - train_acc1_epoch
-  - train_acc5_epoch
-"""
-
-
 log_dir = "tb_logs/experiments/UCF101/standard/i3d/i3d/standard"
+log_dir_2 = "tb_logs/experiments/UCF101/standard/i3d/i3d/version_10"
 tags = ["val_acc1"]
-
-plot_multiple_scalars(log_dir, tags)
+compare_scalar_between_runs(log_dir, log_dir_2)
