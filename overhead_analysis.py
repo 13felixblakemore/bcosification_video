@@ -1,3 +1,5 @@
+import os
+
 import torch
 from ptflops import get_model_complexity_info
 
@@ -5,7 +7,8 @@ from bcos.experiments.utils import CHECKPOINT_LAST_FILENAME
 from bcos.models.standard_models import I3DBcos
 
 ckpt = CHECKPOINT_LAST_FILENAME
-checkpoint = torch.load(ckpt, map_location=torch.device('cpu'))
+path = os.path.join("experiments/UCF101/bcosification/i3d", ckpt)
+checkpoint = torch.load(path, map_location=torch.device('cpu'))
 
 model = I3DBcos(True)
 
