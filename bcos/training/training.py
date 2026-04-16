@@ -90,7 +90,7 @@ def run_training(args):
         callbacks=callbacks,
         accumulate_grad_batches=2,
         precision=16,
-        val_check_interval=0.1,
+        val_check_interval=0.2,
         **trainer_config,
     )
     print("GPUS: ", trainer.num_devices)
