@@ -3,14 +3,19 @@ import os
 import torch
 from ptflops import get_model_complexity_info
 
-from bcos.experiments.utils import CHECKPOINT_LAST_FILENAME
+from bcos.experiments.utils import CHECKPOINT_LAST_FILENAME, Experiment
 from bcos.models.standard_models import I3DBcos
+from bcosify3D import BcosifyNetwork
 
 ckpt = CHECKPOINT_LAST_FILENAME
 path = os.path.join("experiments/UCF101/bcosification/i3d", ckpt)
 checkpoint = torch.load(path, map_location=torch.device('cpu'))
 
+exp = Experiment("UCF101", "bcosification", "i3d")
+config = exp.config.copy()
+
 model = I3DBcos(True)
+model = BcosifyNetwork(model, config)
 
 # If checkpoint contains only state_dict
 if "state_dict" in checkpoint:
