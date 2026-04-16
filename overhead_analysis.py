@@ -9,7 +9,7 @@ from bcosify3D import BcosifyNetwork
 
 ckpt = CHECKPOINT_LAST_FILENAME
 path = os.path.join("experiments/UCF101/bcosification/i3d", ckpt)
-checkpoint = torch.load(path, map_location=torch.device('cpu'))
+checkpoint = torch.load(path, map_location=torch.device('cuda'))
 
 exp = Experiment("UCF101", "bcosification", "i3d")
 config = exp.config.copy()
