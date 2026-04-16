@@ -92,6 +92,6 @@ def print_all_tensorboard_tags(log_dir):
         print()
 
 log_dir = "tb_logs/experiments/UCF101/standard/i3d/i3d/standard"
-log_dir_2 = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_9"
+log_dir_2 = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_8"
 tags = ["val_acc1"]
 compare_scalar_between_runs(log_dir, log_dir_2)
