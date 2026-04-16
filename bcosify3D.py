@@ -149,8 +149,8 @@ class BcosifyNormalize(nn.Module):
             self.std = torch.tensor(std).view(1, -1, 1, 1, 1).to("cpu")
 
     def forward(self, x):
-        mean = self.mean
-        std  = self.std
+        mean = self.mean.to(x.device)
+        std = self.std.to(x.device)
         assert x.shape[1] == self.mean.shape[1]
          #print(x.min().item(), x.max().item())
         out = (x.float() - mean) / std
