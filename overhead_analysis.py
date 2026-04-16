@@ -39,3 +39,20 @@ for model, checkpoint in [(model, s_checkpoint), (model_bcos, checkpoint)]:
 
     print("MACs:", macs)
     print("Params:", params)
+
+
+model.eval().cuda()
+x = torch.randn(1, 6, 8, 224, 224).cuda()
+
+with torch.profiler.profile(
+    activities=[
+        torch.profiler.ProfilerActivity.CPU,
+        torch.profiler.ProfilerActivity.CUDA,
+    ],
+    record_shapes=True,
+    profile_memory=True,
+) as prof:
+    with torch.no_grad():
+        _ = model(x)
+
+print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=30))
