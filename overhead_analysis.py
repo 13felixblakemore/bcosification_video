@@ -21,6 +21,8 @@ model_bcos = BcosifyNetwork(model, config["model"])
 
 # If checkpoint contains only state_dict
 for model, checkpoint in [(model, s_checkpoint), (model_bcos, checkpoint)]:
+    print(model.state_dict().keys())
+    continue
     if "state_dict" in checkpoint:
         model.load_state_dict(checkpoint["state_dict"])
     else:
