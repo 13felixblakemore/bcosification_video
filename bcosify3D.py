@@ -99,7 +99,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         bcosify_args = model_config.get("bcosify_args", None)
         clip_kd = bcosify_args.get("clip_kd", False) if bcosify_args is not None else False
         for n, module in model.named_children():
-            if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d)):
+            if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d, nn.BatchNorm3d)):
                 continue
             if len(list(module.children())) > 0:
                 # compound module, go inside it
