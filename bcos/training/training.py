@@ -1,4 +1,5 @@
 import os
+import sys
 import warnings
 from pathlib import Path
 
@@ -63,6 +64,8 @@ def run_training(args):
 
     # callbacks
     callbacks = setup_callbacks(args, config)
+    print(callbacks)
+    sys.exit()
 
     # init trainer
     trainer_config = config["trainer"]
