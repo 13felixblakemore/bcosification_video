@@ -41,6 +41,7 @@ for model, checkpoint in [(model, s_checkpoint), (model_bcos, checkpoint)]:
     print("Params:", params)
 
 
+model = model_bcos
 model.eval().cuda()
 x = torch.randn(1, 6, 8, 224, 224).cuda()
 
