@@ -15,7 +15,7 @@ exp = Experiment("UCF101", "bcosification", "i3d")
 config = exp.config.copy()
 
 model = I3DBcos(True)
-model = BcosifyNetwork(model, config)
+model = BcosifyNetwork(model, config["model"])
 
 # If checkpoint contains only state_dict
 if "state_dict" in checkpoint:
