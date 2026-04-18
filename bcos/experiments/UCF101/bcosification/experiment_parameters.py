@@ -50,7 +50,7 @@ DEFAULTS = dict(
             is_bcos=True,
         ),
         batch_size=DEFAULT_BATCH_SIZE,
-        num_workers=4,
+        num_workers=8,
         num_classes=NUM_CLASSES,
     ),
     model=dict(
