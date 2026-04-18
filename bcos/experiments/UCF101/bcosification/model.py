@@ -52,9 +52,9 @@ def get_model(model_config) -> nn.Module:
     #    exec(f'model.model.{k} = v')
     
     # Making all the bias parameters None
-    print("Keeping bias parameters (making None)")
-    #for mod in model.modules():
-    #  if hasattr(mod, "bias") and mod.bias is not None:
-    #      mod.bias = None
+    print("Removing bias parameters (making None)")
+    for mod in model.modules():
+      if hasattr(mod, "bias") and mod.bias is not None:
+          mod.bias = None
 
     return model
