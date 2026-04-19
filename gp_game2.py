@@ -4,6 +4,8 @@ import pathlib
 
 import torch
 
+from bcos.data.datamodules import UCF101GridDataModule
+from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
 from bcos.experiments.UCF101.bcosification.model import get_model
 from evaluate import load_model_and_config
@@ -26,10 +28,31 @@ def get_parser(add_help=True):
     )
     return parser
 
+config = {
+    "batch_size": 2,
+    "num_workers": 4,
+    "frames_per_clip": 8,
+    "step_between_clips": 32,
+    "fold": 2,
+    "train_transform": UCF101ClassificationPresetTrain,
+    "test_transform": UCF101ClassificationPresetEval,
+    "same_class_grid": False,
+}
+
 def game(args):
     # load model
-    model, config = load_model_and_config(args)
+    model, model_config = load_model_and_config(args)
     model.eval()
+
+    dm = UCF101GridDataModule(config)
+    dm.setup("fit")
+
+    loader = dm.train_dataloader()
+    grid_video, labels, indices = next(iter(loader))
+
+    print(grid_video.shape)  # [B, C, T, 2H, 2W]
+    print(labels.shape)  # [B, 4]
+    print(indices.shape)  # [B, 4]
 # sort clips by confidence
 # choose top 500 clips and store
 

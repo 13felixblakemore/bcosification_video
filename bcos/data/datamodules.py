@@ -24,7 +24,7 @@ import torch
 import torch.utils.data as data
 import torchvision
 from torchvision.datasets import CIFAR10, ImageFolder, UCF101
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 from PIL import Image
 import random
 
@@ -374,6 +374,195 @@ class UCF101DataModule(ClassificationDataModule):
         #torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
         #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+
+class UCF101VideoGridDataset(Dataset):
+    """
+    Wraps a (video, label) dataset and returns 2x2 tiled video grids.
+
+    Each returned sample is:
+        grid_video: [C, T, 2H, 2W]
+        labels:     [4]   labels of the 4 clips in the grid
+        indices:    [4]   source dataset indices used
+    """
+
+    def __init__(
+        self,
+        base_dataset: Dataset,
+        same_class: bool = False,
+        seed: int = 42,
+    ):
+        self.base_dataset = base_dataset
+        self.same_class = same_class
+        self.seed = seed
+
+        # Build label -> indices mapping for optional same-class sampling
+        self.label_to_indices = {}
+        for i in range(len(self.base_dataset)):
+            _, label = self.base_dataset[i]
+            label = int(label)
+            if label not in self.label_to_indices:
+                self.label_to_indices[label] = []
+            self.label_to_indices[label].append(i)
+
+    def __len__(self):
+        return len(self.base_dataset)
+
+    def _sample_4_indices(self, anchor_idx: int) -> List[int]:
+        rng = random.Random(self.seed + anchor_idx)
+
+        anchor_video, anchor_label = self.base_dataset[anchor_idx]
+        anchor_label = int(anchor_label)
+
+        if self.same_class:
+            candidates = self.label_to_indices[anchor_label]
+            if len(candidates) >= 4:
+                chosen = rng.sample(candidates, 4)
+            else:
+                # fallback with replacement if class has fewer than 4 clips
+                chosen = [rng.choice(candidates) for _ in range(4)]
+        else:
+            all_indices = list(range(len(self.base_dataset)))
+            if len(all_indices) >= 4:
+                chosen = rng.sample(all_indices, 4)
+            else:
+                chosen = [rng.choice(all_indices) for _ in range(4)]
+
+        return chosen
+
+    @staticmethod
+    def make_2x2_grid(videos: List[torch.Tensor]) -> torch.Tensor:
+        """
+        videos: list of 4 tensors, each [C, T, H, W]
+        returns: [C, T, 2H, 2W]
+        """
+        assert len(videos) == 4, "Need exactly 4 videos for a 2x2 grid"
+
+        v0, v1, v2, v3 = videos
+
+        # Sanity check: same shape
+        c, t, h, w = v0.shape
+        for i, v in enumerate(videos):
+            assert v.shape == (c, t, h, w), f"Video {i} has shape {v.shape}, expected {(c,t,h,w)}"
+
+        top = torch.cat([v0, v1], dim=-1)     # [C, T, H, 2W]
+        bottom = torch.cat([v2, v3], dim=-1)  # [C, T, H, 2W]
+        grid = torch.cat([top, bottom], dim=-2)  # [C, T, 2H, 2W]
+
+        return grid
+
+    def __getitem__(self, idx: int):
+        chosen_indices = self._sample_4_indices(idx)
+
+        videos = []
+        labels = []
+
+        for i in chosen_indices:
+            video, label = self.base_dataset[i]
+            videos.append(video)
+            labels.append(int(label))
+
+        grid_video = self.make_2x2_grid(videos)
+        labels = torch.tensor(labels, dtype=torch.long)
+        indices = torch.tensor(chosen_indices, dtype=torch.long)
+
+        return grid_video, labels, indices
+
+
+class UCF101GridDataModule(pl.LightningDataModule):
+    NUM_CLASSES: int = 101
+    UCF101_PATH = settings.UCF101_PATH
+    _TRAIN_PATH = "ucfTrainTestlist"
+
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.batch_size = config["batch_size"]
+        self.num_workers = config["num_workers"]
+
+        self.train_dataset = None
+        self.eval_dataset = None
+
+    def setup(self, stage: str = None) -> None:
+        train_md = torch.load("ucf101_train_metadata.pt")
+        val_md = torch.load("ucf101_eval_metadata.pt")
+
+        frames_per_clip = self.config.get("frames_per_clip", 8)
+        step_between_clips = self.config.get("step_between_clips", 32)
+        fold = self.config.get("fold", 2)
+        same_class_grid = self.config.get("same_class_grid", False)
+
+        if stage == "fit" or stage is None:
+            rank_zero_info("Setting up UCF101 train dataset...")
+            start = time.perf_counter()
+
+            train_base = UCF101(
+                root=settings.UCF101_PATH,
+                annotation_path=self._TRAIN_PATH,
+                frames_per_clip=frames_per_clip,
+                fold=fold,
+                transform=self.config["train_transform"],
+                step_between_clips=step_between_clips,
+                train=True,
+                _precomputed_metadata=train_md,
+            )
+            train_base = VideoOnlyDataset(train_base)
+            self.train_dataset = UCF101VideoGridDataset(
+                train_base,
+                same_class=same_class_grid,
+                seed=42,
+            )
+
+            rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+        rank_zero_info("Setting up UCF101 val dataset...")
+        start = time.perf_counter()
+
+        val_base = UCF101(
+            root=settings.UCF101_PATH,
+            annotation_path=self._TRAIN_PATH,
+            frames_per_clip=frames_per_clip,
+            fold=fold,
+            transform=self.config["test_transform"],
+            step_between_clips=step_between_clips,
+            train=False,
+            _precomputed_metadata=val_md,
+        )
+        val_base = VideoOnlyDataset(val_base)
+        self.eval_dataset = UCF101VideoGridDataset(
+            val_base,
+            same_class=same_class_grid,
+            seed=123,
+        )
+
+        rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            self.eval_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
+
+    def test_dataloader(self):
+        return DataLoader(
+            self.eval_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=True,
+        )
 
 
 class VideoOnlyDataset(torch.utils.data.Dataset):
