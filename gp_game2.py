@@ -85,6 +85,7 @@ def explain(args, video_tensor, labels):
             print("Checkpoint epoch:", checkpoint["epoch"])
 
     model.eval()
+    print(video_tensor.shape)
     out = model(video_tensor)
     scores = []
     for label in labels:
