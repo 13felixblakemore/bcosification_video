@@ -553,7 +553,6 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
-    rgb_grad = linear_mapping[:3].clamp_min(0)
 
     # Compute frame contribution scores
     squeezed_contribs = contribs.squeeze(0)
