@@ -581,7 +581,10 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
     alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
 
-    rgb_grad = linear_mapping[:3].clamp_min(0)
+    lm_norm = linear_mapping / (
+        linear_mapping.abs().max(0, keepdim=True).values + 1e-12
+    )
+    rgb_grad = lm_norm[:3].clamp_min(0)
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
 
