@@ -40,7 +40,7 @@ def game(args):
     model, model_config = load_model_and_config(args)
     model.eval()
     print(model_config)
-    dm = UCF101DataModule(model_config)
+    dm = UCF101DataModule(model_config["data"])
 
     dm.setup("fit")
 
