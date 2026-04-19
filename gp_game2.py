@@ -51,27 +51,8 @@ def game(args):
     model, model_config = load_model_and_config(args)
     model.eval()
 
-    train_md = torch.load("ucf101_train_metadata.pt")
+    dm = UCF101DataModule(model_config)
 
-    ds = UCF101(
-        root=settings.UCF101_PATH,
-        annotation_path="ucfTrainTestlist",
-        frames_per_clip=8,
-        fold=2,
-        transform=config["train_transform"],
-        step_between_clips=32,
-        train=True,
-        _precomputed_metadata=train_md,
-    )
-
-    sample = ds[0]
-    print(type(sample))
-    print(sample)
-    print(len(sample))
-    for i, x in enumerate(sample):
-        print(i, type(x))
-
-    dm = UCF101DataModule(config)
     dm.setup("fit")
 
     loader = dm.train_dataloader()
