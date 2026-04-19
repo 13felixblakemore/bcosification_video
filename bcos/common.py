@@ -517,7 +517,7 @@ class explanation_mode(_DecoratorContextManager):
         for m in self.expl_modules:
             m.set_explanation_mode(False)
 
-def antisymmetry_percentage(linear_mapping, threshold=0.1):
+def antisymmetry_percentage(linear_mapping, threshold=0.01):
     """
     Computes percentage of pixels where (c, 1-c) channel pairs are antisymmetric.
 
