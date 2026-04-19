@@ -297,6 +297,10 @@ def explain_video(args, video_path):
         plt.close()
 
     grad_video = expl_out["explanation"]
+    plt.imshow(frames[0])
+    plt.axis('off')
+    plt.savefig(os.path.join(args.base_directory, f"og.png"), bbox_inches='tight')
+    plt.close()
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
         plt.axis('off')
