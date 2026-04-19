@@ -517,6 +517,47 @@ class explanation_mode(_DecoratorContextManager):
         for m in self.expl_modules:
             m.set_explanation_mode(False)
 
+def antisymmetry_percentage_2d(linear_mapping, threshold=0.1):
+    """
+    Computes percentage of pixels where (c, 1-c) channel pairs are antisymmetric (2D case).
+
+    Parameters
+    ----------
+    linear_mapping : Tensor
+        Shape [6, H, W]
+    threshold : float
+        Tolerance for antisymmetry
+
+    Returns
+    -------
+    float
+        Percentage of antisymmetric pixels
+    """
+
+    # Normalise per-pixel
+    lm = linear_mapping / (linear_mapping.abs().max(dim=0, keepdim=True).values + 1e-12)
+
+    # Split channels
+    rgb = lm[:3]   # [3, H, W]
+    inv = lm[3:]   # [3, H, W]
+
+    # Antisymmetry error: w_rgb + w_inv ≈ 0
+    antisym_error = (rgb + inv).abs()  # [3, H, W]
+
+    # Aggregate across channels
+    antisym_error = antisym_error.mean(dim=0)  # [H, W]
+
+    # Mask
+    antisym_mask = antisym_error < threshold
+
+    # Percentage
+    num_pixels = antisym_mask.numel()
+    num_antisym = antisym_mask.sum().item()
+
+    percentage = 100.0 * num_antisym / num_pixels
+
+    return percentage
+
 def antisymmetry_percentage(linear_mapping, threshold=0.01):
     """
     Computes percentage of pixels where (c, 1-c) channel pairs are antisymmetric.
@@ -707,6 +748,8 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, r
         image explanation of the B-cos model.
         Shape: [H, W, C] (C=4 ie RGBA)
     """
+    p = antisymmetry_percentage_2d(linear_mapping)
+    print(f"{p:.2f}% of pixels are antisymmetric")
     # shape of img and linmap is [C, H, W], summing over first dimension gives the contribution map per location
     contribs = (image * linear_mapping).sum(0, keepdim=True)  # [H, W]
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
