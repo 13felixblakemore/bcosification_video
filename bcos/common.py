@@ -554,6 +554,9 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
+    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+    rgb_grad = rgb_grad.clamp(min=0)
+
     # Compute frame contribution scores
     squeezed_contribs = contribs.squeeze(0)
     pos = squeezed_contribs.clamp_min(0)
@@ -564,8 +567,7 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
 
     frame_scores = topk_vals.sum(dim=1)
 
-    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
-    rgb_grad = rgb_grad.clamp(min=0)
+
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
@@ -584,7 +586,7 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
     lm_norm = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
-    rgb_grad = lm_norm[:3].clamp_min(0)
+    #rgb_grad = lm_norm[:3].clamp_min(0)
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
 
