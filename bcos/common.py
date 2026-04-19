@@ -750,6 +750,13 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, r
     """
     p = antisymmetry_percentage_2d(linear_mapping, 0.01)
     print(f"{p:.2f}% of pixels are antisymmetric")
+    lm = linear_mapping / (linear_mapping.abs().max(dim=0, keepdim=True).values + 1e-12)
+    rgb = lm[:3]
+    inv = lm[3:]
+    antisym_error = (rgb + inv).abs().mean()
+
+    print("mean antisymmetry error:", antisym_error.item())
+    sys.exit()
     # shape of img and linmap is [C, H, W], summing over first dimension gives the contribution map per location
     contribs = (image * linear_mapping).sum(0, keepdim=True)  # [H, W]
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
