@@ -98,8 +98,12 @@ def explain(args, video_tensor, labels):
         model.zero_grad(set_to_none=True)
         out = model(x)
         to_be_explained_logit = out[0, label]
+        to_be_explained_logit.backward()
         print("Explaining label: ", label)
-        to_be_explained_logit.backward(inputs=[video_tensor])
+
+        print("x is leaf:", x.is_leaf)
+        print("x requires_grad:", x.requires_grad)
+        print("x.grad is None:", x.grad is None)
         linear_mapping = x.grad.detach().clone()
         linear_mapping = linear_mapping.sum(dim=1).squeeze(0)
         print(linear_mapping.shape)
