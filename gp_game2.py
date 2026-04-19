@@ -3,7 +3,9 @@ import argparse
 import pathlib
 
 import torch
+from torchvision.datasets import UCF101
 
+from bcos import settings
 from bcos.data.datamodules import UCF101GridDataModule, UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
@@ -48,6 +50,26 @@ def make_2x2_grid(videos):
 def game(args):
     model, model_config = load_model_and_config(args)
     model.eval()
+
+    train_md = torch.load("ucf101_train_metadata.pt")
+
+    ds = UCF101(
+        root=settings.UCF101_PATH,
+        annotation_path="ucfTrainTestlist",
+        frames_per_clip=8,
+        fold=2,
+        transform=config["train_transform"],
+        step_between_clips=32,
+        train=True,
+        _precomputed_metadata=train_md,
+    )
+
+    sample = ds[0]
+    print(type(sample))
+    print(sample)
+    print(len(sample))
+    for i, x in enumerate(sample):
+        print(i, type(x))
 
     dm = UCF101DataModule(config)
     dm.setup("fit")
