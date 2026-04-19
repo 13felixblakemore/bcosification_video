@@ -30,17 +30,6 @@ def get_parser(add_help=True):
     )
     return parser
 
-config = {
-    "batch_size": 2,
-    "num_workers": 0,
-    "frames_per_clip": 8,
-    "step_between_clips": 32,
-    "fold": 2,
-    "train_transform": UCF101ClassificationPresetTrain,
-    "test_transform": UCF101ClassificationPresetEval,
-    "same_class_grid": False,
-}
-
 def make_2x2_grid(videos):
     v0, v1, v2, v3 = videos
     top = torch.cat([v0, v1], dim=-1)
@@ -50,7 +39,7 @@ def make_2x2_grid(videos):
 def game(args):
     model, model_config = load_model_and_config(args)
     model.eval()
-
+    print(model_config)
     dm = UCF101DataModule(model_config)
 
     dm.setup("fit")
