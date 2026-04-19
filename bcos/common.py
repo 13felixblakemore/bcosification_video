@@ -626,10 +626,6 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
         image explanation of the B-cos model.
         Shape: [H, T, W, C] (C=4 ie RGBA)
     """
-    percentages = antisymmetry_percentage(linear_mapping)
-    for t, p in enumerate(percentages):
-        print(f"Frame {t}: {p:.2f}% antisymmetric pixels")
-    sys.exit()
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     logit = contribs.sum(dim=(1,2,3))
