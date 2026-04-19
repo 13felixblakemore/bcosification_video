@@ -33,13 +33,7 @@ def game(args):
     model = get_model(config)
 
     cp = args.checkpoint
-    original_posixpath = pathlib.PosixPath
-    try:
-        pathlib.PosixPath = pathlib.WindowsPath
-        ckpt = torch.load(cp, map_location="cpu")
-    finally:
-        pathlib.PosixPath = original_posixpath
-    print(ckpt.keys())
+    ckpt = torch.load(cp, map_location="cpu")
     state_dict = ckpt["state_dict"]
     model.load_state_dict(state_dict)
     model.eval()
