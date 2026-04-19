@@ -76,7 +76,10 @@ def explain(args, video_tensor, labels):
 
         # Handle Lightning checkpoints
         state_dict = checkpoint.get("state_dict", checkpoint)
-        model.load_state_dict(state_dict)
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            new_state_dict[k.replace("model.", "")] = v
+        model.load_state_dict(new_state_dict, strict=False)
         # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
