@@ -4,7 +4,7 @@ import pathlib
 
 import torch
 
-from bcos.data.datamodules import UCF101GridDataModule
+from bcos.data.datamodules import UCF101GridDataModule, UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
 from bcos.experiments.UCF101.bcosification.model import get_model
@@ -39,23 +39,31 @@ config = {
     "same_class_grid": False,
 }
 
+def make_2x2_grid(videos):
+    v0, v1, v2, v3 = videos
+    top = torch.cat([v0, v1], dim=-1)
+    bottom = torch.cat([v2, v3], dim=-1)
+    return torch.cat([top, bottom], dim=-2)
+
 def game(args):
-    # load model
     model, model_config = load_model_and_config(args)
     model.eval()
 
-    dm = UCF101GridDataModule(config)
-    print("dm")
+    dm = UCF101DataModule(config)
     dm.setup("fit")
-    print("dm fit")
-    loader = dm.train_dataloader()
-    print("loader")
-    grid_video, labels, indices = next(iter(loader))
-    print("batch")
 
-    print(grid_video.shape)  # [B, C, T, 2H, 2W]
-    print(labels.shape)  # [B, 4]
-    print(indices.shape)  # [B, 4]
+    loader = dm.train_dataloader()
+
+    videos, labels = next(iter(loader))   # [B,C,T,H,W], [B]
+
+    print(type(videos), videos.shape)
+    print(type(labels), labels.shape)
+
+    grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
+    grid_labels = labels[:4]
+
+    print("grid_video shape:", grid_video.shape)
+    print("grid_labels:", grid_labels)
 # sort clips by confidence
 # choose top 500 clips and store
 
