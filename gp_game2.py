@@ -98,6 +98,7 @@ def explain(args, video_tensor, labels):
         to_be_explained_logit.backward(inputs=[video_tensor])
         linear_mapping = video_tensor.grad.detach().clone()
         linear_mapping = linear_mapping.sum(dim=0)
+        print(linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
 
