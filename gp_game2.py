@@ -93,12 +93,15 @@ def explain(args, video_tensor, labels):
     print(video_tensor.shape)
     scores = []
     for quadrant, label in enumerate(labels):
-        out = model(video_tensor)
+        x = video_tensor.clone().detach().requires_grad_(True)
+
+        model.zero_grad(set_to_none=True)
+        out = model(x)
         to_be_explained_logit = out[0, label]
+        print("Explaining label: ", label)
         to_be_explained_logit.backward(inputs=[video_tensor])
-        linear_mapping = video_tensor.grad.detach().clone()
-        linear_mapping = linear_mapping.sum(dim=0)
-        linear_mapping = linear_mapping.sum(dim=0)
+        linear_mapping = x.grad.detach().clone()
+        linear_mapping = linear_mapping.sum(dim=1).squeeze(0)
         print(linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
