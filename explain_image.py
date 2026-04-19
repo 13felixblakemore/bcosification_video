@@ -279,6 +279,9 @@ def explain_video(args, video_path):
 
     heatmap = expl_out["heatmap"]  # [T,H,W]
 
+    video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
+    video_tensor = transform(video_tensor)
+    frames = np.array(video_tensor)
     for t, frame in enumerate(heatmap):
         plt.imshow(frames[t])  # original frame
         plt.imshow(heatmap[t], cmap='jet', alpha=0.5)  # overlay
