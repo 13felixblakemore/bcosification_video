@@ -37,6 +37,7 @@ def make_2x2_grid(videos):
     return torch.cat([top, bottom], dim=-2)
 
 def game(args):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, model_config = load_model_and_config(args)
     model.eval()
     print(model_config)
@@ -56,6 +57,9 @@ def game(args):
 
     print("grid_video shape:", grid_video.shape)
     print("grid_labels:", grid_labels)
+    with torch.no_grad():
+        out = model(grid_video.unsqueeze(0).to(device))
+    print(out.shape)
 # sort clips by confidence
 # choose top 500 clips and store
 
