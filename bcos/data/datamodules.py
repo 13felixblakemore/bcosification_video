@@ -455,7 +455,6 @@ class UCF101GridDataModule(pl.LightningDataModule):
             train_base = VideoOnlyDataset(train_base)
             self.train_dataset = UCF101VideoGridDataset(
                 train_base,
-                same_class=same_class_grid,
                 seed=42,
             )
 
@@ -477,7 +476,6 @@ class UCF101GridDataModule(pl.LightningDataModule):
         val_base = VideoOnlyDataset(val_base)
         self.eval_dataset = UCF101VideoGridDataset(
             val_base,
-            same_class=same_class_grid,
             seed=123,
         )
 
