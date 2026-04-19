@@ -35,7 +35,11 @@ def game(args):
     cp = args.checkpoint
     ckpt = torch.load(cp, map_location="cpu")
     state_dict = ckpt["state_dict"]
-    model.load_state_dict(state_dict)
+    new_state_dict = {
+        (k[len("model.model."):] if k.startswith("model.model.") else k): v
+        for k, v in state_dict.items()
+    }
+    model.load_state_dict(new_state_dict)
     model.eval()
 # sort clips by confidence
 # choose top 500 clips and store
