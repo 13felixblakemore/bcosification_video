@@ -91,9 +91,9 @@ def explain(args, video_tensor, labels):
     print(video_tensor.shape)
     video_tensor = video_tensor.unsqueeze(0)
     print(video_tensor.shape)
-    out = model(video_tensor)
     scores = []
     for quadrant, label in enumerate(labels):
+        out = model(video_tensor)
         to_be_explained_logit = out[0, label]
         to_be_explained_logit.backward(inputs=[video_tensor])
         linear_mapping = video_tensor.grad.detach().clone()
