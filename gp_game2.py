@@ -61,7 +61,7 @@ def game(args):
 
 def explain(args, video_tensor, labels):
     global device
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     video_tensor = video_tensor.to(device)
 
