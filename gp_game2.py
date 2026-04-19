@@ -6,7 +6,7 @@ import torch
 from torchvision.datasets import UCF101
 
 from bcos import settings
-from bcos.data.datamodules import UCF101GridDataModule, UCF101DataModule
+from bcos.data.datamodules import UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
 from bcos.experiments.UCF101.bcosification.model import get_model
