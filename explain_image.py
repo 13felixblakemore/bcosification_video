@@ -215,16 +215,18 @@ def explain_video(args, video_path=None, vid_tensor=None):
         length = 8
         frames = frames[start:start+length]
         video_tensor = torch.tensor(np.stack(frames))
+        transform = UCF101ClassificationPresetEval(
+            crop_size=224,
+            is_bcos=True,
+        )
+
+        video_tensor = transform(video_tensor)
+        video_tensor = video_tensor.unsqueeze(0)
     else:
         video_tensor = vid_tensor
-    transform = UCF101ClassificationPresetEval(
-        crop_size=224,
-        is_bcos=True,
-    )
 
-    video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
-    video_tensor = video_tensor.unsqueeze(0)
+
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
 

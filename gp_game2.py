@@ -1,6 +1,7 @@
 # parse args
 import argparse
 import pathlib
+import sys
 
 import torch
 from torchvision.datasets import UCF101
@@ -55,14 +56,51 @@ def game(args):
     grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
     grid_labels = labels[:4]
 
-    print("grid_video shape:", grid_video.shape)
-    print(grid_video.max(), grid_video.min())
-    print("grid_labels:", grid_labels)
-    with torch.no_grad():
-        out = model(grid_video.unsqueeze(0).to(device))
-    print(out.shape)
-# sort clips by confidence
-# choose top 500 clips and store
+    explain(args, grid_video, grid_labels)
+
+def explain(args, video_tensor, labels):
+    global device
+    if args.no_cuda:
+        device = torch.device("cpu")
+
+    if device == torch.device("cuda"):
+        torch.backends.cudnn.benchmark = False
+
+    video_tensor = video_tensor.to(device)
+
+    if video_tensor.grad is not None:
+        video_tensor.grad.zero_()
+
+    model, config = load_model_and_config(args)
+    if args.checkpoint is not None:
+        print(f"Loading checkpoint from: {args.checkpoint}")
+
+        checkpoint = torch.load(args.checkpoint, map_location=device)
+
+        # Handle Lightning checkpoints
+        state_dict = checkpoint.get("state_dict", checkpoint)
+        model.load_state_dict(state_dict)
+        # Optional debug
+        if "epoch" in checkpoint:
+            print("Checkpoint epoch:", checkpoint["epoch"])
+
+    model.eval()
+    out = model(video_tensor)
+    scores = []
+    for label in labels:
+        to_be_explained_logit = out[0, label]
+        to_be_explained_logit.backward(inputs=[video_tensor])
+        linear_mapping = video_tensor.grad.detach().clone()
+        linear_mapping = linear_mapping.sum(dim=0)
+        print(linear_mapping.shape)
+        sys.exit()
+        gp_score = gp_score(linear_mapping)
+        scores.append(gp_score)
+
+    return scores
+
+def gp_score(linear_mapping):
+
 
 # compile 100 games
     # choose 4 random clips
