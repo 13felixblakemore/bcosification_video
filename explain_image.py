@@ -242,8 +242,8 @@ def explain_video(args, video_path):
             new_key = k
 
             # Common prefix issues in your repo
-            new_key = new_key.replace("model.model.model.", "model.model.")
-            new_key = new_key.replace("model.model.", "model.")
+            #new_key = new_key.replace("model.model.model.", "model.model.")
+            #new_key = new_key.replace("model.model.", "model.")
 
             new_state_dict[new_key] = v
 
