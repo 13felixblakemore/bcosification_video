@@ -748,7 +748,7 @@ def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, r
         image explanation of the B-cos model.
         Shape: [H, W, C] (C=4 ie RGBA)
     """
-    p = antisymmetry_percentage_2d(linear_mapping)
+    p = antisymmetry_percentage_2d(linear_mapping, 0.01)
     print(f"{p:.2f}% of pixels are antisymmetric")
     # shape of img and linmap is [C, H, W], summing over first dimension gives the contribution map per location
     contribs = (image * linear_mapping).sum(0, keepdim=True)  # [H, W]
