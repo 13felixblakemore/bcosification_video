@@ -28,18 +28,7 @@ def get_parser(add_help=True):
 
 def game(args):
     # load model
-    config = CONFIGS["i3d"]
-    config = config["model"]
-    model = get_model(config)
-
-    cp = args.checkpoint
-    ckpt = torch.load(cp, map_location="cpu")
-    state_dict = ckpt["state_dict"]
-    new_state_dict = {
-        (k[len("model.model."):] if k.startswith("model.model.") else k): v
-        for k, v in state_dict.items()
-    }
-    model.load_state_dict(new_state_dict)
+    model, config = load_model_and_config(args)
     model.eval()
 # sort clips by confidence
 # choose top 500 clips and store
