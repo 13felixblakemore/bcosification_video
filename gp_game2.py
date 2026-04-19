@@ -57,7 +57,8 @@ def game(args):
     grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
     grid_labels = labels[:4]
 
-    explain(args, grid_video, grid_labels)
+    scores = explain(args, grid_video, grid_labels)
+    print(scores)
 
 def explain(args, video_tensor, labels):
     global device
@@ -92,29 +93,144 @@ def explain(args, video_tensor, labels):
     print(video_tensor.shape)
     out = model(video_tensor)
     scores = []
-    for label in labels:
+    for quadrant, label in enumerate(labels):
         to_be_explained_logit = out[0, label]
         to_be_explained_logit.backward(inputs=[video_tensor])
         linear_mapping = video_tensor.grad.detach().clone()
         linear_mapping = linear_mapping.sum(dim=0)
-        print(linear_mapping.shape)
-        sys.exit()
-        gp_score = gp_score(linear_mapping)
+        gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
 
     return scores
 
-#def gp_score(linear_mapping):
+def gp_scores_from_linear_map(
+    linear_map: torch.Tensor,
+    target_quadrant: int,
+    topk_percent: float = 0.1,
+):
+    """
+    Compute GP game scores from a linear mapping.
 
+    Args:
+        linear_map: Tensor of shape [T, H, W] or [1, T, H, W]
+                    (already reduced over channels if needed)
+        target_quadrant: int in {0,1,2,3}
+            0 = top-left
+            1 = top-right
+            2 = bottom-left
+            3 = bottom-right
+        topk_percent: fraction for top-k evaluation (e.g. 0.1 = top 10%)
 
-# compile 100 games
-    # choose 4 random clips
-    # compile each frame together into a quad frame
-    # feed into model
-    # compute explanations of the video with respect to one of the classes
-    # evaluate how much of the top k% contribution is in the correct quadrant
+    Returns:
+        dict with:
+            energy_score: float
+            peak_correct: int (0 or 1)
+            quadrant_pred: int
+            quadrant_correct: int (0 or 1)
+            topk_score: float
+    """
 
-# print out total score
+    # --- ensure shape [T, H, W]
+    if linear_map.dim() == 4:
+        linear_map = linear_map.squeeze(0)
+
+    assert linear_map.dim() == 3, "Expected [T,H,W]"
+
+    T, H, W = linear_map.shape
+
+    # --- use positive contributions only
+    contrib = torch.relu(linear_map)
+
+    total_mass = contrib.sum()
+    if total_mass == 0:
+        # avoid division by zero
+        return {
+            "energy_score": 0.0,
+            "peak_correct": 0,
+            "quadrant_pred": -1,
+            "quadrant_correct": 0,
+            "topk_score": 0.0,
+        }
+
+    # --- define quadrant masks
+    h_mid = H // 2
+    w_mid = W // 2
+
+    masks = [
+        (slice(None), slice(0, h_mid), slice(0, w_mid)),  # 0 TL
+        (slice(None), slice(0, h_mid), slice(w_mid, W)),  # 1 TR
+        (slice(None), slice(h_mid, H), slice(0, w_mid)),  # 2 BL
+        (slice(None), slice(h_mid, H), slice(w_mid, W)),  # 3 BR
+    ]
+
+    # --- energy per quadrant
+    quad_energy = []
+    for m in masks:
+        quad_energy.append(contrib[m].sum())
+
+    quad_energy = torch.stack(quad_energy)
+
+    # --- 1. Energy-based GP score
+    energy_score = (quad_energy[target_quadrant] / total_mass).item()
+
+    # --- 2. Peak-based GP (classic pointing game)
+    flat_idx = contrib.view(-1).argmax()
+    t_idx = flat_idx // (H * W)
+    hw_idx = flat_idx % (H * W)
+    h_idx = hw_idx // W
+    w_idx = hw_idx % W
+
+    if h_idx < h_mid and w_idx < w_mid:
+        peak_quad = 0
+    elif h_idx < h_mid and w_idx >= w_mid:
+        peak_quad = 1
+    elif h_idx >= h_mid and w_idx < w_mid:
+        peak_quad = 2
+    else:
+        peak_quad = 3
+
+    peak_correct = int(peak_quad == target_quadrant)
+
+    # --- 3. Quadrant classification (which has most mass)
+    quadrant_pred = int(torch.argmax(quad_energy))
+    quadrant_correct = int(quadrant_pred == target_quadrant)
+
+    # --- 4. Top-k mass score
+    flat = contrib.view(-1)
+    k = max(1, int(topk_percent * flat.numel()))
+
+    topk_vals, topk_idx = torch.topk(flat, k)
+
+    # convert indices to quadrant
+    correct_count = 0
+    for idx in topk_idx:
+        idx = idx.item()
+        t = idx // (H * W)
+        hw = idx % (H * W)
+        h = hw // W
+        w = hw % W
+
+        if h < h_mid and w < w_mid:
+            q = 0
+        elif h < h_mid and w >= w_mid:
+            q = 1
+        elif h >= h_mid and w < w_mid:
+            q = 2
+        else:
+            q = 3
+
+        if q == target_quadrant:
+            correct_count += 1
+
+    topk_score = correct_count / k
+
+    return {
+        "energy_score": energy_score,
+        "peak_correct": peak_correct,
+        "quadrant_pred": quadrant_pred,
+        "quadrant_correct": quadrant_correct,
+        "topk_score": topk_score,
+    }
 
 if __name__ == "__main__":
     parser = get_parser()
