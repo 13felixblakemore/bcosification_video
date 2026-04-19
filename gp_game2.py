@@ -68,6 +68,8 @@ def explain(args, video_tensor, labels):
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
 
+    video_tensor.requires_grad_(True)
+
     model, config = load_model_and_config(args)
     if args.checkpoint is not None:
         print(f"Loading checkpoint from: {args.checkpoint}")
