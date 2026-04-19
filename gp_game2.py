@@ -45,10 +45,13 @@ def game(args):
     model.eval()
 
     dm = UCF101GridDataModule(config)
+    print("dm")
     dm.setup("fit")
-
+    print("dm fit")
     loader = dm.train_dataloader()
+    print("loader")
     grid_video, labels, indices = next(iter(loader))
+    print("batch")
 
     print(grid_video.shape)  # [B, C, T, 2H, 2W]
     print(labels.shape)  # [B, 4]
