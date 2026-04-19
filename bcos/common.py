@@ -589,7 +589,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     else:
         return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
-def linear_mapping_to_heatmap(video, linear_mapping, smooth=5, percentile=99.0):
+def linear_mapping_to_heatmap(video, linear_mapping, smooth=5, percentile=90.0):
     """
     Create a clean spatial heatmap from B-Cos linear mapping.
 
