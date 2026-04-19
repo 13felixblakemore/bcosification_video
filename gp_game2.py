@@ -30,7 +30,7 @@ def get_parser(add_help=True):
 
 config = {
     "batch_size": 2,
-    "num_workers": 4,
+    "num_workers": 0,
     "frames_per_clip": 8,
     "step_between_clips": 32,
     "fold": 2,
