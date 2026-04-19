@@ -9,6 +9,8 @@ import sys
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 
+import cv2
+
 if TYPE_CHECKING:
     # this isn't supposed to be a hard dependency
     import matplotlib
@@ -545,6 +547,7 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     logit = contribs.sum(dim=(1,2,3))
 
     heatmap = linear_mapping_to_heatmap(video, linear_mapping)
+    heatmap = smooth_heatmap_np(heatmap)
 
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
@@ -617,8 +620,15 @@ def linear_mapping_to_heatmap(video, linear_mapping, smooth=5, percentile=98.0):
     heatmap = heatmap / (q.unsqueeze(-1) + 1e-12)
 
     heatmap = heatmap.clamp(0, 1)
-
     return heatmap.detach().cpu().numpy()
+
+def smooth_heatmap_np(heatmap, ksize=11, sigma=0):
+    out = []
+    for t in range(len(heatmap)):
+        h = heatmap[t]
+        h = cv2.GaussianBlur(h, (ksize, ksize), sigma)
+        out.append(h)
+    return np.array(out)
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, return_contribs=False):
     """
