@@ -247,7 +247,7 @@ def explain_video(args, video_path):
         plt.imshow(frames[t])  # original frame
         plt.imshow(heatmap[t], cmap='jet', alpha=0.5)  # overlay
         plt.axis('off')
-        plt.savefig(f"heatmap_{t:03d}.png")
+        plt.savefig(os.path.join(args.base_directory, f"heatmap_{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
     for t, frame in enumerate(contribs):
