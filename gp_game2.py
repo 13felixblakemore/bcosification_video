@@ -56,6 +56,7 @@ def game(args):
     grid_labels = labels[:4]
 
     print("grid_video shape:", grid_video.shape)
+    print(grid_video.max(), grid_video.min())
     print("grid_labels:", grid_labels)
     with torch.no_grad():
         out = model(grid_video.unsqueeze(0).to(device))

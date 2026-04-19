@@ -192,7 +192,7 @@ def debug(model, video_tensor):
         "output": y.detach(),
     }
 
-def explain_video(args, video_path):
+def explain_video(args, video_path=None, vid_tensor=None):
     global device
     if args.no_cuda:
         device = torch.device("cpu")
@@ -200,27 +200,28 @@ def explain_video(args, video_path):
     if device == torch.device("cuda"):
         torch.backends.cudnn.benchmark = False
     # torch.use_deterministic_algorithms(True)
+    if video_path:
+        cap = cv2.VideoCapture(video_path)
+        frames = []
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frames.append(frame)
+        cap.release()
 
-    cap = cv2.VideoCapture(video_path)
-    frames = []
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frames.append(frame)
-    cap.release()
-
-    start = 16
-    length = 8
-    frames = frames[start:start+length]
-
+        start = 16
+        length = 8
+        frames = frames[start:start+length]
+        video_tensor = torch.tensor(np.stack(frames))
+    else:
+        video_tensor = vid_tensor
     transform = UCF101ClassificationPresetEval(
         crop_size=224,
         is_bcos=True,
     )
 
-    video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
     video_tensor = transform(video_tensor)
     video_tensor = video_tensor.to(device)
     video_tensor = video_tensor.unsqueeze(0)
