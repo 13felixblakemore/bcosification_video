@@ -8,7 +8,6 @@ So essentially it's a collection of convenience/helper functions/classes.
 import sys
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
-
 import cv2
 
 if TYPE_CHECKING:
@@ -272,6 +271,7 @@ class BcosUtilMixin:
                 result["explained_class_idx"] = pred_out.indices.item()
             else:  # user specified idx
                 to_be_explained_logit = out[0, idx]
+                print("EXPLAINING ", idx, get_inx2label_ucf101(idx))
                 result["explained_class_idx"] = idx
 
             result["explained_logit"] = to_be_explained_logit.detach().clone()
