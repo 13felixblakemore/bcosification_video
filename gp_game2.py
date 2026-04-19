@@ -68,7 +68,6 @@ def explain(args, video_tensor, labels):
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
 
-    video_tensor.requires_grad_(True)
 
     model, config = load_model_and_config(args)
     if args.checkpoint is not None:
@@ -87,6 +86,7 @@ def explain(args, video_tensor, labels):
             print("Checkpoint epoch:", checkpoint["epoch"])
 
     model.eval()
+    video_tensor.requires_grad_(True)
     print(video_tensor.shape)
     video_tensor = video_tensor.unsqueeze(0)
     print(video_tensor.shape)
