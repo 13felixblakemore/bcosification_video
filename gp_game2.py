@@ -99,7 +99,7 @@ def explain(args, video_tensor, labels):
 
     return scores
 
-def gp_score(linear_mapping):
+#def gp_score(linear_mapping):
 
 
 # compile 100 games
