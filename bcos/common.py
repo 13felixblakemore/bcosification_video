@@ -517,6 +517,49 @@ class explanation_mode(_DecoratorContextManager):
         for m in self.expl_modules:
             m.set_explanation_mode(False)
 
+def antisymmetry_percentage(linear_mapping, threshold=0.1):
+    """
+    Computes percentage of pixels where (c, 1-c) channel pairs are antisymmetric.
+
+    Parameters
+    ----------
+    linear_mapping : Tensor
+        Shape [6, T, H, W]
+    threshold : float
+        Tolerance for antisymmetry (lower = stricter)
+
+    Returns
+    -------
+    percentages : list[float]
+        Percentage per frame
+    """
+
+    # Normalise per-pixel (like your explanation step)
+    lm = linear_mapping / (linear_mapping.abs().max(dim=0, keepdim=True).values + 1e-12)
+
+    # Split channels
+    rgb = lm[:3]        # [3, T, H, W]
+    inv = lm[3:]        # [3, T, H, W]
+
+    # Measure antisymmetry: w_rgb + w_inv ≈ 0
+    antisym_error = (rgb + inv).abs()  # [3, T, H, W]
+
+    # Aggregate across channels
+    antisym_error = antisym_error.mean(dim=0)  # [T, H, W]
+
+    # Boolean mask of antisymmetric pixels
+    antisym_mask = antisym_error < threshold  # [T, H, W]
+
+    # Percentage per frame
+    T = antisym_mask.shape[0]
+    percentages = []
+
+    for t in range(T):
+        num_pixels = antisym_mask[t].numel()
+        num_antisym = antisym_mask[t].sum().item()
+        percentages.append(100.0 * num_antisym / num_pixels)
+
+    return percentages
 
 def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, return_contribs=False, return_heatmap=False):
     """
@@ -542,6 +585,10 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
         image explanation of the B-cos model.
         Shape: [H, T, W, C] (C=4 ie RGBA)
     """
+    percentages = antisymmetry_percentage(linear_mapping)
+    for t, p in enumerate(percentages):
+        print(f"Frame {t}: {p:.2f}% antisymmetric pixels")
+    sys.exit()
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     logit = contribs.sum(dim=(1,2,3))
