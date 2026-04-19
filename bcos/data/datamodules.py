@@ -376,87 +376,33 @@ class UCF101DataModule(ClassificationDataModule):
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
 
-class UCF101VideoGridDataset(Dataset):
-    """
-    Wraps a (video, label) dataset and returns 2x2 tiled video grids.
-
-    Each returned sample is:
-        grid_video: [C, T, 2H, 2W]
-        labels:     [4]   labels of the 4 clips in the grid
-        indices:    [4]   source dataset indices used
-    """
-
-    def __init__(
-        self,
-        base_dataset: Dataset,
-        same_class: bool = False,
-        seed: int = 42,
-    ):
+class UCF101VideoGridDataset(data.Dataset):
+    def __init__(self, base_dataset, seed=42):
         self.base_dataset = base_dataset
-        self.same_class = same_class
         self.seed = seed
-
-        # Build label -> indices mapping for optional same-class sampling
-        self.label_to_indices = {}
-        for i in range(len(self.base_dataset)):
-            _, label = self.base_dataset[i]
-            label = int(label)
-            if label not in self.label_to_indices:
-                self.label_to_indices[label] = []
-            self.label_to_indices[label].append(i)
 
     def __len__(self):
         return len(self.base_dataset)
 
-    def _sample_4_indices(self, anchor_idx: int) -> List[int]:
+    def _sample_4_indices(self, anchor_idx):
         rng = random.Random(self.seed + anchor_idx)
+        all_indices = list(range(len(self.base_dataset)))
 
-        anchor_video, anchor_label = self.base_dataset[anchor_idx]
-        anchor_label = int(anchor_label)
-
-        if self.same_class:
-            candidates = self.label_to_indices[anchor_label]
-            if len(candidates) >= 4:
-                chosen = rng.sample(candidates, 4)
-            else:
-                # fallback with replacement if class has fewer than 4 clips
-                chosen = [rng.choice(candidates) for _ in range(4)]
-        else:
-            all_indices = list(range(len(self.base_dataset)))
-            if len(all_indices) >= 4:
-                chosen = rng.sample(all_indices, 4)
-            else:
-                chosen = [rng.choice(all_indices) for _ in range(4)]
-
-        return chosen
+        others = [i for i in all_indices if i != anchor_idx]
+        sampled_others = rng.sample(others, 3)
+        return [anchor_idx] + sampled_others
 
     @staticmethod
-    def make_2x2_grid(videos: List[torch.Tensor]) -> torch.Tensor:
-        """
-        videos: list of 4 tensors, each [C, T, H, W]
-        returns: [C, T, 2H, 2W]
-        """
-        assert len(videos) == 4, "Need exactly 4 videos for a 2x2 grid"
-
+    def make_2x2_grid(videos):
         v0, v1, v2, v3 = videos
+        top = torch.cat([v0, v1], dim=-1)
+        bottom = torch.cat([v2, v3], dim=-1)
+        return torch.cat([top, bottom], dim=-2)
 
-        # Sanity check: same shape
-        c, t, h, w = v0.shape
-        for i, v in enumerate(videos):
-            assert v.shape == (c, t, h, w), f"Video {i} has shape {v.shape}, expected {(c,t,h,w)}"
-
-        top = torch.cat([v0, v1], dim=-1)     # [C, T, H, 2W]
-        bottom = torch.cat([v2, v3], dim=-1)  # [C, T, H, 2W]
-        grid = torch.cat([top, bottom], dim=-2)  # [C, T, 2H, 2W]
-
-        return grid
-
-    def __getitem__(self, idx: int):
+    def __getitem__(self, idx):
         chosen_indices = self._sample_4_indices(idx)
 
-        videos = []
-        labels = []
-
+        videos, labels = [], []
         for i in chosen_indices:
             video, label = self.base_dataset[i]
             videos.append(video)
