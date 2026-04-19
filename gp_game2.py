@@ -4,6 +4,7 @@ import pathlib
 import sys
 
 import torch
+from torch.version import cuda
 from torchvision.datasets import UCF101
 
 from bcos import settings
@@ -60,11 +61,7 @@ def game(args):
 
 def explain(args, video_tensor, labels):
     global device
-    if args.no_cuda:
-        device = torch.device("cpu")
-
-    if device == torch.device("cuda"):
-        torch.backends.cudnn.benchmark = False
+    device = torch.device("cpu")
 
     video_tensor = video_tensor.to(device)
 
