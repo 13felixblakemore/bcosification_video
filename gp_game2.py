@@ -86,6 +86,8 @@ def explain(args, video_tensor, labels):
 
     model.eval()
     print(video_tensor.shape)
+    video_tensor = video_tensor.unsqueeze(0)
+    print(video_tensor.shape)
     out = model(video_tensor)
     scores = []
     for label in labels:
