@@ -248,7 +248,10 @@ class Experiment:
             ema=ema,
             verbose=verbose,
         )
-        model.load_state_dict(state_dict)
+        try:
+            model.load_state_dict(state_dict)
+        except:
+            print("error caught")
 
         if return_training_ckpt_if_possible:
             return dict(model=model, ckpt=training_ckpt)

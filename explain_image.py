@@ -80,11 +80,6 @@ def get_parser(add_help=True):
     )
 
     parser.add_argument(
-        "--force-no-resume",
-        default=True,
-    )
-
-    parser.add_argument(
         "--image_path", type=str, help="The image path."
     )
 
