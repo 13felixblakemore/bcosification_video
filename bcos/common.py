@@ -281,8 +281,8 @@ class BcosUtilMixin:
         result["contribution_map"] = (in_tensor * grad).sum(1)
 
         # generate (color) explanation
-        result["explanation"], result["frame_scores"], result["contribution_map"] = gradient_to_video(
-            in_tensor[0], in_tensor.grad[0], return_contribs=True, **grad2vid_kwargs
+        result["explanation"], result["frame_scores"], result["contribution_map"], result["heatmap"] = gradient_to_video(
+            in_tensor[0], in_tensor.grad[0], return_contribs=True, return_heatmap = True, **grad2vid_kwargs
         )
 
         return result
@@ -516,7 +516,7 @@ class explanation_mode(_DecoratorContextManager):
             m.set_explanation_mode(False)
 
 
-def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, return_contribs=False):
+def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, return_contribs=False, return_heatmap=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
@@ -543,6 +543,9 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     logit = contribs.sum(dim=(1,2,3))
+
+    heatmap = linear_mapping_to_heatmap(video, linear_mapping)
+
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
@@ -582,9 +585,40 @@ def gradient_to_video(video, linear_mapping, smooth=1, alpha_percentile=99.0, re
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
 
     if return_contribs:
-        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu()), heatmap
     else:
         return np.array(grad_video), np.array(frame_scores.detach().cpu())
+
+def linear_mapping_to_heatmap(video, linear_mapping, smooth=5, percentile=99.0):
+    """
+    Create a clean spatial heatmap from B-Cos linear mapping.
+
+    Returns:
+        heatmap: [T, H, W] in [0,1]
+    """
+
+    # Contribution per pixel
+    contribs = (video * linear_mapping).sum(0)  # [T, H, W]
+
+    # Only keep positive evidence (standard in B-Cos)
+    heatmap = contribs.clamp(min=0)
+
+    # Smooth spatially (per frame)
+    heatmap = heatmap.unsqueeze(1)  # [T,1,H,W]
+    heatmap = F.avg_pool2d(
+        heatmap,
+        kernel_size=smooth,
+        stride=1,
+        padding=(smooth - 1) // 2
+    ).squeeze(1)  # [T,H,W]
+
+    # Normalize per frame (IMPORTANT for video)
+    q = torch.quantile(heatmap.flatten(1), percentile / 100.0, dim=1, keepdim=True)
+    heatmap = heatmap / (q.unsqueeze(-1) + 1e-12)
+
+    heatmap = heatmap.clamp(0, 1)
+
+    return heatmap.detach().cpu().numpy()
 
 def gradient_to_image(image, linear_mapping, smooth=15, alpha_percentile=80.5, return_contribs=False):
     """
