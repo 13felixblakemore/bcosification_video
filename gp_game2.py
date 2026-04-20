@@ -140,7 +140,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
             logit = out[0, label]
-            logit.backward()
+            logit.backward(inputs=[x])
 
         if x.grad is None:
             raise RuntimeError("x.grad is None")
@@ -153,6 +153,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         #    plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
         #    plt.close()
         #sys.exit()
+
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape) # BCTHW
         grad = grad.squeeze(0)
@@ -164,6 +165,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         pair = rgb_grad[:3] + rgb_grad[3:]
         rgb_grad = rgb_grad[:3] / (pair + 1e-12)
         rgb_grad = rgb_grad.sum(0)
+        debug_quadrant_masses(rgb_grad)
         gp_score = gp_scores_from_linear_map(rgb_grad, quadrant)
         scores.append(gp_score)
     return scores
@@ -297,6 +299,21 @@ def gp_scores_from_linear_map(
         "quadrant_correct": quadrant_correct,
         "topk_score": topk_score,
     }
+
+def debug_quadrant_masses(linear_map):
+    contrib = torch.relu(linear_map)
+    T, H, W = contrib.shape
+    h_mid = H // 2
+    w_mid = W // 2
+
+    q0 = contrib[:, :h_mid, :w_mid].sum().item()
+    q1 = contrib[:, :h_mid, w_mid:].sum().item()
+    q2 = contrib[:, h_mid:, :w_mid].sum().item()
+    q3 = contrib[:, h_mid:, w_mid:].sum().item()
+    total = q0 + q1 + q2 + q3
+
+    print("Quadrant masses:", [q0, q1, q2, q3])
+    print("Normalised:", [q0/total, q1/total, q2/total, q3/total])
 
 if __name__ == "__main__":
     parser = get_parser()
