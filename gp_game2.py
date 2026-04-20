@@ -113,9 +113,9 @@ def explain(args, video_tensor, labels):
         scores.append(gp_score)
         maps.append(linear_mapping)
     print(torch.allclose(maps[0], maps[1], atol=1e-4),
-    torch.allclose(scores[1], scores[2], atol=1e-4),
-    torch.allclose(scores[2], scores[3], atol=1e-4),
-    torch.allclose(scores[3], scores[4], atol=1e-4))
+    torch.allclose(maps[1], maps[2], atol=1e-4),
+    torch.allclose(maps[2], maps[3], atol=1e-4),
+    torch.allclose(maps[3], maps[4], atol=1e-4))
     return scores
 
 def gp_scores_from_linear_map(
