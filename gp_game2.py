@@ -87,7 +87,6 @@ def explain(model, args, video_tensor, labels):
             print("Checkpoint epoch:", checkpoint["epoch"])
 
     model.eval()
-    video_tensor.requires_grad_(True)
     print("VT: ", video_tensor.shape)
     frame = video_tensor[:, 0]   # [C, H, W]
 
@@ -105,6 +104,9 @@ def explain(model, args, video_tensor, labels):
     maps = []
     with torch.enable_grad(), model.explanation_mode():
         for quadrant, label in enumerate(labels):
+            if video_tensor.grad is not None:
+                video_tensor.grad.zero_()
+            video_tensor.requires_grad_(True)
             out = model(video_tensor)
 
             pred_out = out.max(1)
