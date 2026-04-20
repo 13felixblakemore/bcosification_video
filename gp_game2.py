@@ -141,6 +141,58 @@ def make_2x2_grid(videos):
     top = torch.cat([v0, v1], dim=-1)
     bottom = torch.cat([v2, v3], dim=-1)
     return torch.cat([top, bottom], dim=-2)
+def sample_with_blank(clips_by_class, quadrant=None, device="cpu"):
+    """
+    Create a 2x2 grid where only one quadrant contains a real clip,
+    and the others are blank (zeros).
+
+    Args:
+        clips_by_class: dict[class_id] -> list of (video_tensor, confidence)
+        quadrant: int in {0,1,2,3} or None (random)
+        device: torch device
+
+    Returns:
+        grid_video: [C, T, 2H, 2W]
+        grid_labels: list of 4 labels (only one real, others = -1)
+        confidence: float (confidence of selected clip)
+        quadrant: int (where the real clip was placed)
+    """
+
+    import random
+    import torch
+
+    # --- pick random class and clip
+    cls = random.choice(list(clips_by_class.keys()))
+    video, _, conf = random.choice(clips_by_class[cls])
+
+    video = video.to(device)   # [C, T, H, W]
+    C, T, H, W = video.shape
+
+    # --- create blank clip
+    blank = torch.zeros_like(video)
+
+    # --- choose quadrant
+    if quadrant is None:
+        quadrant = random.randint(0, 3)
+
+    # --- assign clips
+    videos = [blank.clone() for _ in range(4)]
+    labels = torch.tensor([-1, -1, -1, -1], dtype=torch.long)
+
+    videos[quadrant] = video
+    labels[quadrant] = cls
+
+    # --- build grid
+    def make_2x2_grid(videos):
+        v0, v1, v2, v3 = videos
+        top = torch.cat([v0, v1], dim=-1)     # concat width
+        bottom = torch.cat([v2, v3], dim=-1)
+        return torch.cat([top, bottom], dim=-2)  # concat height
+
+    grid_video = make_2x2_grid(videos)
+
+    return grid_video, labels, conf, quadrant
+
 
 def game(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -196,9 +248,9 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, seed=42 + step)
+        grid_video, grid_labels, confs, quad = sample_with_blank(clips_by_class)
 
-        scores = explain(model, args, grid_video, grid_labels)
+        scores = explain(model, args, grid_video, grid_labels, quad)
         total_scores.append(scores)
 
     # --- aggregate ---
@@ -221,7 +273,7 @@ def game(args):
         print(f"{k}: {v:.4f}")
 
 
-def explain(model, args, video_tensor, labels):
+def explain(model, args, video_tensor, labels, true_quad):
     device = next(model.parameters()).device
     base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
 
@@ -231,6 +283,8 @@ def explain(model, args, video_tensor, labels):
     print("labels:", labels.tolist())
 
     for quadrant, label in enumerate(labels.tolist()):
+        if label == -1:
+            continue
         x = base_video.clone().detach().requires_grad_(True)
 
         model.zero_grad(set_to_none=True)
@@ -254,12 +308,6 @@ def explain(model, args, video_tensor, labels):
 
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
-        maps.append(linear_mapping)
-
-    for i in range(3):
-        diff = (maps[i] - maps[i + 1]).abs().max().item()
-        print(f"max abs diff map{i} vs map{i+1}: {diff}")
-
     return scores
 
 def gp_scores_from_linear_map(
