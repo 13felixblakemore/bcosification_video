@@ -114,6 +114,7 @@ def explain(model, args, clip, label):
     frames = [3,4]
     frame_contrib = 0
     total_contrib = 0
+    print(grad.shape)
     for t in range(T):
         if t in frames:
             frame_contrib += grad[t].sum(dim=(1,2)).item()
