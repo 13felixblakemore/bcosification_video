@@ -77,7 +77,7 @@ def explain(model, args, video_tensor, labels):
         model.zero_grad(set_to_none=True)
 
         with torch.enable_grad(), model.explanation_mode():
-            out = model(x)
+            out = model.model(x)
             print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
             logit = out[0, label]
