@@ -57,10 +57,10 @@ def game(args):
     grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
     grid_labels = labels[:4]
 
-    scores = explain(args, grid_video, grid_labels)
+    scores = explain(model, args, grid_video, grid_labels)
     print(scores)
 
-def explain(args, video_tensor, labels):
+def explain(model, args, video_tensor, labels):
     global device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -69,8 +69,6 @@ def explain(args, video_tensor, labels):
     if video_tensor.grad is not None:
         video_tensor.grad.zero_()
 
-
-    model, config = load_model_and_config(args)
     if args.checkpoint is not None:
         print(f"Loading checkpoint from: {args.checkpoint}")
 
@@ -114,8 +112,7 @@ def explain(args, video_tensor, labels):
         maps.append(linear_mapping)
     print(torch.allclose(maps[0], maps[1], atol=1e-4),
     torch.allclose(maps[1], maps[2], atol=1e-4),
-    torch.allclose(maps[2], maps[3], atol=1e-4),
-    torch.allclose(maps[3], maps[4], atol=1e-4))
+    torch.allclose(maps[2], maps[3], atol=1e-4))
     return scores
 
 def gp_scores_from_linear_map(
