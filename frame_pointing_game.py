@@ -70,14 +70,14 @@ def game(args):
         device=device,
         confidence_threshold=0.1,  # try 0.5 if this is too strict
         max_per_class=2,
-        max_batches=20,
+        max_batches=50,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
 
-    for step in range(20):
+    for step in range(100):
         print(step)
         clip, label = add_blank_frames(clips_by_class, step)
         #clip, labels = add_second_clip(clips_by_class, step)
