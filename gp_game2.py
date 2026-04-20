@@ -251,7 +251,7 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs, quad = sample_unique_class_grid(clips_by_class, 42)
+        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, 42)
 
         scores = explain(model, args, grid_video, grid_labels, quad)
         total_scores.append(scores)
