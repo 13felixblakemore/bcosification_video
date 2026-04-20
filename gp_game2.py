@@ -43,7 +43,7 @@ def collect_high_confidence_clips(
     device,
     confidence_threshold=0.7,
     max_per_class=10,
-    max_batches=200,
+    max_batches=10,
 ):
     """
     Collect correctly classified, high-confidence clips.
@@ -185,9 +185,9 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.1,  # try 0.5 if this is too strict
+        confidence_threshold=0.5,  # try 0.5 if this is too strict
         max_per_class=10,
-        max_batches=200,
+        max_batches=10,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
