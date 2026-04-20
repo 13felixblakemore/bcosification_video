@@ -78,7 +78,9 @@ def explain(model, args, video_tensor, labels):
         model.zero_grad(set_to_none=True)
 
         with torch.enable_grad(), model.explanation_mode():
-            out = model.model(x)
+            out = model(x)
+            pred = out.max(1)
+            print(pred.indices.item())
             print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
             logit = out[0, label]
@@ -95,12 +97,6 @@ def explain(model, args, video_tensor, labels):
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
         maps.append(linear_mapping)
-
-    print(
-        "allclose 0-1:", torch.allclose(maps[0], maps[1], atol=1e-4),
-        "allclose 1-2:", torch.allclose(maps[1], maps[2], atol=1e-4),
-        "allclose 2-3:", torch.allclose(maps[2], maps[3], atol=1e-4),
-    )
 
     for i in range(3):
         diff = (maps[i] - maps[i + 1]).abs().max().item()
