@@ -305,6 +305,8 @@ def explain(model, args, video_tensor, labels, true_quad):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
+        print("x: ", x.shape)
+        print("grad: ", grad.shape)
         grad_vid,_ = gradient_to_video(x, grad)
         for t, frame_expl in enumerate(grad_vid):
             plt.imshow(frame_expl)
