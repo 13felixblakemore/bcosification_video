@@ -92,7 +92,7 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
+        grid_video, grid_labels, confs, quads = sample_with_blank(clips_by_class)
 
         scores = explain(model, args, grid_video, grid_labels, quads)
         total_scores.append(scores)
