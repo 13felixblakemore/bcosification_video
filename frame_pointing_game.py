@@ -70,7 +70,7 @@ def game(args):
         device=device,
         confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=2,
-        max_batches=50,
+        max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
