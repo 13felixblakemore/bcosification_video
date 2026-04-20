@@ -79,14 +79,14 @@ def game(args):
 
     for step in range(20):
         print(step)
-        #clip, label = add_blank_frames(clips_by_class, step)
-        clip, labels = add_second_clip(clips_by_class, step)
-        score = explain_joint(model, args, clip, labels)
+        clip, label = add_blank_frames(clips_by_class, step)
+        #clip, labels = add_second_clip(clips_by_class, step)
+        score = explain_joint(model, args, clip, label)
         total_scores.append(score)
 
     print(total_scores)
-    avgs = [sum(row) / len(row) for row in zip(*total_scores)]
-    #avg = sum(total_scores) / len(total_scores)
+    #avgs = [sum(row) / len(row) for row in zip(*total_scores)]
+    avgs = sum(total_scores) / len(total_scores)
     print("Average scores:", avgs)
 
 def explain_joint(model, args, clip, labels):
