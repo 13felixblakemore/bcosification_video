@@ -155,13 +155,15 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         #sys.exit()
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape) # BCTHW
-        #linear_mapping = x * grad # BCTHW
-        linear_mapping = grad.squeeze(0) # 6THW
-        linear_mapping = linear_mapping[:3] # 3THW
-        print("LM: ", linear_mapping.shape)
-        linear_mapping = linear_mapping.clamp_min(0).sum(0)
-        print("LM: ", linear_mapping.shape)
-        gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
+        grad = grad.squeeze(0)
+        rgb_grad = grad / (
+                grad.abs().max(0, keepdim=True).values + 1e-12
+        )
+        rgb_grad = rgb_grad.clamp(min=0) # 6THW
+        # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
+        pair = rgb_grad[:3] + rgb_grad[3:]
+        rgb_grad = rgb_grad[:3] / (pair + 1e-12)
+        gp_score = gp_scores_from_linear_map(rgb_grad, quadrant)
         scores.append(gp_score)
     return scores
 
