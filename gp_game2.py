@@ -17,6 +17,7 @@ from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101Classificat
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
 from bcos.experiments.UCF101.bcosification.model import get_model
 from evaluate import load_model_and_config
+from grid import sample_unique_class_grid, make_2x2_grid, collect_high_confidence_clips, sample_top_confidence_grid, sample_with_blank, sample_two_clips_two_blank
 
 
 def get_parser(add_help=True):
@@ -35,166 +36,6 @@ def get_parser(add_help=True):
         help="Path to a specific Lightning .ckpt file to load"
     )
     return parser
-
-import random
-from collections import defaultdict
-
-def collect_high_confidence_clips(
-    model,
-    loader,
-    device,
-    confidence_threshold=0.7,
-    max_per_class=10,
-    max_batches=10,
-):
-    """
-    Collect correctly classified, high-confidence clips.
-
-    Returns:
-        clips_by_class: dict[class_idx] -> list of (video_tensor_cpu, label, confidence)
-    """
-    model.eval()
-    clips_by_class = defaultdict(list)
-
-    with torch.no_grad():
-        for batch_idx, (videos, labels) in enumerate(loader):
-            if batch_idx >= max_batches:
-                break
-
-            videos = videos.to(device)
-            labels = labels.to(device)
-
-            out = model(videos)
-            probs = torch.softmax(out, dim=1)
-            preds = out.argmax(dim=1)
-
-            true_class_probs = probs[torch.arange(labels.size(0), device=device), labels]
-
-            for i in range(labels.size(0)):
-                label = int(labels[i].item())
-                pred = int(preds[i].item())
-                conf = float(true_class_probs[i].item())
-
-                if pred == label and conf >= confidence_threshold:
-                    if len(clips_by_class[label]) < max_per_class:
-                        clips_by_class[label].append((
-                            videos[i].detach().cpu(),
-                            label,
-                            conf
-                        ))
-
-    return clips_by_class
-
-
-def sample_unique_class_grid(clips_by_class, seed=42):
-    """
-    Sample 4 clips from 4 different classes and return a 2x2 grid.
-    """
-    rng = random.Random(seed)
-
-    valid_classes = [c for c, clips in clips_by_class.items() if len(clips) > 0]
-    if len(valid_classes) < 4:
-        raise RuntimeError(
-            f"Only found {len(valid_classes)} classes with high-confidence clips. Need at least 4."
-        )
-
-    chosen_classes = rng.sample(valid_classes, 4)
-
-    chosen_clips = []
-    for c in chosen_classes:
-        clip, label, conf = rng.choice(clips_by_class[c])
-        chosen_clips.append((clip, label, conf))
-
-    videos = [x[0] for x in chosen_clips]
-    labels = torch.tensor([x[1] for x in chosen_clips], dtype=torch.long)
-    confs = [x[2] for x in chosen_clips]
-
-    grid_video = make_2x2_grid(videos)
-    return grid_video, labels, confs
-
-
-def sample_top_confidence_grid(clips_by_class):
-    """
-    Deterministic version: take the top-confidence clip from 4 classes with highest available confidence.
-    """
-    best_per_class = []
-    for c, clips in clips_by_class.items():
-        if len(clips) > 0:
-            best_clip = max(clips, key=lambda x: x[2])
-            best_per_class.append(best_clip)
-
-    if len(best_per_class) < 4:
-        raise RuntimeError(
-            f"Only found {len(best_per_class)} classes with high-confidence clips. Need at least 4."
-        )
-
-    # pick the 4 strongest classes overall
-    best_per_class = sorted(best_per_class, key=lambda x: x[2], reverse=True)[:4]
-
-    videos = [x[0] for x in best_per_class]
-    labels = torch.tensor([x[1] for x in best_per_class], dtype=torch.long)
-    confs = [x[2] for x in best_per_class]
-
-    grid_video = make_2x2_grid(videos)
-    return grid_video, labels, confs
-
-def make_2x2_grid(videos):
-    v0, v1, v2, v3 = videos
-    top = torch.cat([v0, v1], dim=-1)
-    bottom = torch.cat([v2, v3], dim=-1)
-    return torch.cat([top, bottom], dim=-2)
-
-def sample_with_blank(clips_by_class, quadrant=None, device="cuda"):
-    """
-    Create a 2x2 grid where only one quadrant contains a real clip,
-    and the others are blank (zeros).
-
-    Args:
-        clips_by_class: dict[class_id] -> list of (video_tensor, confidence)
-        quadrant: int in {0,1,2,3} or None (random)
-        device: torch device
-
-    Returns:
-        grid_video: [C, T, 2H, 2W]
-        grid_labels: list of 4 labels (only one real, others = -1)
-        confidence: float (confidence of selected clip)
-        quadrant: int (where the real clip was placed)
-    """
-
-    import random
-    import torch
-
-    # --- pick random class and clip
-    cls = random.choice(list(clips_by_class.keys()))
-    video, _, conf = random.choice(clips_by_class[cls])
-
-    video = video.to(device)   # [C, T, H, W]
-    C, T, H, W = video.shape
-
-    # --- create blank clip
-    blank = torch.zeros_like(video)
-
-    # --- choose quadrant
-    if quadrant is None:
-        quadrant = random.randint(0, 3)
-
-    # --- assign clips
-    videos = [blank.clone() for _ in range(4)]
-    labels = torch.tensor([-1, -1, -1, -1], dtype=torch.long)
-
-    videos[quadrant] = video
-    labels[quadrant] = cls
-
-    # --- build grid
-    def make_2x2_grid(videos):
-        v0, v1, v2, v3 = videos
-        top = torch.cat([v0, v1], dim=-1)     # concat width
-        bottom = torch.cat([v2, v3], dim=-1)
-        return torch.cat([top, bottom], dim=-2)  # concat height
-
-    grid_video = make_2x2_grid(videos)
-
-    return grid_video, labels, conf, quadrant
 
 
 def game(args):
@@ -251,9 +92,9 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs, quad = sample_with_blank(clips_by_class)
+        grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
 
-        scores = explain(model, args, grid_video, grid_labels, quad)
+        scores = explain(model, args, grid_video, grid_labels, quads)
         total_scores.append(scores)
 
     # --- aggregate ---
@@ -305,18 +146,17 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-        grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
-        for t, frame_expl in enumerate(grad_vid):
-            plt.imshow(frame_expl)
-            plt.axis('off')
-            plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
-            plt.close()
-        sys.exit()
+        #grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
+        #for t, frame_expl in enumerate(grad_vid):
+        #    plt.imshow(frame_expl)
+        #    plt.axis('off')
+        #    plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+        #    plt.close()
+        #sys.exit()
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape)
-        linear_mapping = grad.squeeze(0)   # [T, H, W]
-        print("LM: ", linear_mapping.shape)
-        linear_mapping = linear_mapping.sum(0)
+        linear_mapping = (x * grad).sum(dim=1)
+        linear_mapping = linear_mapping.squeeze(0)   # [T, H, W]
         print("LM: ", linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
