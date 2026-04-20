@@ -66,9 +66,10 @@ def game(args):
     loader = dm.test_dataloader()
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
+    num = len(loader)
 
     for batch_idx, (videos, labels) in enumerate(loader):
-        print(f"Processing batch {batch_idx}")
+        print(f"Processing batch {batch_idx} out of {num}")
         videos = add_blank_frames_full(videos)
 
         # explain now returns a dictionary of {label: score}
