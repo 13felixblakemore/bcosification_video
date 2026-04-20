@@ -86,7 +86,7 @@ def explain(model, args, video_tensor, labels):
 
     model.eval()
     video_tensor.requires_grad_(True)
-    print(video_tensor.shape)
+    print("VT: ", video_tensor.shape)
     video_tensor = video_tensor.unsqueeze(0)
     print(video_tensor.shape)
     scores = []
