@@ -313,7 +313,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         #    plt.close()
         #sys.exit()
         # B-cos contribution map, not raw grad
-        linear_mapping = grad   # [T, H, W]
+        linear_mapping = grad.squeeze(0)   # [T, H, W]
 
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
