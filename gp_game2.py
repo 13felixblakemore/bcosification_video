@@ -316,6 +316,8 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         print("LM: ", grad.shape)
         linear_mapping = grad.squeeze(0)   # [T, H, W]
         print("LM: ", linear_mapping.shape)
+        linear_mapping = linear_mapping.sum(0)
+        print("LM: ", linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
     return scores
