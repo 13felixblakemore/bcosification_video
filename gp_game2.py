@@ -107,7 +107,7 @@ def explain(model, args, video_tensor, labels):
 
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
-            pred = out.max(1)
+            pred = out.topk(1, 10)
             print(pred.indices.item())
             print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
