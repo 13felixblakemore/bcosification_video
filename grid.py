@@ -3,7 +3,6 @@ from collections import defaultdict
 
 import torch
 
-
 def collect_high_confidence_clips(
     model,
     loader,

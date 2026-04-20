@@ -60,7 +60,7 @@ def game(args):
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
 
-    dm.setup("fit")
+    dm.setup("test")
 
     loader = dm.train_dataloader()
 
@@ -70,14 +70,14 @@ def game(args):
         device=device,
         confidence_threshold=0.8,  # try 0.5 if this is too strict
         max_per_class=8,
-        max_batches=500,
+        max_batches=200,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
 
-    for step in range(100):
+    for step in range(50):
         print(step)
         clip, label = add_blank_frames(clips_by_class, step)
         #clip, labels = add_second_clip(clips_by_class, step)
