@@ -251,7 +251,7 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs, quad = sample_with_blank(clips_by_class)
+        grid_video, grid_labels, confs, quad = sample_unique_class_grid(clips_by_class, 42)
 
         scores = explain(model, args, grid_video, grid_labels, quad)
         total_scores.append(scores)
@@ -305,8 +305,6 @@ def explain(model, args, video_tensor, labels, true_quad):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-        print("x: ", x.shape)
-        print("grad: ", grad.shape)
         #grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
         #for t, frame_expl in enumerate(grad_vid):
         #    plt.imshow(frame_expl)
@@ -315,7 +313,7 @@ def explain(model, args, video_tensor, labels, true_quad):
         #    plt.close()
         #sys.exit()
         # B-cos contribution map, not raw grad
-        linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)   # [T, H, W]
+        linear_mapping = grad   # [T, H, W]
 
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
