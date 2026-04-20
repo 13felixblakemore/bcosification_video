@@ -158,6 +158,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         linear_mapping = x * grad # BCTHW
         linear_mapping = linear_mapping.squeeze(0) # 6THW
         linear_mapping = linear_mapping[:3] # 3THW
+        print("LM: ", linear_mapping.shape)
         linear_mapping = linear_mapping.clamp_min(0).sum(0)
         print("LM: ", linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
