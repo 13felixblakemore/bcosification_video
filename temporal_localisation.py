@@ -63,7 +63,7 @@ def game(args):
 
     dm.setup("test")
 
-    loader = dm.train_dataloader()
+    loader = dm.test_dataloader()
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
 
