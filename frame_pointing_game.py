@@ -77,7 +77,7 @@ def game(args):
 
     total_scores = []
 
-    for step in range(1):
+    for step in range(100):
         print(step)
         clip, label = add_blank_frames(clips_by_class, step)
         #clip, labels = add_second_clip(clips_by_class, step)
