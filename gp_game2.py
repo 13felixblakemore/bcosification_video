@@ -92,6 +92,7 @@ def explain(args, video_tensor, labels):
     video_tensor = video_tensor.unsqueeze(0)
     print(video_tensor.shape)
     scores = []
+    maps = []
     for quadrant, label in enumerate(labels):
         x = video_tensor.clone().detach().requires_grad_(True)
 
@@ -110,7 +111,11 @@ def explain(args, video_tensor, labels):
         print(linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
-
+        maps.append(linear_mapping)
+    print(torch.allclose(maps[0], maps[1], atol=1e-4),
+    torch.allclose(scores[1], scores[2], atol=1e-4),
+    torch.allclose(scores[2], scores[3], atol=1e-4),
+    torch.allclose(scores[3], scores[4], atol=1e-4))
     return scores
 
 def gp_scores_from_linear_map(
