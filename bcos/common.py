@@ -630,8 +630,8 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
     contribs = (video * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
     logit = contribs.sum(dim=(1,2,3))
 
-    heatmap = linear_mapping_to_heatmap(video, linear_mapping)
-    heatmap = smooth_heatmap_np(heatmap)
+    #heatmap = linear_mapping_to_heatmap(video, linear_mapping)
+    #heatmap = smooth_heatmap_np(heatmap)
 
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
