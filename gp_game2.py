@@ -163,6 +163,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
         pair = rgb_grad[:3] + rgb_grad[3:]
         rgb_grad = rgb_grad[:3] / (pair + 1e-12)
+        rgb_grad = rgb_grad.sum(0)
         gp_score = gp_scores_from_linear_map(rgb_grad, quadrant)
         scores.append(gp_score)
     return scores
