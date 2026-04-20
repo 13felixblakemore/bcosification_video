@@ -143,7 +143,7 @@ def make_2x2_grid(videos):
     top = torch.cat([v0, v1], dim=-1)
     bottom = torch.cat([v2, v3], dim=-1)
     return torch.cat([top, bottom], dim=-2)
-def sample_with_blank(clips_by_class, quadrant=None, device="cpu"):
+def sample_with_blank(clips_by_class, quadrant=None, device="cuda"):
     """
     Create a 2x2 grid where only one quadrant contains a real clip,
     and the others are blank (zeros).
