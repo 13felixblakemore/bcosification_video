@@ -124,9 +124,9 @@ def explain(model, args, video_tensor, labels, true_quad=None):
     scores = []
     maps = []
 
-    print("labels:", labels.tolist())
+    print("labels:", labels)
 
-    for quadrant, label in enumerate(labels.tolist()):
+    for quadrant, label in enumerate(labels):
         if label == -1:
             continue
         x = base_video.clone().detach().requires_grad_(True)
