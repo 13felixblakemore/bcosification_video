@@ -155,8 +155,8 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         #sys.exit()
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape) # BCTHW
-        linear_mapping = x * grad # BCTHW
-        linear_mapping = linear_mapping.squeeze(0) # 6THW
+        #linear_mapping = x * grad # BCTHW
+        linear_mapping = grad.squeeze(0) # 6THW
         linear_mapping = linear_mapping[:3] # 3THW
         print("LM: ", linear_mapping.shape)
         linear_mapping = linear_mapping.clamp_min(0).sum(0)
