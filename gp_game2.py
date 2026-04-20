@@ -185,26 +185,40 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.8,  # try 0.5 if this is too strict
+        confidence_threshold=0.9,  # try 0.5 if this is too strict
         max_per_class=10,
-        max_batches=10,
+        max_batches=20,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
-    # Random unique-class grid
-    grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, seed=42)
+    total_scores = []
 
-    # Or strongest 4 classes overall:
-    # grid_video, grid_labels, confs = sample_top_confidence_grid(clips_by_class)
+    for step in range(20):
+        print(step)
+        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, seed=42 + step)
 
-    print("Grid labels:", grid_labels.tolist())
-    print("Grid confidences:", confs)
-    print("Grid class names:", [get_inx2label_ucf101(int(l)) for l in grid_labels.tolist()])
-    print("Grid video shape:", grid_video.shape)
+        scores = explain(model, args, grid_video, grid_labels)
+        total_scores.append(scores)
 
-    scores = explain(model, args, grid_video, grid_labels)
-    print(scores)
+    # --- aggregate ---
+    metrics = ["energy_score", "peak_correct", "quadrant_correct", "topk_score"]
+
+    avg_results = {m: 0.0 for m in metrics}
+    count = 0
+
+    for grid_scores in total_scores:  # each grid
+        for s in grid_scores:  # each quadrant
+            for m in metrics:
+                avg_results[m] += s[m]
+            count += 1
+
+    for m in metrics:
+        avg_results[m] /= count
+
+    print("\n=== Average GP Results over 20 grids ===")
+    for k, v in avg_results.items():
+        print(f"{k}: {v:.4f}")
 
 
 def explain(model, args, video_tensor, labels):
