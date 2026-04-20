@@ -6,6 +6,7 @@ import sys
 import torch
 from torch.version import cuda
 from torchvision.datasets import UCF101
+from torchvision.utils import save_image
 
 from bcos import settings
 from bcos.data.datamodules import UCF101DataModule
@@ -87,6 +88,16 @@ def explain(model, args, video_tensor, labels):
     model.eval()
     video_tensor.requires_grad_(True)
     print("VT: ", video_tensor.shape)
+    frame = video_tensor[:, 0]   # [C, H, W]
+
+    # If B-cos 6-channel, take RGB only
+    if frame.shape[0] == 6:
+        frame = frame[:3]
+
+    # Clamp in case values are outside [0,1]
+    frame = frame.clamp(0, 1)
+
+    save_image(frame, "./experiments/grid.png")
     video_tensor = video_tensor.unsqueeze(0)
     print(video_tensor.shape)
     scores = []
@@ -104,8 +115,8 @@ def explain(model, args, video_tensor, labels):
         print("x requires_grad:", x.requires_grad)
         print("x.grad is None:", x.grad is None)
         grad = x.grad.detach().clone()
-        #linear_mapping = grad.sum(dim=1).squeeze(0)
-        linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)
+        linear_mapping = grad.sum(dim=1).squeeze(0)
+        #linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)
         print(linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
