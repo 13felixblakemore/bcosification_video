@@ -63,71 +63,48 @@ def game(args):
     print(scores)
 
 def explain(model, args, video_tensor, labels):
-    global device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = next(model.parameters()).device
+    base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
 
-    video_tensor = video_tensor.to(device)
-
-    if video_tensor.grad is not None:
-        video_tensor.grad.zero_()
-
-    if args.checkpoint is not None:
-        print(f"Loading checkpoint from: {args.checkpoint}")
-
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        # Handle Lightning checkpoints
-        state_dict = checkpoint.get("state_dict", checkpoint)
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_state_dict[k.replace("model.", "")] = v
-        model.load_state_dict(new_state_dict, strict=False)
-        # Optional debug
-        if "epoch" in checkpoint:
-            print("Checkpoint epoch:", checkpoint["epoch"])
-
-    model.eval()
-    print("VT: ", video_tensor.shape)
-    frame = video_tensor[:, 0]   # [C, H, W]
-
-    # If B-cos 6-channel, take RGB only
-    if frame.shape[0] == 6:
-        frame = frame[:3]
-
-    # Clamp in case values are outside [0,1]
-    frame = frame.clamp(0, 1)
-
-    save_image(frame, "./experiments/grid.png")
-    video_tensor = video_tensor.unsqueeze(0)
-    print(video_tensor.shape)
     scores = []
     maps = []
-    with torch.enable_grad(), model.explanation_mode():
-        for quadrant, label in enumerate(labels):
-            if video_tensor.grad is not None:
-                video_tensor.grad.zero_()
-            video_tensor.requires_grad_(True)
-            out = model(video_tensor)
 
-            pred_out = out.max(1)
-            print("Predicted: ", pred_out.indices.item())
+    print("labels:", labels.tolist())
 
-            to_be_explained_logit = out[0, label]
-            print("EXPLAINING ", label, get_inx2label_ucf101(label))
-            to_be_explained_logit.backward(inputs=[video_tensor])
+    for quadrant, label in enumerate(labels.tolist()):
+        x = base_video.clone().detach().requires_grad_(True)
 
-            grad = video_tensor.grad.detach().clone()
-            print("grad shape: ", grad.shape)
-            linear_mapping = grad.sum(dim=1).squeeze(0)
-            print("linear_mapping shape: ", linear_mapping.shape)
-            #linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)
-            print("Quadrant: ", quadrant)
-            gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
-            scores.append(gp_score)
-            maps.append(linear_mapping)
-    print(torch.allclose(maps[0], maps[1], atol=1e-4),
-    torch.allclose(maps[1], maps[2], atol=1e-4),
-    torch.allclose(maps[2], maps[3], atol=1e-4))
+        model.zero_grad(set_to_none=True)
+
+        with torch.enable_grad(), model.explanation_mode():
+            out = model(x)
+            print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
+
+            logit = out[0, label]
+            logit.backward()
+
+        if x.grad is None:
+            raise RuntimeError("x.grad is None")
+
+        grad = x.grad.detach().clone()
+
+        # B-cos contribution map, not raw grad
+        linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)   # [T, H, W]
+
+        gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
+        scores.append(gp_score)
+        maps.append(linear_mapping)
+
+    print(
+        "allclose 0-1:", torch.allclose(maps[0], maps[1], atol=1e-4),
+        "allclose 1-2:", torch.allclose(maps[1], maps[2], atol=1e-4),
+        "allclose 2-3:", torch.allclose(maps[2], maps[3], atol=1e-4),
+    )
+
+    for i in range(3):
+        diff = (maps[i] - maps[i + 1]).abs().max().item()
+        print(f"max abs diff map{i} vs map{i+1}: {diff}")
+
     return scores
 
 def gp_scores_from_linear_map(
