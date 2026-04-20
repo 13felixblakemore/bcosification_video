@@ -85,8 +85,9 @@ def game(args):
         total_scores.append(score)
 
     print(total_scores)
-    avg = sum(total_scores) / len(total_scores)
-    print("Average score:", avg)
+    avgs = [sum(row) / len(row) for row in total_scores]
+    #avg = sum(total_scores) / len(total_scores)
+    print("Average scores:", avgs)
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
