@@ -108,7 +108,7 @@ def explain(model, args, video_tensor, labels):
             out = model(video_tensor)
 
             pred_out = out.max(1)
-            print("Predicted: ", pred_out[0])
+            print("Predicted: ", pred_out.indices.item())
 
             to_be_explained_logit = out[0, label]
             print("EXPLAINING ", label, get_inx2label_ucf101(label))
