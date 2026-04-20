@@ -79,12 +79,15 @@ def game(args):
 
     for step in range(20):
         print(step)
-        clip, label = add_blank_frames(clips_by_class)
+        clip, label = add_blank_frames(clips_by_class, step)
         # clip, labels = add_second_clip(clips_by_class)
         score = explain(model, args, clip, label)
         total_scores.append(score)
 
     print(total_scores)
+    avg = sum(total_scores) / len(total_scores)
+    print("Average score:", avg)
+
 
 def explain(model, args, clip, label):
     device = next(model.parameters()).device
