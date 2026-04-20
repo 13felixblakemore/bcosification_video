@@ -103,7 +103,7 @@ def explain(model, args, video_tensor, labels):
     print(video_tensor.shape)
     scores = []
     maps = []
-    with torch.enable_grad, model.explanation_mode():
+    with torch.enable_grad(), model.explanation_mode():
         for quadrant, label in enumerate(labels):
             out = model(video_tensor)
 
