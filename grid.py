@@ -255,6 +255,15 @@ def add_blank_frames(clips_by_class, seed=42):
 
     return clip, class_1
 
+def add_blank_frames_full(batch):
+    B,C,T,H,W = batch.shape
+    blank_ind = [0, 1, 2, 5, 6, 7]
+    blank = torch.zeros_like(batch)
+    for t in range(T):
+        if t in blank_ind:
+            batch[:,:,t] = blank.clone()[:,:,t]
+    return batch
+
 def add_second_clip(clips_by_class, seed=42):
     rng = random.Random(seed)
 
