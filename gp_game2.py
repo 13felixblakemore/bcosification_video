@@ -253,7 +253,7 @@ def game(args):
         print(step)
         grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, 42)
 
-        scores = explain(model, args, grid_video, grid_labels, quad)
+        scores = explain(model, args, grid_video, grid_labels)
         total_scores.append(scores)
 
     # --- aggregate ---
@@ -276,7 +276,7 @@ def game(args):
         print(f"{k}: {v:.4f}")
 
 
-def explain(model, args, video_tensor, labels, true_quad):
+def explain(model, args, video_tensor, labels, true_quad=None):
     device = next(model.parameters()).device
     base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
 
