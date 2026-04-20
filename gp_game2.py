@@ -9,6 +9,7 @@ from torchvision.datasets import UCF101
 from torchvision.utils import save_image
 
 from bcos import settings
+from bcos.common import get_inx2label_ucf101
 from bcos.data.datamodules import UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
@@ -102,25 +103,26 @@ def explain(model, args, video_tensor, labels):
     print(video_tensor.shape)
     scores = []
     maps = []
-    for quadrant, label in enumerate(labels):
-        x = video_tensor.clone().detach().requires_grad_(True)
+    with torch.enable_grad, model.explanation_mode():
+        for quadrant, label in enumerate(labels):
+            out = model(video_tensor)
 
-        model.zero_grad(set_to_none=True)
-        out = model(x)
-        to_be_explained_logit = out[0, label]
-        to_be_explained_logit.backward()
-        print("Explaining label: ", label)
+            pred_out = out.max(1)
+            print("Predicted: ", pred_out[0])
 
-        print("x is leaf:", x.is_leaf)
-        print("x requires_grad:", x.requires_grad)
-        print("x.grad is None:", x.grad is None)
-        grad = x.grad.detach().clone()
-        linear_mapping = grad.sum(dim=1).squeeze(0)
-        #linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)
-        print(linear_mapping.shape)
-        gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
-        scores.append(gp_score)
-        maps.append(linear_mapping)
+            to_be_explained_logit = out[0, label]
+            print("EXPLAINING ", label, get_inx2label_ucf101(label))
+            to_be_explained_logit.backward(inputs=[video_tensor])
+
+            grad = video_tensor.grad.detach().clone()
+            print("grad shape: ", grad.shape)
+            linear_mapping = grad.sum(dim=1).squeeze(0)
+            print("linear_mapping shape: ", linear_mapping.shape)
+            #linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)
+            print("Quadrant: ", quadrant)
+            gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
+            scores.append(gp_score)
+            maps.append(linear_mapping)
     print(torch.allclose(maps[0], maps[1], atol=1e-4),
     torch.allclose(maps[1], maps[2], atol=1e-4),
     torch.allclose(maps[2], maps[3], atol=1e-4))
