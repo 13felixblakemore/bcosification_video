@@ -252,7 +252,7 @@ def add_blank_frames(clips_by_class, seed=42):
 
     for t in range(T):
         if t in blank_ind:
-            clip[:,t] = blank.clone()
+            clip[:,t] = blank.clone()[:,t]
 
     return clip, class_1
 
