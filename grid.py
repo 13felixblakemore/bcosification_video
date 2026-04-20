@@ -234,3 +234,43 @@ def sample_two_clips_two_blank(
     grid_video = make_2x2_grid(videos)
 
     return grid_video, labels, confs, real_quadrants
+
+def add_blank_frames(clips_by_class, seed=42):
+    rng = random.Random(seed)
+
+    # --- pick classes ---
+    classes = list(clips_by_class.keys())
+
+    class_1 = rng.choice(classes)
+    clip, _, conf = rng.choice(clips_by_class[class_1]) # C,T,H,W
+
+    C,T,H,W = clip.shape
+
+    blank = torch.zeros_like(clip)
+
+    blank_ind = [0,1,2,5,6,7]
+
+    for t in range(T):
+        if t in blank_ind:
+            clip[:,t] = blank.clone()
+
+    return clip, class_1
+
+def add_second_clip(clips_by_class, seed=42):
+    rng = random.Random(seed)
+
+    # --- pick classes ---
+    classes = list(clips_by_class.keys())
+
+    c1, c2 = rng.sample(classes, 2)
+    clip, _, conf = rng.choice(clips_by_class[c1]) # C,T,H,W
+    clip2, _, conf = rng.choice(clips_by_class[c2])  # C,T,H,W
+
+    C,T,H,W = clip.shape
+
+    for t in range(T//2):
+        clip2[:, t] = clip[:, t].clone()
+
+    return clip2, c1, c2
+
+
