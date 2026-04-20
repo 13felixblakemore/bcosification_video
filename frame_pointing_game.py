@@ -4,7 +4,7 @@ import torch
 
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
-from grid import collect_high_confidence_clips, add_blank_frames
+from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip
 
 
 def get_parser(add_help=True):
@@ -79,14 +79,55 @@ def game(args):
 
     for step in range(20):
         print(step)
-        clip, label = add_blank_frames(clips_by_class, step)
-        # clip, labels = add_second_clip(clips_by_class)
-        score = explain(model, args, clip, label)
+        #clip, label = add_blank_frames(clips_by_class, step)
+        clip, labels = add_second_clip(clips_by_class)
+        score = explain_joint(model, args, clip, labels)
         total_scores.append(score)
 
     print(total_scores)
     avg = sum(total_scores) / len(total_scores)
     print("Average score:", avg)
+
+def explain_joint(model, args, clip, labels):
+    device = next(model.parameters()).device
+    base_video = clip.to(device).unsqueeze(0)   # [1, C, T, H, W]
+
+    scores = []
+
+    x = base_video.clone().detach().requires_grad_(True)
+
+    model.zero_grad(set_to_none=True)
+
+    for i, label in enumerate(labels):
+        with torch.enable_grad(), model.explanation_mode():
+            out = model(x)
+
+            logit = out[0, label]
+            logit.backward(inputs=[x])
+
+        if x.grad is None:
+            raise RuntimeError("x.grad is None")
+
+        grad = x.grad.detach().clone().squeeze(0)
+        grad = grad[:3].clamp_min(0)
+        grad = grad.sum(0)
+        # then keep only top 10% of gradients
+
+        T,H,W = grad.shape
+        if i ==0:
+            frames = [0,1,2,3]
+        else:
+            frames = [4,5,6,7]
+        frame_contrib = 0
+        total_contrib = 0
+        for t in range(T):
+            if t in frames:
+                frame_contrib += grad[t].sum(dim=(0,1)).item()
+            total_contrib += grad[t].sum(dim=(0,1)).item()
+        scores.append(frame_contrib/total_contrib)
+    return scores
+
+
 
 
 def explain(model, args, clip, label):
