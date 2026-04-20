@@ -1,15 +1,17 @@
 # parse args
 import argparse
+import os
 import pathlib
 import sys
 
 import torch
+from matplotlib import pyplot as plt
 from torch.version import cuda
 from torchvision.datasets import UCF101
 from torchvision.utils import save_image
 
 from bcos import settings
-from bcos.common import get_inx2label_ucf101
+from bcos.common import get_inx2label_ucf101, gradient_to_video
 from bcos.data.datamodules import UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
@@ -302,7 +304,13 @@ def explain(model, args, video_tensor, labels, true_quad):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-
+        grad_vid,_ = gradient_to_video(video_tensor, grad)
+        for t, frame_expl in enumerate(grad_vid):
+            plt.imshow(frame_expl)
+            plt.axis('off')
+            plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+            plt.close()
+        sys.exit()
         # B-cos contribution map, not raw grad
         linear_mapping = (x.detach() * grad).sum(dim=1).squeeze(0)   # [T, H, W]
 
