@@ -34,6 +34,108 @@ def get_parser(add_help=True):
     )
     return parser
 
+import random
+from collections import defaultdict
+
+def collect_high_confidence_clips(
+    model,
+    loader,
+    device,
+    confidence_threshold=0.7,
+    max_per_class=10,
+    max_batches=200,
+):
+    """
+    Collect correctly classified, high-confidence clips.
+
+    Returns:
+        clips_by_class: dict[class_idx] -> list of (video_tensor_cpu, label, confidence)
+    """
+    model.eval()
+    clips_by_class = defaultdict(list)
+
+    with torch.no_grad():
+        for batch_idx, (videos, labels) in enumerate(loader):
+            if batch_idx >= max_batches:
+                break
+
+            videos = videos.to(device)
+            labels = labels.to(device)
+
+            out = model(videos)
+            probs = torch.softmax(out, dim=1)
+            preds = out.argmax(dim=1)
+
+            true_class_probs = probs[torch.arange(labels.size(0), device=device), labels]
+
+            for i in range(labels.size(0)):
+                label = int(labels[i].item())
+                pred = int(preds[i].item())
+                conf = float(true_class_probs[i].item())
+
+                if pred == label and conf >= confidence_threshold:
+                    if len(clips_by_class[label]) < max_per_class:
+                        clips_by_class[label].append((
+                            videos[i].detach().cpu(),
+                            label,
+                            conf
+                        ))
+
+    return clips_by_class
+
+
+def sample_unique_class_grid(clips_by_class, seed=42):
+    """
+    Sample 4 clips from 4 different classes and return a 2x2 grid.
+    """
+    rng = random.Random(seed)
+
+    valid_classes = [c for c, clips in clips_by_class.items() if len(clips) > 0]
+    if len(valid_classes) < 4:
+        raise RuntimeError(
+            f"Only found {len(valid_classes)} classes with high-confidence clips. Need at least 4."
+        )
+
+    chosen_classes = rng.sample(valid_classes, 4)
+
+    chosen_clips = []
+    for c in chosen_classes:
+        clip, label, conf = rng.choice(clips_by_class[c])
+        chosen_clips.append((clip, label, conf))
+
+    videos = [x[0] for x in chosen_clips]
+    labels = torch.tensor([x[1] for x in chosen_clips], dtype=torch.long)
+    confs = [x[2] for x in chosen_clips]
+
+    grid_video = make_2x2_grid(videos)
+    return grid_video, labels, confs
+
+
+def sample_top_confidence_grid(clips_by_class):
+    """
+    Deterministic version: take the top-confidence clip from 4 classes with highest available confidence.
+    """
+    best_per_class = []
+    for c, clips in clips_by_class.items():
+        if len(clips) > 0:
+            best_clip = max(clips, key=lambda x: x[2])
+            best_per_class.append(best_clip)
+
+    if len(best_per_class) < 4:
+        raise RuntimeError(
+            f"Only found {len(best_per_class)} classes with high-confidence clips. Need at least 4."
+        )
+
+    # pick the 4 strongest classes overall
+    best_per_class = sorted(best_per_class, key=lambda x: x[2], reverse=True)[:4]
+
+    videos = [x[0] for x in best_per_class]
+    labels = torch.tensor([x[1] for x in best_per_class], dtype=torch.long)
+    confs = [x[2] for x in best_per_class]
+
+    grid_video = make_2x2_grid(videos)
+    return grid_video, labels, confs
+
 def make_2x2_grid(videos):
     v0, v1, v2, v3 = videos
     top = torch.cat([v0, v1], dim=-1)
@@ -79,13 +181,27 @@ def game(args):
 
     loader = dm.train_dataloader()
 
-    videos, labels = next(iter(loader))   # [B,C,T,H,W], [B]
+    clips_by_class = collect_high_confidence_clips(
+        model=model,
+        loader=loader,
+        device=device,
+        confidence_threshold=0.7,  # try 0.5 if this is too strict
+        max_per_class=10,
+        max_batches=200,
+    )
 
-    print(type(videos), videos.shape)
-    print(type(labels), labels.shape)
+    print("Found high-confidence clips for", len(clips_by_class), "classes")
 
-    grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
-    grid_labels = labels[:4]
+    # Random unique-class grid
+    grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, seed=42)
+
+    # Or strongest 4 classes overall:
+    # grid_video, grid_labels, confs = sample_top_confidence_grid(clips_by_class)
+
+    print("Grid labels:", grid_labels.tolist())
+    print("Grid confidences:", confs)
+    print("Grid class names:", [get_inx2label_ucf101(int(l)) for l in grid_labels.tolist()])
+    print("Grid video shape:", grid_video.shape)
 
     scores = explain(model, args, grid_video, grid_labels)
     print(scores)
