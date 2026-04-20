@@ -251,9 +251,9 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, 42+step)
+        grid_video, grid_labels, confs, quad = sample_with_blank(clips_by_class)
 
-        scores = explain(model, args, grid_video, grid_labels)
+        scores = explain(model, args, grid_video, grid_labels, quad)
         total_scores.append(scores)
 
     # --- aggregate ---
@@ -305,13 +305,13 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-        #grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
-        #for t, frame_expl in enumerate(grad_vid):
-        #    plt.imshow(frame_expl)
-        #    plt.axis('off')
-        #    plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
-        #    plt.close()
-        #sys.exit()
+        grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
+        for t, frame_expl in enumerate(grad_vid):
+            plt.imshow(frame_expl)
+            plt.axis('off')
+            plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+            plt.close()
+        sys.exit()
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape)
         linear_mapping = grad.squeeze(0)   # [T, H, W]
