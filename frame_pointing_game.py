@@ -105,7 +105,7 @@ def explain(model, args, clip, label):
     if x.grad is None:
         raise RuntimeError("x.grad is None")
 
-    grad = x.grad.detach().clone()
+    grad = x.grad.detach().clone().squeeze(0)
     grad = grad[:3].clamp_min(0)
     grad = grad.sum(0)
     # then keep only top 10% of gradients
