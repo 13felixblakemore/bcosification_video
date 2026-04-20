@@ -82,8 +82,8 @@ def game(args):
         loader=loader,
         device=device,
         confidence_threshold=0.2,  # try 0.5 if this is too strict
-        max_per_class=4,
-        max_batches=100,
+        max_per_class=1,
+        max_batches=5,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -200,6 +200,7 @@ def gp_scores_from_linear_map(
 
     T, H, W = linear_map.shape
 
+    print(linear_map.min(), linear_map.max())
     # --- use positive contributions only
     contrib = torch.relu(linear_map)
 
