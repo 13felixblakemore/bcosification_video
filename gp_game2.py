@@ -43,6 +43,34 @@ def make_2x2_grid(videos):
 def game(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, model_config = load_model_and_config(args)
+    if args.checkpoint is not None:
+        print(f"Loading checkpoint from: {args.checkpoint}")
+
+        checkpoint = torch.load(args.checkpoint, map_location=device)
+
+        # Handle Lightning checkpoints
+        state_dict = checkpoint.get("state_dict", checkpoint)
+
+        # 🔧 Fix key mismatches (VERY important for your setup)
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            new_key = k
+
+            # Common prefix issues in your repo
+            #new_key = new_key.replace("model.model.model.", "model.model.")
+            #new_key = new_key.replace("model.model.", "model.")
+
+            new_state_dict[new_key] = v
+
+        missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
+
+        print("Loaded checkpoint.")
+        print("Missing keys:", len(missing))
+        print("Unexpected keys:", len(unexpected))
+
+        # Optional debug
+        if "epoch" in checkpoint:
+            print("Checkpoint epoch:", checkpoint["epoch"])
     model.eval()
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
