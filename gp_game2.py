@@ -143,6 +143,7 @@ def make_2x2_grid(videos):
     top = torch.cat([v0, v1], dim=-1)
     bottom = torch.cat([v2, v3], dim=-1)
     return torch.cat([top, bottom], dim=-2)
+
 def sample_with_blank(clips_by_class, quadrant=None, device="cuda"):
     """
     Create a 2x2 grid where only one quadrant contains a real clip,
@@ -304,7 +305,7 @@ def explain(model, args, video_tensor, labels, true_quad):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-        grad_vid,_ = gradient_to_video(video_tensor, grad)
+        grad_vid,_ = gradient_to_video(x, grad)
         for t, frame_expl in enumerate(grad_vid):
             plt.imshow(frame_expl)
             plt.axis('off')
