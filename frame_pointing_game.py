@@ -81,7 +81,7 @@ def game(args):
         print(step)
         clip, label = add_blank_frames(clips_by_class, step)
         #clip, labels = add_second_clip(clips_by_class, step)
-        score = explain_joint(model, args, clip, label)
+        score = explain(model, args, clip, label)
         total_scores.append(score)
 
     print(total_scores)
