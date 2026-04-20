@@ -154,9 +154,11 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         #    plt.close()
         #sys.exit()
         # B-cos contribution map, not raw grad
-        print("LM: ", grad.shape)
-        linear_mapping = (x * grad).sum(dim=1)
-        linear_mapping = linear_mapping.squeeze(0)   # [T, H, W]
+        print("LM: ", grad.shape) # BCTHW
+        linear_mapping = x * grad # BCTHW
+        linear_mapping = linear_mapping.squeeze(0) # 6THW
+        linear_mapping = linear_mapping[:3] # 3THW
+        linear_mapping = linear_mapping.clamp_min(0).sum(0)
         print("LM: ", linear_mapping.shape)
         gp_score = gp_scores_from_linear_map(linear_mapping, quadrant)
         scores.append(gp_score)
