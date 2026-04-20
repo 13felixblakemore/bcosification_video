@@ -87,7 +87,7 @@ def game(args):
     grid_video = make_2x2_grid([videos[0], videos[1], videos[2], videos[3]])
     grid_labels = labels[:4]
 
-    scores = explain(model, args, videos[0], labels[:1])
+    scores = explain(model, args, grid_video, grid_labels)
     print(scores)
 
 
