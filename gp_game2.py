@@ -185,7 +185,7 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.7,  # try 0.5 if this is too strict
+        confidence_threshold=0.01,  # try 0.5 if this is too strict
         max_per_class=10,
         max_batches=200,
     )
