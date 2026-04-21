@@ -93,7 +93,7 @@ def game(args):
 
     for step in range(20):
         print(step)
-        grid_video, grid_labels, confs, quads = sample_with_blank(clips_by_class)
+        grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
 
         scores = explain(model, args, grid_video, grid_labels, quads)
         total_scores.append(scores)
@@ -147,33 +147,10 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-
-
-        # B-cos contribution map, not raw grad
-        print("LM: ", grad.shape) # BCTHW
         linear_mapping = grad.squeeze(0)
 
         contribs = (video_tensor * linear_mapping).sum(0, keepdim=True)
 
-
-        rgb_grad = linear_mapping / (
-                linear_mapping.abs().max(0, keepdim=True).values + 1e-12
-        )
-        rgb_grad = rgb_grad.clamp(min=0) # 6THW
-        # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-        pair = rgb_grad[:3] + rgb_grad[3:]
-        rgb_grad = rgb_grad[:3] / (pair + 1e-12)
-        # Set alpha value to the strength (L2 norm) of each location's gradient
-        alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
-        # Only show positive contributions
-        alpha = torch.where(contribs < 0, 1e-12, alpha)
-        # [1, T, H, W] -> [T, 1, H, W]
-        alpha_2d = alpha.permute(1, 0, 2, 3)
-        alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
-        alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
-        alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
-
-        rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)
         gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
     return scores
