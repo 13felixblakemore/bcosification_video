@@ -120,7 +120,8 @@ def explain_joint(model, clip, labels):
         alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
 
         rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)
-        grad = rgb_grad
+        print("Contribs ", contribs.shape)
+        grad = contribs.squeeze(0)
         #flat = grad.reshape(-1)
         #k = max(1, int(0.001 * flat.numel()))
         #topk_vals, _ = torch.topk(flat, k)
