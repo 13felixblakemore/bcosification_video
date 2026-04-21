@@ -83,7 +83,7 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.9,  # try 0.5 if this is too strict
+        confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=20,
         max_batches=100,
     )
@@ -92,7 +92,7 @@ def game(args):
 
     total_scores = []
     total = 0
-    for step in range(100):
+    for step in range(1000):
         print(step)
         grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 42)
 
