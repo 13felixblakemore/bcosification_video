@@ -50,15 +50,26 @@ def get_model(model_config) -> nn.Module:
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
 
+    # 1) Replace model.model.blocks.0.pool
+    old_pool = model.model.blocks[0].pool
+    model.model.blocks[0].pool = nn.AvgPool3d(
+        kernel_size=old_pool.kernel_size,
+        stride=old_pool.stride,
+        padding=old_pool.padding,
+    )
+
+    # 2) Replace model.model.blocks.2
+    old_pool = model.model.blocks[2]
+    model.model.blocks[2] = nn.AvgPool3d(
+        kernel_size=old_pool.kernel_size,
+        stride=old_pool.stride,
+        padding=old_pool.padding,
+    )
+
     for name, module in model.named_modules():
         if isinstance(module, (nn.MaxPool2d, nn.MaxPool3d)):
             print("FOUND MAXPOOL:", name, module)
     sys.exit()
-
-    for k,v in standard_changes.items():
-        print("Changing maxpool to avgpool")
-        exec(f'model.model.{k} = v')
-    
     # Making all the bias parameters None
     #print("keeping bias")
     print("Removing bias parameters (making None)")
