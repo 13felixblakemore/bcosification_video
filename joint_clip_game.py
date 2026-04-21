@@ -98,6 +98,22 @@ def explain_joint(model, clip, labels):
         grad = x.grad.detach().clone().squeeze(0)
         grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
 
+        grad = x.grad.detach().clone().squeeze(0)
+        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
+
+        grad = x.grad.detach().clone().squeeze(0)
+        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
+
+        flat = grad.reshape(-1)
+        k = max(1, int(0.1 * flat.numel()))
+        topk_vals, _ = torch.topk(flat, k)
+        threshold = topk_vals[-1]
+
+        grad = grad.clone()
+        grad[grad < threshold] = 0
+
+        print((grad > 0).float().mean())
+
         T = grad.shape[0]
         # Logic: First label should be in first half, second in second half
         midpoint = T // 2
