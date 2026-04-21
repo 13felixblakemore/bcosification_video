@@ -209,6 +209,7 @@ def gp_scores_from_linear_map(
     if linear_map.dim() == 4:
         linear_map = linear_map.squeeze(0)
 
+    print(linear_map.shape)
     assert linear_map.dim() == 3, "Expected [T,H,W]"
 
     T, H, W = linear_map.shape
