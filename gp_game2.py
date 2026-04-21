@@ -106,6 +106,7 @@ def game(args):
     avg_results = {m: 0.0 for m in metrics}
     count = 0
 
+
     for grid_scores in total_scores:  # each grid
         for s in grid_scores:  # each quadrant
             for m in metrics:
@@ -126,7 +127,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
 
     scores = []
 
-    print("labels:", labels)
+    #print("labels:", labels)
 
     for quadrant, label in enumerate(labels):
         if label == -1:
@@ -138,17 +139,15 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
             pred = out.topk(10, 1)
-            print(pred)
-            print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
             logit = out[0, label]
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, pred_class].item()
 
-            if pred_class == label and confidence > 0.7:
+            if pred_class == label and confidence > 0.5:
                 pass
             else:
-                return
+                continue
 
             logit.backward(inputs=[x])
 
