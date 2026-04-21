@@ -174,7 +174,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
 
         rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)
-        gp_score = gp_scores_from_linear_map(rgb_grad, quadrant)
+        gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
     return scores
 
