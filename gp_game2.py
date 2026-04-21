@@ -149,7 +149,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, label].item()
 
-            if confidence > 0.1:
+            if pred_class == label:
                 count += 1
                 pass
             else:
