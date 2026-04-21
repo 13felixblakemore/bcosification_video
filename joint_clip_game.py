@@ -112,6 +112,7 @@ def explain_joint(model, clip, labels):
         # Only show positive contributions
         alpha = torch.where(contribs < 0, 1e-12, alpha)
         # [1, T, H, W] -> [T, 1, H, W]
+        print("Alpha: ", alpha.shape)
         alpha_2d = alpha.permute(1, 0, 2, 3)
         alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
         alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
