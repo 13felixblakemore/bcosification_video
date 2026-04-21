@@ -105,7 +105,7 @@ def explain_joint(model, clip, labels):
         grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
 
         flat = grad.reshape(-1)
-        k = max(1, int(0.01 * flat.numel()))
+        k = max(1, int(0.001 * flat.numel()))
         topk_vals, _ = torch.topk(flat, k)
         threshold = topk_vals[-1]
 
