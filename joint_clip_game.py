@@ -93,26 +93,41 @@ def explain_joint(model, clip, labels):
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
             logit = out[0, label]
-            logit.backward(retain_graph=True)  # Retain to explain the second label next
+            logit.backward(retain_graph=False)  # Retain to explain the second label next
 
         grad = x.grad.detach().clone().squeeze(0)
-        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
+        rgb_grad = grad / (
+                grad.abs().max(0, keepdim=True).values + 1e-12
+        )
 
-        grad = x.grad.detach().clone().squeeze(0)
-        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
+        contribs = (clip * grad).sum(0, keepdim=True)
 
-        grad = x.grad.detach().clone().squeeze(0)
-        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
+        # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+        rgb_grad = rgb_grad.clamp(min=0)
+        pair = rgb_grad[:3] + rgb_grad[3:]
+        rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
 
-        flat = grad.reshape(-1)
-        k = max(1, int(0.001 * flat.numel()))
-        topk_vals, _ = torch.topk(flat, k)
-        threshold = topk_vals[-1]
+        # Set alpha value to the strength (L2 norm) of each location's gradient
+        alpha = grad.norm(p=2, dim=0, keepdim=True)
+        # Only show positive contributions
+        alpha = torch.where(contribs < 0, 1e-12, alpha)
+        # [1, T, H, W] -> [T, 1, H, W]
+        alpha_2d = alpha.permute(1, 0, 2, 3)
+        alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+        alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
+        alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
 
-        grad = grad.clone()
-        grad[grad < threshold] = 0
+        rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)
+        grad = rgb_grad
+        #flat = grad.reshape(-1)
+        #k = max(1, int(0.001 * flat.numel()))
+        #topk_vals, _ = torch.topk(flat, k)
+        #threshold = topk_vals[-1]
 
-        print((grad > 0).float().mean())
+        #grad = grad.clone()
+        #grad[grad < threshold] = 0
+
+        #print((grad > 0).float().mean())
 
         T = grad.shape[0]
         # Logic: First label should be in first half, second in second half
