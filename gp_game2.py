@@ -84,22 +84,24 @@ def game(args):
         loader=loader,
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
-        max_per_class=100,
-        max_batches=500,
+        max_per_class=20,
+        max_batches=100,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
-
+    total = 0
     for step in range(100):
         print(step)
         grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
 
-        scores = explain(model, args, grid_video, grid_labels, quads)
+        scores, count = explain(model, args, grid_video, grid_labels, quads)
+        total += count
         if scores:
             total_scores.append(scores)
 
+    print("total clips: ", total)
     # --- aggregate ---
     metrics = ["energy_score"]
 
@@ -125,6 +127,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
     device = next(model.parameters()).device
     base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
 
+    count = 0
     scores = []
 
     #print("labels:", labels)
@@ -144,7 +147,8 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, pred_class].item()
 
-            if pred_class == label and confidence > 0.7:
+            if pred_class == label and confidence > 0.9:
+                count += 1
                 pass
             else:
                 continue
@@ -165,7 +169,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
 
         gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
-    return scores
+    return scores, count
 
 def gp_scores_from_linear_map(
     linear_map: torch.Tensor,
