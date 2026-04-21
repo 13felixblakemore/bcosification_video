@@ -1,3 +1,5 @@
+import sys
+
 from torch import nn
 from torchvision.models.densenet import DenseNet121_Weights, _load_state_dict
 from torchvision.models.resnet import (
@@ -51,6 +53,7 @@ def get_model(model_config) -> nn.Module:
     for name, module in model.named_modules():
         if isinstance(module, (nn.MaxPool2d, nn.MaxPool3d)):
             print("FOUND MAXPOOL:", name, module)
+    sys.exit()
 
     for k,v in standard_changes.items():
         print("Changing maxpool to avgpool")
