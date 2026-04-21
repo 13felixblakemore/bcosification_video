@@ -85,14 +85,14 @@ def game(args):
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
         max_per_class=2,
-        max_batches=20,
+        max_batches=100,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
 
-    for step in range(20):
+    for step in range(100):
         print(step)
         grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
 
@@ -100,7 +100,7 @@ def game(args):
         total_scores.append(scores)
 
     # --- aggregate ---
-    metrics = ["energy_score", "peak_correct", "quadrant_correct", "topk_score"]
+    metrics = ["energy_score"]
 
     avg_results = {m: 0.0 for m in metrics}
     count = 0
@@ -124,7 +124,6 @@ def explain(model, args, video_tensor, labels, true_quad=None):
     base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
 
     scores = []
-    maps = []
 
     print("labels:", labels)
 
@@ -154,6 +153,8 @@ def explain(model, args, video_tensor, labels, true_quad=None):
 
         contribs = contribs.sum(0)
 
+        debug_quadrant_masses(contribs)
+
         gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
     return scores
@@ -179,10 +180,6 @@ def gp_scores_from_linear_map(
     Returns:
         dict with:
             energy_score: float
-            peak_correct: int (0 or 1)
-            quadrant_pred: int
-            quadrant_correct: int (0 or 1)
-            topk_score: float
     """
 
     # --- ensure shape [T, H, W]
@@ -202,11 +199,7 @@ def gp_scores_from_linear_map(
     if total_mass == 0:
         # avoid division by zero
         return {
-            "energy_score": 0.0,
-            "peak_correct": 0,
-            "quadrant_pred": -1,
-            "quadrant_correct": 0,
-            "topk_score": 0.0,
+            "energy_score": 0.0
         }
 
     # --- define quadrant masks
@@ -230,63 +223,9 @@ def gp_scores_from_linear_map(
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
-    # --- 2. Peak-based GP (classic pointing game)
-    flat_idx = contrib.view(-1).argmax()
-    t_idx = flat_idx // (H * W)
-    hw_idx = flat_idx % (H * W)
-    h_idx = hw_idx // W
-    w_idx = hw_idx % W
-
-    if h_idx < h_mid and w_idx < w_mid:
-        peak_quad = 0
-    elif h_idx < h_mid and w_idx >= w_mid:
-        peak_quad = 1
-    elif h_idx >= h_mid and w_idx < w_mid:
-        peak_quad = 2
-    else:
-        peak_quad = 3
-
-    peak_correct = int(peak_quad == target_quadrant)
-
-    # --- 3. Quadrant classification (which has most mass)
-    quadrant_pred = int(torch.argmax(quad_energy))
-    quadrant_correct = int(quadrant_pred == target_quadrant)
-
-    # --- 4. Top-k mass score
-    flat = contrib.view(-1)
-    k = max(1, int(topk_percent * flat.numel()))
-
-    topk_vals, topk_idx = torch.topk(flat, k)
-
-    # convert indices to quadrant
-    correct_count = 0
-    for idx in topk_idx:
-        idx = idx.item()
-        t = idx // (H * W)
-        hw = idx % (H * W)
-        h = hw // W
-        w = hw % W
-
-        if h < h_mid and w < w_mid:
-            q = 0
-        elif h < h_mid and w >= w_mid:
-            q = 1
-        elif h >= h_mid and w < w_mid:
-            q = 2
-        else:
-            q = 3
-
-        if q == target_quadrant:
-            correct_count += 1
-
-    topk_score = correct_count / k
 
     return {
-        "energy_score": energy_score,
-        "peak_correct": peak_correct,
-        "quadrant_pred": quadrant_pred,
-        "quadrant_correct": quadrant_correct,
-        "topk_score": topk_score,
+        "energy_score": energy_score
     }
 
 def debug_quadrant_masses(linear_map):
