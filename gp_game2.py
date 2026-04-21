@@ -5,6 +5,7 @@ import pathlib
 import sys
 
 import torch
+import torch.nn.functional as F
 from matplotlib import pyplot as plt
 from torch.version import cuda
 from torchvision.datasets import UCF101
@@ -146,30 +147,34 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone()
-        #grad_vid,_ = gradient_to_video(x.squeeze(0), grad.squeeze(0))
-        #for t, frame_expl in enumerate(grad_vid):
-        #    plt.imshow(frame_expl)
-        #    plt.axis('off')
-        #    plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
-        #    plt.close()
-        #sys.exit()
+
 
         # B-cos contribution map, not raw grad
         print("LM: ", grad.shape) # BCTHW
-        linear_map = grad.squeeze(0)
-        linear_map = linear_map[:3].sum(0)
+        linear_mapping = grad.squeeze(0)
 
-        grad = grad.squeeze(0)
-        rgb_grad = grad / (
-                grad.abs().max(0, keepdim=True).values + 1e-12
+        contribs = (video_tensor * linear_mapping).sum(0, keepdim=True)
+
+
+        rgb_grad = linear_mapping / (
+                linear_mapping.abs().max(0, keepdim=True).values + 1e-12
         )
         rgb_grad = rgb_grad.clamp(min=0) # 6THW
         # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
         pair = rgb_grad[:3] + rgb_grad[3:]
         rgb_grad = rgb_grad[:3] / (pair + 1e-12)
-        rgb_grad = rgb_grad.sum(0)
-        debug_quadrant_masses(linear_map)
-        gp_score = gp_scores_from_linear_map(linear_map, quadrant)
+        # Set alpha value to the strength (L2 norm) of each location's gradient
+        alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
+        # Only show positive contributions
+        alpha = torch.where(contribs < 0, 1e-12, alpha)
+        # [1, T, H, W] -> [T, 1, H, W]
+        alpha_2d = alpha.permute(1, 0, 2, 3)
+        alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+        alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
+        alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
+
+        rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)
+        gp_score = gp_scores_from_linear_map(rgb_grad, quadrant)
         scores.append(gp_score)
     return scores
 
