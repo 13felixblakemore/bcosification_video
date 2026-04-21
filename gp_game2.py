@@ -84,8 +84,8 @@ def game(args):
         loader=loader,
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
-        max_per_class=2,
-        max_batches=100,
+        max_per_class=100,
+        max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -144,7 +144,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, pred_class].item()
 
-            if pred_class == label and confidence > 0.5:
+            if pred_class == label and confidence > 0.7:
                 pass
             else:
                 continue
