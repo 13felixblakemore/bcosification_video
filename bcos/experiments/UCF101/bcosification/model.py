@@ -69,7 +69,7 @@ def get_model(model_config) -> nn.Module:
     for name, module in model.named_modules():
         if isinstance(module, (nn.MaxPool2d, nn.MaxPool3d)):
             print("FOUND MAXPOOL:", name, module)
-    sys.exit()
+
     # Making all the bias parameters None
     #print("keeping bias")
     print("Removing bias parameters (making None)")
