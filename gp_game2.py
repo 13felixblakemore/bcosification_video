@@ -97,7 +97,8 @@ def game(args):
         grid_video, grid_labels, confs, quads = sample_two_clips_two_blank(clips_by_class)
 
         scores = explain(model, args, grid_video, grid_labels, quads)
-        total_scores.append(scores)
+        if scores:
+            total_scores.append(scores)
 
     # --- aggregate ---
     metrics = ["energy_score"]
@@ -141,6 +142,14 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             print(f"quadrant={quadrant}, label={label}, logit={out[0, label].item():.6f}")
 
             logit = out[0, label]
+            pred_class = out.argmax(dim=1).item()
+            confidence = F.softmax(out, dim=1)[0, pred_class].item()
+
+            if pred_class == label and confidence > 0.7:
+                pass
+            else:
+                return
+
             logit.backward(inputs=[x])
 
         if x.grad is None:
