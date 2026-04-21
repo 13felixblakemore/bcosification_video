@@ -115,6 +115,8 @@ def game(args):
                 avg_results[m] += s[m]
             count += 1
 
+    print("count: ", count)
+    print("avg results: ", avg_results)
     for m in metrics:
         avg_results[m] /= count
 
@@ -147,7 +149,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, pred_class].item()
 
-            if pred_class == label and confidence > 0.3:
+            if pred_class == label and confidence > 0.0:
                 count += 1
                 pass
             else:
