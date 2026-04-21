@@ -100,7 +100,7 @@ def explain_joint(model, clip, labels):
                 grad.abs().max(0, keepdim=True).values + 1e-12
         )
 
-        contribs = (clip * grad).sum(0, keepdim=True)
+        contribs = (x * grad).sum(0, keepdim=True)
 
         # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
         rgb_grad = rgb_grad.clamp(min=0)
