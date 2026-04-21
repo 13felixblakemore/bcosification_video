@@ -48,6 +48,10 @@ def get_model(model_config) -> nn.Module:
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
 
+    for name, module in model.named_modules():
+        if isinstance(module, (nn.MaxPool2d, nn.MaxPool3d)):
+            print("FOUND MAXPOOL:", name, module)
+
     for k,v in standard_changes.items():
         print("Changing maxpool to avgpool")
         exec(f'model.model.{k} = v')
