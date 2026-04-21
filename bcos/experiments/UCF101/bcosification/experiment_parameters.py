@@ -61,7 +61,7 @@ DEFAULTS = dict(
             logit_bias=-math.log(NUM_CLASSES - 1),
         ),
         bcos_args=dict(
-            b=1.5,
+            b=2,
             max_out=1,
         ),
     ),
@@ -145,7 +145,7 @@ i3ds = {
                     gap = True, # Global Average Pooling reorder works with conv1x1x1 for the last linear layer
                     act_layer = True, # ReLU activation layer
                 ),
-                standard_changes = {"features[3]": nn.AvgPool3d(kernel_size=3, stride=2, padding=1)},
+                standard_changes = {"maxpool": nn.AvgPool3d(kernel_size=3, stride=2, padding=1)},
             ),
         )
     )
