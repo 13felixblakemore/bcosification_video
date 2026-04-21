@@ -149,7 +149,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         grad = x.grad.detach().clone()
         linear_mapping = grad.squeeze(0)
 
-        contribs = (video_tensor * linear_mapping).sum(0, keepdim=True)
+        contribs = (x * linear_mapping).sum(0, keepdim=True)
 
         gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
