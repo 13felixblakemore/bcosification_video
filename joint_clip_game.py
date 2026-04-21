@@ -29,7 +29,7 @@ def game(args):
     model.eval()
     dm = UCF101DataModule(model_config["data"])
     dm.setup("test")
-    loader = dm.train_dataloader()
+    loader = dm.test_dataloader()
 
     # 1. Collect clips the model actually knows (important for 3D B-CoS)
     print("Collecting high-confidence clips...")
