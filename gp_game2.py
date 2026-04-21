@@ -6,6 +6,7 @@ import sys
 
 import torch
 import torch.nn.functional as F
+from cv2.version import contrib
 from matplotlib import pyplot as plt
 from torch.version import cuda
 from torchvision.datasets import UCF101
@@ -149,7 +150,9 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         grad = x.grad.detach().clone()
         linear_mapping = grad.squeeze(0)
 
-        contribs = (x * linear_mapping).sum(0, keepdim=True)
+        contribs = (x * linear_mapping).squeeze(0)
+
+        contribs = contribs.sum(0)
 
         gp_score = gp_scores_from_linear_map(contribs, quadrant)
         scores.append(gp_score)
