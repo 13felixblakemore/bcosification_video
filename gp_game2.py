@@ -94,7 +94,7 @@ def game(args):
     total = 0
     for step in range(100):
         print(step)
-        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class)
+        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 42)
 
         scores, count = explain(model, args, grid_video, grid_labels)
         total += count
