@@ -264,9 +264,14 @@ def plot_fp_score(vid, linear_mapping, contribs):
 
     for t in range(T):
         # Row 0: contribution graph (as vertical bar)
-        axes[0, t].bar(0, contribs_np[t])
-        axes[0, t].set_ylim(0, contribs_np.max() + 1e-6)
-        axes[0, t].axis("off")
+        ax = axes[0, 0]  # use entire top row
+        ax.plot(contribs_np, linewidth=2)
+        ax.set_ylim(0, contribs_np.max() + 1e-6)
+        ax.set_title("Temporal Contributions")
+
+        # hide other axes in row
+        for t in range(1, T):
+            axes[0, t].axis("off")
 
         # Row 1: grad overlay
         axes[1, t].imshow(grad_video[t])
