@@ -85,7 +85,7 @@ def game(args):
         device=device,
         confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=2,
+        max_batches=100,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -200,7 +200,7 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
-    if energy_score > 0.5:
+    if energy_score > 0.9:
         plot_fp_score(vid, linear_mapping, contribs)
 
     return {
@@ -259,7 +259,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     # --- Prepare video frames ---
     vid_np = vid[:3].permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
 
-    print("vid: ", vid_np)
+    print("vid: ", vid_np.shape)
     # --- Plot ---
 
     fig = plt.figure(figsize=(T * 2, 8))
