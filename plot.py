@@ -95,7 +95,7 @@ log_dir = "tb_logs/experiments/UCF101/standard/i3d/i3d/standard"
 log_dir_2 = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7"
 
 logs = ["16","17","18","19"]
-log_dirs = ["tb_logs/experiments/UCF101/standard/i3d/i3d/version_" + version for version in logs]
+log_dirs = ["tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_" + version for version in logs]
 tags = ["val_acc1"]
 labels = ["b=1", "b=2", "b=3", "b=1.5"]
 compare_scalar_between_runs(log_dirs, labels)
