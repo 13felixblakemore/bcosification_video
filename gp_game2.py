@@ -86,7 +86,7 @@ def game(args):
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=500,
+        max_batches=20,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -267,6 +267,7 @@ def plot_grid(linear_mapping, vid):
     alpha = torch.where(contribs < 0, 1e-12, alpha)
     # [1, T, H, W] -> [T, 1, H, W]
     alpha = alpha.squeeze(0)
+    print("Alpha: ", alpha.shape)
     alpha_2d = alpha.permute(1, 0, 2, 3)
     alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
@@ -274,9 +275,11 @@ def plot_grid(linear_mapping, vid):
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
+    print("RBG grad shape ", rgb_grad.shape)
 
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
+    print("GRADVID ", np.array(grad_video).shape)
 
     for t, frame_expl in enumerate(np.array(grad_video)):
         plt.imshow(frame_expl)
