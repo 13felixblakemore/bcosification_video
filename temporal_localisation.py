@@ -173,6 +173,7 @@ def explain_joint(model, args, clip, labels):
                 count += 1
                 pass
             else:
+                print("skip")
                 continue
 
             logit.backward(inputs=[x])
