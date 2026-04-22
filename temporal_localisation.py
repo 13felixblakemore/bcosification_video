@@ -200,7 +200,7 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
-    if energy_score > 0.0:
+    if energy_score > 0.5:
         plot_fp_score(vid, linear_mapping, contribs)
 
     return {
@@ -259,6 +259,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     # --- Prepare video frames ---
     vid_np = vid[:3].permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
 
+    print("vid: ", vid_np)
     # --- Plot ---
 
     fig = plt.figure(figsize=(T * 2, 8))
