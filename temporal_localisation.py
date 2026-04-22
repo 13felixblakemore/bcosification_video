@@ -269,9 +269,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
         ax.set_ylim(0, contribs_np.max() + 1e-6)
         ax.set_title("Temporal Contributions")
 
-        # hide other axes in row
-        for t in range(1, T):
-            axes[0, t].axis("off")
+        # could try [████░░░███░░████] here
 
         # Row 1: grad overlay
         axes[1, t].imshow(grad_video[t])
