@@ -95,7 +95,7 @@ def game(args):
     total = 0
     for step in range(1000):
         print(step)
-        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 42)
+        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 43)
 
         scores, count = explain(model, args, grid_video, grid_labels)
         total += count
@@ -237,7 +237,7 @@ def gp_scores_from_linear_map(
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
-    if energy_score > 0.9:
+    if energy_score > 0.95:
         plot_grid(linear_map, vid)
 
     return {
