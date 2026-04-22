@@ -210,6 +210,8 @@ def explain_joint(model, args, clip, labels):
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
             pred = out.topk(10, 1)
+            print(pred)
+            print(out[0])
 
             logit = out[0, label]
             pred_class = out.argmax(dim=1).item()
