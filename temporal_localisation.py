@@ -85,7 +85,7 @@ def game(args):
         device=device,
         confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=500,
+        max_batches=200,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -241,6 +241,9 @@ def plot_fp_score(vid, linear_mapping, contribs):
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     print("GRADVID ", np.array(grad_video).shape)
 
+    vid = vid.squeeze(0)
+    print(vid.shape)
+    print(linear_mapping.shape)
     heatmap = linear_mapping_to_heatmap(vid, linear_mapping)
     heatmap = smooth_heatmap_np(heatmap)
 
