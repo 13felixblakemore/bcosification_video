@@ -288,6 +288,9 @@ def plot_grid(linear_mapping, vid):
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
     print("GRADVID ", np.array(grad_video).shape)
 
+    heatmap = linear_mapping_to_heatmap(vid, linear_mapping)
+    heatmap = smooth_heatmap_np(heatmap)
+
     vid = vid[:3].permute(1, 2, 3, 0)
     vid = np.array(vid.cpu().detach())
     for t, frame in enumerate(vid):
@@ -302,8 +305,7 @@ def plot_grid(linear_mapping, vid):
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
-    heatmap = linear_mapping_to_heatmap(vid, linear_mapping)
-    heatmap = smooth_heatmap_np(heatmap)
+
 
     for t, frame in enumerate(heatmap):
         plt.imshow(vid[t])  # original frame
