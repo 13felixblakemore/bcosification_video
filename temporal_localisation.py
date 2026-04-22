@@ -108,12 +108,10 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
     if contribs.dim() == 4:
         linear_map = linear_mapping.squeeze(0)
 
-    print(contribs.shape)
     assert contribs.dim() == 3, "Expected [T,H,W]"
 
     T, H, W = contribs.shape
 
-    print(contribs.min(), contribs.max())
     # --- use positive contributions only
     contribs = torch.relu(contribs)
 
@@ -140,7 +138,6 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
     quad_energy = torch.stack(quad_energy)
 
     scores = quad_energy / total_mass
-    print("scores: ", scores)
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target] / total_mass).item()
 
@@ -155,12 +152,15 @@ def explain_joint(model, args, clip, labels):
 
     scores = []
 
-    x = base_video.clone().detach().requires_grad_(True)
+
 
     model.zero_grad(set_to_none=True)
 
     count = 0
     for i, label in enumerate(labels):
+        x = base_video.clone().detach().requires_grad_(True)
+        model.zero_grad(set_to_none=True)
+
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
             pred = out.topk(10, 1)
