@@ -12,7 +12,6 @@ from matplotlib import pyplot as plt
 from torch.version import cuda
 from torchvision.datasets import UCF101
 from torchvision.utils import save_image
-from wandb.integration.diffusers.resolvers.utils import np_array
 
 from bcos import settings
 from bcos.common import get_inx2label_ucf101, gradient_to_video
@@ -278,7 +277,7 @@ def plot_grid(linear_mapping, vid):
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
 
-    for t, frame_expl in enumerate(np_array(grad_video)):
+    for t, frame_expl in enumerate(np.array(grad_video)):
         plt.imshow(frame_expl)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
