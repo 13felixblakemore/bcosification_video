@@ -289,10 +289,12 @@ def plot_grid(linear_mapping, vid):
     print("GRADVID ", np.array(grad_video).shape)
 
     vid = np.array(vid.cpu().detach())
-    plt.imshow(vid)
-    plt.axis('off')
-    plt.savefig(os.path.join(args.base_directory, f"og.png"), bbox_inches='tight')
-    plt.close()
+
+    for t, frame in enumerate(vid):
+        plt.imshow(frame)
+        plt.axis('off')
+        plt.savefig(os.path.join(args.base_directory, f"og_{t}.png"), bbox_inches='tight')
+        plt.close()
 
     for t, frame_expl in enumerate(np.array(grad_video)):
         plt.imshow(frame_expl)
