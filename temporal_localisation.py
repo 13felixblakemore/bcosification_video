@@ -5,7 +5,8 @@ import torch
 import torch.nn.functional as F
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
-from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip, add_blank_frames_full
+from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip, add_blank_frames_full, \
+    add_second_clip_full
 
 
 def get_parser(add_help=True):
@@ -75,7 +76,7 @@ def game(args):
         if batch_idx >= num:
             break
         print(f"Processing batch {batch_idx} out of {num}")
-        video, labels = add_second_clip(videos, labels)
+        video, labels = add_second_clip_full(videos, labels)
 
         # explain now returns a dictionary of {label: score}
         batch_results = explain_joint(model, args, video, labels)
