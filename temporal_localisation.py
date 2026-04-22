@@ -235,8 +235,7 @@ def explain_joint(model, args, clip, labels):
             else:
                 print("skip")
                 labels_dict[i] += 1
-
-                pass
+                continue
 
             logit.backward(inputs=[x])
 
