@@ -200,7 +200,7 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
-    if energy_score > 0.9:
+    if energy_score > 0.0:
         plot_fp_score(vid, linear_mapping, contribs)
 
     return {
@@ -248,10 +248,13 @@ def plot_fp_score(vid, linear_mapping, contribs):
     heatmap = smooth_heatmap_np(heatmap)
 
     # --- Normalize contribs over frames ---
+    print("Contribs: ", contribs.shape)
     contribs_np = contribs.detach().cpu().numpy()
+    print("Contribs: ", contribs.shape)
     contribs_np = np.maximum(contribs_np, 0)  # only positive
+    print("Contribs: ", contribs.shape)
     contribs_np = contribs_np / (contribs_np.sum() + 1e-12)
-
+    print("Contribs: ", contribs.shape)
     # --- Prepare video frames ---
     vid_np = vid.permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
 
