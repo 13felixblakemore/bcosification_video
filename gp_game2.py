@@ -249,10 +249,13 @@ def plot_grid(linear_mapping, vid):
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
     contribs = (vid * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
 
+    print("Contribs ", contribs.shape)
+
     # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
     rgb_grad = linear_mapping / (
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
+    print("rgb grad ", rgb_grad.shape)
 
     # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
     rgb_grad = rgb_grad.clamp(min=0)
@@ -260,12 +263,13 @@ def plot_grid(linear_mapping, vid):
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
     rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
-
+    print("rgb grad ", rgb_grad.shape)
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
     alpha = torch.where(contribs < 0, 1e-12, alpha)
     # [1, T, H, W] -> [T, 1, H, W]
+    print("Alpha: ", alpha.shape)
     alpha = alpha.squeeze(0)
     print("Alpha: ", alpha.shape)
     alpha_2d = alpha.permute(1, 0, 2, 3)
