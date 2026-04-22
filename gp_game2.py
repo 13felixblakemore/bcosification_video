@@ -4,6 +4,7 @@ import os
 import pathlib
 import sys
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from cv2.version import contrib
@@ -11,6 +12,7 @@ from matplotlib import pyplot as plt
 from torch.version import cuda
 from torchvision.datasets import UCF101
 from torchvision.utils import save_image
+from wandb.integration.diffusers.resolvers.utils import np_array
 
 from bcos import settings
 from bcos.common import get_inx2label_ucf101, gradient_to_video
@@ -163,13 +165,7 @@ def explain(model, args, video_tensor, labels, true_quad=None):
         grad = x.grad.detach().clone()
         linear_mapping = grad.squeeze(0)
 
-        contribs = (x * linear_mapping).squeeze(0)
-
-        contribs = contribs.sum(0)
-
-        debug_quadrant_masses(contribs)
-
-        gp_score = gp_scores_from_linear_map(contribs, quadrant)
+        gp_score = gp_scores_from_linear_map(linear_mapping, target_quadrant=quadrant, vid=video_tensor)
         scores.append(gp_score)
     return scores, count
 
@@ -177,6 +173,7 @@ def gp_scores_from_linear_map(
     linear_map: torch.Tensor,
     target_quadrant: int,
     topk_percent: float = 0.1,
+    vid = None
 ):
     """
     Compute GP game scores from a linear mapping.
@@ -196,20 +193,24 @@ def gp_scores_from_linear_map(
             energy_score: float
     """
 
+    contribs = (vid * linear_map).squeeze(0)
+
+    contribs = contribs.sum(0)
+    debug_quadrant_masses(contribs)
     # --- ensure shape [T, H, W]
-    if linear_map.dim() == 4:
+    if contribs.dim() == 4:
         linear_map = linear_map.squeeze(0)
 
-    print(linear_map.shape)
-    assert linear_map.dim() == 3, "Expected [T,H,W]"
+    print(contribs.shape)
+    assert contribs.dim() == 3, "Expected [T,H,W]"
 
-    T, H, W = linear_map.shape
+    T, H, W = contribs.shape
 
-    print(linear_map.min(), linear_map.max())
+    print(contribs.min(), contribs.max())
     # --- use positive contributions only
-    contrib = torch.relu(linear_map)
+    contribs = torch.relu(contribs)
 
-    total_mass = contrib.sum()
+    total_mass = contribs.sum()
     if total_mass == 0:
         # avoid division by zero
         return {
@@ -230,17 +231,61 @@ def gp_scores_from_linear_map(
     # --- energy per quadrant
     quad_energy = []
     for m in masks:
-        quad_energy.append(contrib[m].sum())
+        quad_energy.append(contribs[m].sum())
 
     quad_energy = torch.stack(quad_energy)
 
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
+    if energy_score > 0.9:
+        plot_grid(linear_map, vid)
 
     return {
         "energy_score": energy_score
     }
+
+
+def plot_grid(linear_mapping, vid):
+    # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
+    contribs = (vid * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
+
+    # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
+    rgb_grad = linear_mapping / (
+        linear_mapping.abs().max(0, keepdim=True).values + 1e-12
+    )
+
+    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+    rgb_grad = rgb_grad.clamp(min=0)
+
+    # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
+    pair = rgb_grad[:3] + rgb_grad[3:]
+    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+
+    # Set alpha value to the strength (L2 norm) of each location's gradient
+    alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
+    # Only show positive contributions
+    alpha = torch.where(contribs < 0, 1e-12, alpha)
+    # [1, T, H, W] -> [T, 1, H, W]
+    alpha_2d = alpha.permute(1, 0, 2, 3)
+    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+    alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
+    alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
+
+    rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
+    T = rgb_grad.shape[1]
+
+    # Reshaping to [T, H, W, C]
+    grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
+
+    for t, frame_expl in enumerate(np_array(grad_video)):
+        plt.imshow(frame_expl)
+        plt.axis('off')
+        plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+        plt.close()
+
+    sys.exit()
+
 
 def debug_quadrant_masses(linear_map):
     contrib = torch.relu(linear_map)
