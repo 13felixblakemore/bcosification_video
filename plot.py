@@ -37,15 +37,15 @@ def plot_multiple_scalars(log_dir, tags, smoothing=0.0):
     plt.close()
 
 
-def compare_scalar_between_runs(log_dir1, log_dir2, tag="val_acc1",
-                                label1="Standard",
-                                label2="B-Cos",
+def compare_scalar_between_runs(log_dirs,
+                                labels,
+                                tag="val_acc1",
                                 smoothing=0.0,
                                 save_path="comparison_plot.png"):
 
     plt.figure(figsize=(8, 5))
 
-    for log_dir, label in [(log_dir1, label1), (log_dir2, label2)]:
+    for log_dir, label in zip(log_dirs, labels):
 
         ea = event_accumulator.EventAccumulator(
             log_dir,
@@ -93,5 +93,8 @@ def print_all_tensorboard_tags(log_dir):
 
 log_dir = "tb_logs/experiments/UCF101/standard/i3d/i3d/standard"
 log_dir_2 = "tb_logs/experiments/UCF101/bcosification/i3d/i3d/version_7"
+
+logs = ["16","17","18","19"]
+log_dirs = ["tb_logs/experiments/UCF101/standard/i3d/i3d/version_" + version for version in logs]
 tags = ["val_acc1"]
 compare_scalar_between_runs(log_dir, log_dir_2)
