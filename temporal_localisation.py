@@ -62,9 +62,9 @@ def game(args):
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
 
-    dm.setup("test")
+    dm.setup("fit")
 
-    loader = dm.test_dataloader()
+    loader = dm.train_dataloader()
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
     num = len(loader)
