@@ -279,7 +279,11 @@ def add_second_clip(clips_by_class, seed=42):
     for t in range(T//2):
         clip2[:, t] = clip[:, t].clone()
 
-    return clip2, [c1, c2]
+    black_frame = torch.zeros_like(clip[:,0]).unsqueeze(1)  # (C, H, W)
+
+    x_new = torch.cat([black_frame, clip2], dim=1)
+
+    return x_new, [c1, c2]
 
 def add_second_clip_full(batch, labels, seed=42):
     rng = random.Random(seed)
