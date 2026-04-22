@@ -62,9 +62,9 @@ def game(args):
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
 
-    dm.setup("fit")
+    dm.setup("test")
 
-    loader = dm.train_dataloader()
+    loader = dm.test_dataloader()
 
     clips_by_class = collect_high_confidence_clips(
         model=model,
