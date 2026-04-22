@@ -218,16 +218,10 @@ def explain_joint(model, args, clip, labels):
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
             pred = out.topk(10, 1)
-            print(pred)
-            print(out[0])
 
             logit = out[0, label]
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, label].item()
-
-            print("Predicted:", pred_class)
-            print("Confidence:", confidence)
-            print("Label:", label)
 
             if pred_class == label:
                 count += 1
@@ -246,6 +240,7 @@ def explain_joint(model, args, clip, labels):
         linear_mapping = grad.squeeze(0)
 
         fp_score = fp_scores_from_linear_map(linear_mapping, target=i, vid=x)
+        print(fp_score)
         scores.append(fp_score)
     return scores, count, labels_dict
 
