@@ -260,33 +260,35 @@ def plot_fp_score(vid, linear_mapping, contribs):
     vid_np = vid[:3].permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
 
     # --- Plot ---
-    fig, axes = plt.subplots(4, T, figsize=(T * 2, 8))
+
+    fig = plt.figure(figsize=(T * 2, 8))
+    gs = fig.add_gridspec(4, T)
+
+    # --- Top row: ONE big axis ---
+    ax_top = fig.add_subplot(gs[0, :])
+    ax_top.plot(contribs_np, linewidth=2)
+    ax_top.set_ylim(0, contribs_np.max() + 1e-6)
+    ax_top.set_title("Temporal Contributions")
+    ax_top.axvline(T // 2, color='red', linestyle='--')
+
+    axes = [[None] * T for _ in range(4)]
 
     for t in range(T):
-        # Row 0: contribution graph (as vertical bar)
-        ax = axes[0, 0]  # use entire top row
-        ax.plot(contribs_np, linewidth=2)
-        ax.set_ylim(0, contribs_np.max() + 1e-6)
-        ax.set_title("Temporal Contributions")
+        axes[1][t] = fig.add_subplot(gs[1, t])
+        axes[2][t] = fig.add_subplot(gs[2, t])
+        axes[3][t] = fig.add_subplot(gs[3, t])
 
-        # could try [████░░░███░░████] here
+    # could try [████░░░███░░████] here
 
-        # Row 1: grad overlay
-        axes[1, t].imshow(grad_video[t])
-        axes[1, t].axis("off")
+    for t in range(T):
+        axes[1][t].imshow(grad_video[t])
+        axes[1][t].axis("off")
 
-        # Row 2: heatmap
-        axes[2, t].imshow(heatmap[t], cmap="jet")
-        axes[2, t].axis("off")
+        axes[2][t].imshow(heatmap[t], cmap="jet")
+        axes[2][t].axis("off")
 
-        # Row 3: original frame
-        axes[3, t].imshow(vid_np[t])
-        axes[3, t].axis("off")
-
-    axes[0, 0].set_title("Contrib")
-    axes[1, 0].set_title("Grad")
-    axes[2, 0].set_title("Heatmap")
-    axes[3, 0].set_title("Original")
+        axes[3][t].imshow(vid_np[t])
+        axes[3][t].axis("off")
 
     plt.tight_layout()
     plt.savefig(os.path.join(args.base_directory, f"temporal_localisation.png"), bbox_inches='tight')
