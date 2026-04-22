@@ -237,6 +237,8 @@ def gp_scores_from_linear_map(
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
+    print([energy_score > 0.15 for energy_score in quad_energy])
+
     if all(energy_score > 0.5 for energy_score in quad_energy):
         plot_grid(linear_map, vid)
 
