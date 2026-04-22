@@ -257,7 +257,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     contribs_np = contribs_np / (contribs_np.sum() + 1e-12)
     print("Contribs: ", contribs.shape)
     # --- Prepare video frames ---
-    vid_np = vid.permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
+    vid_np = vid[:3].permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
 
     # --- Plot ---
     fig, axes = plt.subplots(4, T, figsize=(T * 2, 8))
