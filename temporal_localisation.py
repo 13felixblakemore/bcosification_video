@@ -68,7 +68,7 @@ def game(args):
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
     num = len(loader)
-    num = 500
+    num = 10
 
     per_class = False
 
