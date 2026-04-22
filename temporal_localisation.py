@@ -75,9 +75,10 @@ def game(args):
     for batch_idx, (videos, labels) in enumerate(loader):
         if batch_idx >= num:
             break
+        print("batch labels: ", labels)
         print(f"Processing batch {batch_idx} out of {num}")
         video, labels = add_second_clip_full(videos, labels)
-
+        print("labels: ", labels)
         # explain now returns a dictionary of {label: score}
         batch_results = explain_joint(model, args, video, labels)
 
