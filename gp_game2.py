@@ -247,6 +247,9 @@ def gp_scores_from_linear_map(
 
 def plot_grid(linear_mapping, vid):
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
+    print(linear_mapping.shape)
+    linear_mapping = linear_mapping.squeeze(0)
+
     contribs = (vid * linear_mapping).sum(0, keepdim=True)  # [1, T, H, W]
 
     print("Contribs ", contribs.shape)
