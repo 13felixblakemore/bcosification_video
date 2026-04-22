@@ -65,6 +65,17 @@ def game(args):
     dm.setup("fit")
 
     loader = dm.train_dataloader()
+
+    clips_by_class = collect_high_confidence_clips(
+        model=model,
+        loader=loader,
+        device=device,
+        confidence_threshold=0.9,  # try 0.5 if this is too strict
+        max_per_class=20,
+        max_batches=20,
+    )
+
+    print("Found high-confidence clips for", len(clips_by_class), "classes")
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
     num = len(loader)
@@ -72,18 +83,29 @@ def game(args):
 
     per_class = False
 
-    for batch_idx, (videos, labels) in enumerate(loader):
-        if batch_idx >= num:
-            break
-        print("batch labels: ", labels)
-        print(f"Processing batch {batch_idx} out of {num}")
-        video, labels = add_second_clip_full(videos, labels)
-        print("labels: ", labels)
-        # explain now returns a dictionary of {label: score}
-        batch_results = explain_joint(model, args, video, labels)
+    total_scores = []
+    total = 0
+    for step in range(10):
+        print(step)
+        joint_vid, labels = add_second_clip(clips_by_class, step + 43)
 
-        for label, score in batch_results:
-            class_scores[label].append(score)
+        scores, count = explain_joint(model, args, joint_vid, labels)
+        total += count
+        if scores:
+            total_scores.append(scores)
+    if per_class:
+        for batch_idx, (videos, labels) in enumerate(loader):
+            if batch_idx >= num:
+                break
+            print("batch labels: ", labels)
+            print(f"Processing batch {batch_idx} out of {num}")
+            video, labels = add_second_clip_full(videos, labels)
+            print("labels: ", labels)
+            # explain now returns a dictionary of {label: score}
+            batch_results = explain_joint(model, args, video, labels)
+
+            for label, score in batch_results:
+                class_scores[label].append(score)
 
     if per_class:
         # 3. Calculate averages per class
@@ -94,9 +116,24 @@ def game(args):
             per_class_averages[label] = avg
             print(f"Class {label}: {avg:.4f} (based on {len(scores)} samples)")
 
-    # 4. Overall average (optional)
-    all_scores = [s for scores in class_scores.values() for s in scores]
-    print(f"\nGlobal Average: {sum(all_scores) / len(all_scores):.4f}")
+    count = 0
+
+    metrics = ["energy_score"]
+    avg_results = {m: 0.0 for m in metrics}
+    for grid_scores in total_scores:  # each grid
+        for s in grid_scores:  # each quadrant
+            for m in metrics:
+                avg_results[m] += s[m]
+            count += 1
+
+    print("count: ", count)
+    print("avg results: ", avg_results)
+    for m in metrics:
+        avg_results[m] /= count
+
+    print("\n=== Average GP Results over 20 grids ===")
+    for k, v in avg_results.items():
+        print(f"{k}: {v:.4f}")
 
 
 def fp_scores_from_linear_map(linear_mapping, target, vid):
@@ -144,8 +181,9 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
-
-    return energy_score
+    return {
+        "energy_score": energy_score
+    }
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
@@ -190,8 +228,8 @@ def explain_joint(model, args, clip, labels):
         linear_mapping = grad.squeeze(0)
 
         fp_score = fp_scores_from_linear_map(linear_mapping, target=i, vid=x)
-        scores.append((label, fp_score))
-    return scores
+        scores.append(fp_score)
+    return scores, count
 
 
 def explain(model, args, batch, labels):

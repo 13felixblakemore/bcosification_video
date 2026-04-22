@@ -279,7 +279,7 @@ def add_second_clip(clips_by_class, seed=42):
     for t in range(T//2):
         clip2[:, t] = clip[:, t].clone()
 
-    return clip2, (c1, c2)
+    return clip2, [c1, c2]
 
 def add_second_clip_full(batch, labels, seed=42):
     rng = random.Random(seed)
