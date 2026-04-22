@@ -14,7 +14,7 @@ from torchvision.datasets import UCF101
 from torchvision.utils import save_image
 
 from bcos import settings
-from bcos.common import get_inx2label_ucf101, gradient_to_video
+from bcos.common import get_inx2label_ucf101, gradient_to_video, linear_mapping_to_heatmap, smooth_heatmap_np
 from bcos.data.datamodules import UCF101DataModule
 from bcos.data.presets import UCF101ClassificationPresetTrain, UCF101ClassificationPresetEval
 from bcos.experiments.UCF101.bcosification.experiment_parameters import CONFIGS
@@ -300,6 +300,16 @@ def plot_grid(linear_mapping, vid):
         plt.imshow(frame_expl)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
+        plt.close()
+
+    heatmap = linear_mapping_to_heatmap(vid, linear_mapping)
+    heatmap = smooth_heatmap_np(heatmap)
+
+    for t, frame in enumerate(heatmap):
+        plt.imshow(vid[t])  # original frame
+        plt.imshow(heatmap[t], cmap='jet', alpha=0.5)  # overlay
+        plt.axis('off')
+        plt.savefig(os.path.join(args.base_directory, f"heatmap_{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
     sys.exit()
