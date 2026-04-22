@@ -75,7 +75,7 @@ def game(args):
         if batch_idx >= num:
             break
         print(f"Processing batch {batch_idx} out of {num}")
-        video = add_second_clip(videos)
+        video, labels = add_second_clip(videos, labels)
 
         # explain now returns a dictionary of {label: score}
         batch_results = explain_joint(model, args, video, labels)

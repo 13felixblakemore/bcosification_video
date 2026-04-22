@@ -281,4 +281,24 @@ def add_second_clip(clips_by_class, seed=42):
 
     return clip2, (c1, c2)
 
+def add_second_clip_full(batch, labels, seed=42):
+    rng = random.Random(seed)
+    B, C, T, H, W = batch.shape
+    # --- pick classes ---
+
+    idx1 = rng.randint(0, B-1)
+    idx2 = rng.randint(0, B-1)
+
+    v1 = batch[idx1]
+    v2 = batch[idx2]
+
+    l1 = labels[0]
+    l2 = labels[1]
+
+    for t in range(T//2):
+        v2[:, t] = v1[:, t].clone()
+
+    return v2, (l1, l2)
+
+
 
