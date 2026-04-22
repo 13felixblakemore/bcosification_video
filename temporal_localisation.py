@@ -2,7 +2,7 @@ import argparse
 from collections import defaultdict
 
 import torch
-
+import torch.nn.functional as F
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
 from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip, add_blank_frames_full
@@ -67,31 +67,86 @@ def game(args):
     # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
     class_scores = defaultdict(list)
     num = len(loader)
+    num = 500
+
+    per_class = False
 
     for batch_idx, (videos, labels) in enumerate(loader):
+        if batch_idx >= num:
+            break
         print(f"Processing batch {batch_idx} out of {num}")
-        videos = add_blank_frames_full(videos)
+        video = add_second_clip(videos)
 
         # explain now returns a dictionary of {label: score}
-        batch_results = explain(model, args, videos, labels)
+        batch_results = explain_joint(model, args, video, labels)
 
-        # 2. Merge batch results into our main tracker
-        for label, score in batch_results.items():
+        for label, score in batch_results:
             class_scores[label].append(score)
 
-    # 3. Calculate averages per class
-    print("\n--- Per-Class Results ---")
-    per_class_averages = {}
-    for label, scores in class_scores.items():
-        avg = sum(scores) / len(scores)
-        per_class_averages[label] = avg
-        print(f"Class {label}: {avg:.4f} (based on {len(scores)} samples)")
+    if per_class:
+        # 3. Calculate averages per class
+        print("\n--- Per-Class Results ---")
+        per_class_averages = {}
+        for label, scores in class_scores.items():
+            avg = sum(scores) / len(scores)
+            per_class_averages[label] = avg
+            print(f"Class {label}: {avg:.4f} (based on {len(scores)} samples)")
 
     # 4. Overall average (optional)
     all_scores = [s for scores in class_scores.values() for s in scores]
     print(f"\nGlobal Average: {sum(all_scores) / len(all_scores):.4f}")
 
-    return per_class_averages
+
+def fp_scores_from_linear_map(linear_mapping, target, vid):
+
+    contribs = (vid * linear_mapping).squeeze(0)
+
+    contribs = contribs.sum(0)
+
+    # --- ensure shape [T, H, W]
+    if contribs.dim() == 4:
+        linear_map = linear_mapping.squeeze(0)
+
+    print(contribs.shape)
+    assert contribs.dim() == 3, "Expected [T,H,W]"
+
+    T, H, W = contribs.shape
+
+    print(contribs.min(), contribs.max())
+    # --- use positive contributions only
+    contribs = torch.relu(contribs)
+
+    total_mass = contribs.sum()
+    if total_mass == 0:
+        # avoid division by zero
+        return {
+            "energy_score": 0.0
+        }
+
+    # --- define quadrant masks
+    t_mid = T // 2
+
+    masks = [
+        (slice(0, t_mid), slice(None), slice(None)),  # 0 TL
+        (slice(t_mid, T), slice(None), slice(None)),  # 1 TR
+    ]
+
+    # --- energy per quadrant
+    quad_energy = []
+    for m in masks:
+        quad_energy.append(contribs[m].sum())
+
+    quad_energy = torch.stack(quad_energy)
+
+    scores = quad_energy / total_mass
+    print("scores: ", scores)
+    # --- 1. Energy-based GP score
+    energy_score = (quad_energy[target] / total_mass).item()
+
+    #if (scores > 0.1).all():
+    #    plot_grid(linear_map, vid)
+
+    return energy_score
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
@@ -103,33 +158,32 @@ def explain_joint(model, args, clip, labels):
 
     model.zero_grad(set_to_none=True)
 
+    count = 0
     for i, label in enumerate(labels):
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
+            pred = out.topk(10, 1)
 
             logit = out[0, label]
+            pred_class = out.argmax(dim=1).item()
+            confidence = F.softmax(out, dim=1)[0, label].item()
+
+            if pred_class == label:
+                count += 1
+                pass
+            else:
+                continue
+
             logit.backward(inputs=[x])
 
         if x.grad is None:
             raise RuntimeError("x.grad is None")
 
-        grad = x.grad.detach().clone().squeeze(0)
-        grad = grad[:3].clamp_min(0)
-        grad = grad.sum(0)
-        # then keep only top 10% of gradients
+        grad = x.grad.detach().clone()
+        linear_mapping = grad.squeeze(0)
 
-        T,H,W = grad.shape
-        if i ==0:
-            frames = [0,1,2,3]
-        else:
-            frames = [4,5,6,7]
-        frame_contrib = 0
-        total_contrib = 0
-        for t in range(T):
-            if t in frames:
-                frame_contrib += grad[t].sum(dim=(0,1)).item()
-            total_contrib += grad[t].sum(dim=(0,1)).item()
-        scores.append(frame_contrib/total_contrib)
+        fp_score = fp_scores_from_linear_map(linear_mapping, target=i, vid=x)
+        scores.append((label, fp_score))
     return scores
 
 
