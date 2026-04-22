@@ -86,7 +86,7 @@ def game(args):
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=20,
+        max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -239,8 +239,8 @@ def gp_scores_from_linear_map(
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
-    if (scores > 0.1).all():
-        plot_grid(linear_map, vid)
+    #if (scores > 0.1).all():
+    #    plot_grid(linear_map, vid)
 
     return {
         "energy_score": energy_score
