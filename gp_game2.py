@@ -234,10 +234,12 @@ def gp_scores_from_linear_map(
 
     quad_energy = torch.stack(quad_energy)
 
+    scores = quad_energy / total_mass
+    print("scores: ", scores)
     # --- 1. Energy-based GP score
     energy_score = (quad_energy[target_quadrant] / total_mass).item()
 
-    if (quad_energy > 0.15).all():
+    if (scores > 0.15).all():
         plot_grid(linear_map, vid)
 
     return {
