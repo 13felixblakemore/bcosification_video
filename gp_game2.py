@@ -267,6 +267,7 @@ def plot_grid(linear_mapping, vid):
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
+    contribs = contribs.squeeze(0)
     alpha = torch.where(contribs < 0, 1e-12, alpha)
     # [1, T, H, W] -> [T, 1, H, W]
     print("Alpha: ", alpha.shape)
