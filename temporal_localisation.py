@@ -72,7 +72,7 @@ def game(args):
         device=device,
         confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=500,
+        max_batches=30,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -86,7 +86,7 @@ def game(args):
     total_scores = []
     total = 0
     frame_dict= defaultdict(int)
-    for step in range(500):
+    for step in range(20):
         print(step)
         joint_vid, labels = add_second_clip(clips_by_class, step + 43)
 
@@ -226,7 +226,7 @@ def explain_joint(model, args, clip, labels):
                 print("skip")
                 labels_dict[i] += 1
 
-                continue
+                pass
 
             logit.backward(inputs=[x])
 
