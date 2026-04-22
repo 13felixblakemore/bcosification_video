@@ -283,9 +283,9 @@ def add_second_clip(clips_by_class, seed=42):
 
     add_blank = False
     if add_blank:
-        x_new = torch.cat([black_frame, clip2], dim=1)
+        clip2 = torch.cat([black_frame, clip2], dim=1)
 
-    return x_new, [c1, c2]
+    return clip2, [c1, c2]
 
 def add_second_clip_full(batch, labels, seed=42):
     rng = random.Random(seed)
