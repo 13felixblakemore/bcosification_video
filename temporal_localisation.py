@@ -253,6 +253,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     print("Contribs: ", contribs.shape)
     contribs_np = np.maximum(contribs_np, 0)  # only positive
     print("Contribs: ", contribs.shape)
+    contribs_np = contribs_np.sum(axis=(1, 2))
     contribs_np = contribs_np / (contribs_np.sum() + 1e-12)
     print("Contribs: ", contribs.shape)
     # --- Prepare video frames ---
