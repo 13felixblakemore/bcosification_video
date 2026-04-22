@@ -72,7 +72,7 @@ def game(args):
         device=device,
         confidence_threshold=0.0,  # try 0.5 if this is too strict
         max_per_class=20,
-        max_batches=100,
+        max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -85,11 +85,14 @@ def game(args):
 
     total_scores = []
     total = 0
-    for step in range(10):
+    frame_dict= defaultdict(int)
+    for step in range(500):
         print(step)
         joint_vid, labels = add_second_clip(clips_by_class, step + 43)
 
-        scores, count = explain_joint(model, args, joint_vid, labels)
+        scores, count, dict = explain_joint(model, args, joint_vid, labels)
+        for key in dict.keys():
+            frame_dict[key] += dict[key]
         total += count
         if scores:
             total_scores.append(scores)
@@ -125,6 +128,9 @@ def game(args):
             for m in metrics:
                 avg_results[m] += s[m]
             count += 1
+
+    for key in frame_dict.keys():
+        print(f"Half {key}: {frame_dict[key]}")
 
     print("count: ", count)
     print("avg results: ", avg_results)
@@ -195,6 +201,7 @@ def explain_joint(model, args, clip, labels):
 
     model.zero_grad(set_to_none=True)
 
+    labels_dict = defaultdict(int)
     count = 0
     for i, label in enumerate(labels):
         x = base_video.clone().detach().requires_grad_(True)
@@ -217,6 +224,8 @@ def explain_joint(model, args, clip, labels):
                 pass
             else:
                 print("skip")
+                labels_dict[i] += 1
+
                 continue
 
             logit.backward(inputs=[x])
@@ -229,7 +238,7 @@ def explain_joint(model, args, clip, labels):
 
         fp_score = fp_scores_from_linear_map(linear_mapping, target=i, vid=x)
         scores.append(fp_score)
-    return scores, count
+    return scores, count, labels_dict
 
 
 def explain(model, args, batch, labels):
