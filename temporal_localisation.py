@@ -3,6 +3,8 @@ from collections import defaultdict
 
 import torch
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
+
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
 from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip, add_blank_frames_full, \
@@ -64,7 +66,13 @@ def game(args):
 
     dm.setup("test")
 
-    loader = dm.test_dataloader()
+    loader = DataLoader(
+        dm.eval_dataset,
+        batch_size=8,
+        shuffle=True,  # ✅ force shuffle
+        num_workers=4,  # match your config if needed
+        pin_memory=True
+    )
 
     clips_by_class = collect_high_confidence_clips(
         model=model,
