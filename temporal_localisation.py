@@ -1,10 +1,15 @@
 import argparse
+import os
+import sys
 from collections import defaultdict
 
+import numpy as np
 import torch
 import torch.nn.functional as F
+from matplotlib import pyplot as plt
 from torch.utils.data import DataLoader
 
+from bcos.common import linear_mapping_to_heatmap, smooth_heatmap_np
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
 from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip, add_blank_frames_full, \
@@ -195,9 +200,89 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
+    if energy_score > 0.9:
+        plot_fp_score(vid, linear_mapping, contribs)
+
     return {
         "energy_score": energy_score
     }
+
+def plot_fp_score(vid, linear_mapping, contribs):
+    # Normalise each pixel vector (r, g, b, 1-r, 1-g, 1-b) s.t. max entry is 1, maintaining direction
+    rgb_grad = linear_mapping / (
+        linear_mapping.abs().max(0, keepdim=True).values + 1e-12
+    )
+    print("rgb grad ", rgb_grad.shape)
+
+    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+    rgb_grad = rgb_grad.clamp(min=0)
+
+    # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
+    pair = rgb_grad[:3] + rgb_grad[3:]
+    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    print("rgb grad ", rgb_grad.shape)
+    # Set alpha value to the strength (L2 norm) of each location's gradient
+    alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
+    # Only show positive contributions
+    contribs = contribs.squeeze(0)
+    alpha = torch.where(contribs < 0, 1e-12, alpha)
+    # [1, T, H, W] -> [T, 1, H, W]
+    print("Alpha: ", alpha.shape)
+    alpha_2d = alpha.permute(1, 0, 2, 3)
+    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+    alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
+    alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
+
+    rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
+    T = rgb_grad.shape[1]
+    print("RBG grad shape ", rgb_grad.shape)
+
+    # Reshaping to [T, H, W, C]
+    grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
+    print("GRADVID ", np.array(grad_video).shape)
+
+    heatmap = linear_mapping_to_heatmap(vid, linear_mapping)
+    heatmap = smooth_heatmap_np(heatmap)
+
+    # --- Normalize contribs over frames ---
+    contribs_np = contribs.detach().cpu().numpy()
+    contribs_np = np.maximum(contribs_np, 0)  # only positive
+    contribs_np = contribs_np / (contribs_np.sum() + 1e-12)
+
+    # --- Prepare video frames ---
+    vid_np = vid.permute(1, 2, 3, 0).detach().cpu().numpy()  # [T, H, W, C]
+
+    # --- Plot ---
+    fig, axes = plt.subplots(4, T, figsize=(T * 2, 8))
+
+    for t in range(T):
+        # Row 0: contribution graph (as vertical bar)
+        axes[0, t].bar(0, contribs_np[t])
+        axes[0, t].set_ylim(0, contribs_np.max() + 1e-6)
+        axes[0, t].axis("off")
+
+        # Row 1: grad overlay
+        axes[1, t].imshow(grad_video[t])
+        axes[1, t].axis("off")
+
+        # Row 2: heatmap
+        axes[2, t].imshow(heatmap[t], cmap="jet")
+        axes[2, t].axis("off")
+
+        # Row 3: original frame
+        axes[3, t].imshow(vid_np[t])
+        axes[3, t].axis("off")
+
+    axes[0, 0].set_title("Contrib")
+    axes[1, 0].set_title("Grad")
+    axes[2, 0].set_title("Heatmap")
+    axes[3, 0].set_title("Original")
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(args.base_directory, f"temporal_localisation.png"), bbox_inches='tight')
+    plt.close()
+    sys.exit()
+
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
@@ -223,7 +308,7 @@ def explain_joint(model, args, clip, labels):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, label].item()
 
-            if True:
+            if pred_class == label:
                 count += 1
                 pass
             else:
