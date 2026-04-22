@@ -281,7 +281,7 @@ def add_second_clip(clips_by_class, seed=42):
 
     black_frame = torch.zeros_like(clip[:,0]).unsqueeze(1)  # (C, H, W)
 
-    add_blank = False
+    add_blank = True
     if add_blank:
         clip2 = torch.cat([black_frame, clip2], dim=1)
 
