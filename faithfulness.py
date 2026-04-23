@@ -82,7 +82,8 @@ def check_faithfulness(model, loader, args, batch_lim):
         model.zero_grad(set_to_none=True)
         if batch_idx >= batch_lim:
             with torch.enable_grad(), model.explanation_mode():
-                out = model(videos)
+                x = videos.clone().detach().requires_grad_(True)
+                out = model(x)
                 pred_out = out.max(1)
 
                 to_be_explained_logit = pred_out.values
