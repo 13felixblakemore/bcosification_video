@@ -270,7 +270,7 @@ def explain_video(args, video_path=None, vid_tensor=None):
     print("Logit value:", pred_val.item())
     logits = logits[0]
 
-    expl_out = model.explain_video(video_tensor, 41)
+    expl_out = model.explain_video(video_tensor, 66)
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
