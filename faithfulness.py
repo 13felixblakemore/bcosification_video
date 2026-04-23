@@ -47,46 +47,8 @@ def main(args):
 
             new_state_dict[new_key] = v
 
-        missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
+        model.load_state_dict(new_state_dict, strict=False)
 
-        print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
-
-        print("\nMODEL block 5:")
-        for k in model.state_dict().keys():
-            if "blocks.5" in k:
-                print(k)
-
-        print("\nMODEL block 6:")
-        for k in model.state_dict().keys():
-            if "blocks.6" in k:
-                print(k)
-
-        print("\nCHECKPOINT block 5:")
-        for k in new_state_dict.keys():
-            if "blocks.5" in k:
-                print(k)
-
-        print("\nCHECKPOINT block 6:")
-        for k in new_state_dict.keys():
-            if "blocks.6" in k:
-                print(k)
-
-        filtered_state_dict = {
-            k: v for k, v in new_state_dict.items()
-            if k.startswith("model.model.")
-        }
-
-        missing, unexpected = model.load_state_dict(filtered_state_dict, strict=False)
-
-        print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
-
-        # Optional debug
-        if "epoch" in checkpoint:
-            print("Checkpoint epoch:", checkpoint["epoch"])
     model.eval()
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
