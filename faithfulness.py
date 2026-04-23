@@ -78,7 +78,11 @@ def main(args):
             if k.startswith("model.model.")
         }
 
-        model.load_state_dict(filtered_state_dict, strict=False)
+        missing, unexpected = model.load_state_dict(filtered_state_dict, strict=False)
+
+        print("Loaded checkpoint.")
+        print("Missing keys:", len(missing))
+        print("Unexpected keys:", len(unexpected))
 
         # Optional debug
         if "epoch" in checkpoint:
