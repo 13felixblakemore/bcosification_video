@@ -28,6 +28,8 @@ def get_parser(add_help=True):
 def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, model_config = load_model_and_config(args)
+
+    args.checkpoint = None
     if args.checkpoint is not None:
         print(f"Loading checkpoint from: {args.checkpoint}")
 
