@@ -61,7 +61,7 @@ DEFAULTS = dict(
             logit_bias=-math.log(NUM_CLASSES - 1),
         ),
         bcos_args=dict(
-            b=1,
+            b=2,
             max_out=1,
         ),
     ),
