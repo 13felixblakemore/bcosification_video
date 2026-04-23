@@ -73,6 +73,7 @@ def get_model(model_config) -> nn.Module:
                 print("FOUND MAXPOOL:", name, module)
 
     # Making all the bias parameters None
+    print(model_config.keys())
 
     if model_config["use_bias"] == True:
         print("keeping bias")
