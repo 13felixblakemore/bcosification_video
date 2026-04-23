@@ -75,7 +75,7 @@ def get_model(model_config) -> nn.Module:
     # Making all the bias parameters None
     print(model_config.keys())
 
-    if model_config["use_bias"] == True:
+    if model_config["bcosify_args"]["use_bias"] == True:
         print("keeping bias")
     else:
         print("Removing bias parameters (making None)")
