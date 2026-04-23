@@ -93,7 +93,7 @@ def check_faithfulness(model, loader, args, batch_lim):
             grads = x.grad.detach().clone()
             print("grads: ", grads.shape)
             reconstructed_logits = (x * grads).sum(dim=(1, 2, 3, 4)).detach().clone()
-            print("Reconstructed logits: ", reconstructed_logits.shape)
+            print("Reconstructed logits: ", reconstructed_logits)
             sys.exit()
             # compare error between reconstructed logit and actual logit
     faithfulness = 0
