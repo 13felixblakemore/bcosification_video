@@ -53,12 +53,25 @@ def main(args):
         print("Missing keys:", len(missing))
         print("Unexpected keys:", len(unexpected))
 
-        print("MODEL keys:")
-        print(list(model.state_dict().keys())[:20])
+        print("\nMODEL block 5:")
+        for k in model.state_dict().keys():
+            if "blocks.5" in k:
+                print(k)
 
-        print("CHECKPOINT keys:")
-        print(list(new_state_dict.keys())[:20])
-        sys.exit()
+        print("\nMODEL block 6:")
+        for k in model.state_dict().keys():
+            if "blocks.6" in k:
+                print(k)
+
+        print("\nCHECKPOINT block 5:")
+        for k in new_state_dict.keys():
+            if "blocks.5" in k:
+                print(k)
+
+        print("\nCHECKPOINT block 6:")
+        for k in new_state_dict.keys():
+            if "blocks.6" in k:
+                print(k)
 
         # Optional debug
         if "epoch" in checkpoint:
