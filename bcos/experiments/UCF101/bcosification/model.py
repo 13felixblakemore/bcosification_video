@@ -50,7 +50,7 @@ def get_model(model_config) -> nn.Module:
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
 
-    replace = True
+    replace = False
     if replace:
         # 1) Replace model.model.blocks.0.pool
         old_pool = model.model.blocks[0].pool
@@ -73,11 +73,14 @@ def get_model(model_config) -> nn.Module:
                 print("FOUND MAXPOOL:", name, module)
 
     # Making all the bias parameters None
-    #print("keeping bias")
-    print("Removing bias parameters (making None)")
-    for mod in model.modules():
-        print(mod)
-        if hasattr(mod, "bias") and mod.bias is not None:
-          mod.bias = None
+
+    if model_config["use_bias"] == True:
+        print("keeping bias")
+    else:
+        print("Removing bias parameters (making None)")
+        for mod in model.modules():
+            print(mod)
+            if hasattr(mod, "bias") and mod.bias is not None:
+              mod.bias = None
 
     return model
