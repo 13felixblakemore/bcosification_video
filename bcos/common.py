@@ -602,7 +602,7 @@ def antisymmetry_percentage(linear_mapping, threshold=0.01):
 
     return percentages
 
-def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=96.0, return_contribs=False, return_heatmap=False):
+def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, return_contribs=False, return_heatmap=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
