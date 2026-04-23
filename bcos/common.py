@@ -283,7 +283,7 @@ class BcosUtilMixin:
         result["contribution_map"] = (in_tensor * grad).sum(1)
 
         # generate (color) explanation
-        result["explanation"], result["frame_scores"], result["contribution_map"], result["heatmap"] = gradient_to_video(
+        result["explanation"], result["frame_scores"], result["contribution_map"] = gradient_to_video(
             in_tensor[0], in_tensor.grad[0], return_contribs=True, return_heatmap = True, **grad2vid_kwargs
         )
 
@@ -602,7 +602,7 @@ def antisymmetry_percentage(linear_mapping, threshold=0.01):
 
     return percentages
 
-def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, return_contribs=False, return_heatmap=False):
+def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, return_contribs=False, return_heatmap=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
@@ -654,8 +654,11 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
 
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    pair = rgb_grad[:3] + rgb_grad[3:]
-    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    #pair = rgb_grad[:3] + rgb_grad[3:]
+    #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    rgb_grad = rgb_grad[:3]
+    rgb_grad = 1 - rgb_grad
+
 
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
@@ -678,7 +681,7 @@ def gradient_to_video(video, linear_mapping, smooth=5, alpha_percentile=98.0, re
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
 
     if return_contribs:
-        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu()), heatmap
+        return np.array(grad_video), np.array(frame_scores.detach().cpu()), np.array(contribs.detach().cpu())
     else:
         return np.array(grad_video), np.array(frame_scores.detach().cpu())
 
