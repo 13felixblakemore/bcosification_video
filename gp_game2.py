@@ -242,7 +242,7 @@ def gp_scores_from_linear_map(
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
 
-    if energy_score > 0.9:
+    if energy_score > 0.8:
         plot_grid(linear_map, vid)
 
     return {
