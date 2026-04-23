@@ -242,6 +242,9 @@ def gp_scores_from_linear_map(
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
 
+    if energy_score > 0.9:
+        plot_grid(linear_map, vid)
+
     return {
         "energy_score": energy_score
     }
@@ -267,8 +270,10 @@ def plot_grid(linear_mapping, vid):
     rgb_grad = rgb_grad.clamp(min=0)
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    pair = rgb_grad[:3] + rgb_grad[3:]
-    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    #pair = rgb_grad[:3] + rgb_grad[3:]
+    #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    rgb_grad = rgb_grad[:3]
+    rgb_grad = 1 - rgb_grad
     print("rgb grad ", rgb_grad.shape)
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
@@ -278,9 +283,9 @@ def plot_grid(linear_mapping, vid):
     # [1, T, H, W] -> [T, 1, H, W]
     print("Alpha: ", alpha.shape)
     alpha_2d = alpha.permute(1, 0, 2, 3)
-    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=15, stride=1, padding=(15 - 1) // 2)
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
-    alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
+    alpha = (alpha / torch.quantile(alpha, q=99.0 / 100)).clip(0, 1)
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
