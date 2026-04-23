@@ -272,7 +272,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     ax_top.plot(contribs_np, linewidth=2)
     ax_top.set_ylim(0, contribs_np.max() + 1e-6)
     ax_top.set_title("Temporal Contributions")
-    ax_top.axvline(T // 2, color='red', linestyle='--')
+    ax_top.axvline(3.5, color='red', linestyle='--')
 
     axes = [[None] * T for _ in range(4)]
 
