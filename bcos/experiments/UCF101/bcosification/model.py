@@ -73,11 +73,11 @@ def get_model(model_config) -> nn.Module:
                 print("FOUND MAXPOOL:", name, module)
 
     # Making all the bias parameters None
-    print("keeping bias")
-    #print("Removing bias parameters (making None)")
-    #for mod in model.modules():
-    #    print(mod)
-    #    if hasattr(mod, "bias") and mod.bias is not None:
-    #      mod.bias = None
+    #print("keeping bias")
+    print("Removing bias parameters (making None)")
+    for mod in model.modules():
+        print(mod)
+        if hasattr(mod, "bias") and mod.bias is not None:
+          mod.bias = None
 
     return model
