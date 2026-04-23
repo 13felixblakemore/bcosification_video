@@ -200,7 +200,7 @@ def fp_scores_from_linear_map(linear_mapping, target, vid):
 
     #if (scores > 0.1).all():
     #    plot_grid(linear_map, vid)
-    if energy_score > 0.95:
+    if energy_score > 0.9:
         plot_fp_score(vid, linear_mapping, contribs)
 
     return {
