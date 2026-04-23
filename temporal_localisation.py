@@ -229,9 +229,9 @@ def plot_fp_score(vid, linear_mapping, contribs):
     # [1, T, H, W] -> [T, 1, H, W]
     print("Alpha: ", alpha.shape)
     alpha_2d = alpha.permute(1, 0, 2, 3)
-    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=5, stride=1, padding=(5 - 1) // 2)
+    alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=15, stride=1, padding=(15 - 1) // 2)
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
-    alpha = (alpha / torch.quantile(alpha, q=98.0 / 100)).clip(0, 1)
+    alpha = (alpha / torch.quantile(alpha, q=10.0 / 100)).clip(0, 1)
 
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
