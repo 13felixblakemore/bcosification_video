@@ -50,7 +50,7 @@ def get_model(model_config) -> nn.Module:
     # For standard changes
     standard_changes = model_config.get("standard_changes", None)
 
-    replace = False
+    replace = True
     if replace:
         # 1) Replace model.model.blocks.0.pool
         old_pool = model.model.blocks[0].pool
