@@ -64,7 +64,7 @@ def main(args):
 
     loader = DataLoader(
         dm.eval_dataset,
-        batch_size=8,
+        batch_size=1,
         shuffle=True,  # ✅ force shuffle
         num_workers=4,  # match your config if needed
         pin_memory=True
@@ -82,12 +82,13 @@ def check_faithfulness(model, loader, args, batch_lim):
         model.zero_grad(set_to_none=True)
         if batch_idx >= batch_lim:
             with torch.enable_grad(), model.explanation_mode():
+                videos = videos.squeeze(0)
                 out = model(videos)
                 pred_out = out.max(1)
 
-                to_be_explained_logits = pred_out.values
-                print("Explaining logits: ", to_be_explained_logits)
-                to_be_explained_logits.backward(inputs=[videos])
+                to_be_explained_logit = pred_out.values
+                print("Explaining logits: ", to_be_explained_logit)
+                to_be_explained_logit.backward(inputs=[videos])
 
             grads = videos.grad.detach().clone()
             print("grads: ", grads.shape)
