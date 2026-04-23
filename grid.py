@@ -264,7 +264,7 @@ def add_blank_frames_full(batch):
             batch[:,:,t] = blank.clone()[:,:,t]
     return batch
 
-def add_second_clip_stride2(clips_by_class, seed=42):
+def add_second_clip(clips_by_class, seed=42):
     rng = random.Random(seed)
 
     # --- pick classes ---
