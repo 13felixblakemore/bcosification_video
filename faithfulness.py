@@ -88,7 +88,7 @@ def check_faithfulness(model, loader, args, batch_lim):
 
                 to_be_explained_logit = pred_out.values
                 print("Explaining logits: ", to_be_explained_logit)
-                to_be_explained_logit.backward(inputs=[videos])
+                to_be_explained_logit.backward(inputs=[x])
 
             grads = videos.grad.detach().clone()
             print("grads: ", grads.shape)
