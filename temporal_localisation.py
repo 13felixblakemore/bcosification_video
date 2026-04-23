@@ -279,7 +279,6 @@ def plot_fp_score(vid, linear_mapping, contribs):
     for t in range(T):
         axes[1][t] = fig.add_subplot(gs[1, t])
         axes[2][t] = fig.add_subplot(gs[2, t])
-        axes[3][t] = fig.add_subplot(gs[3, t])
 
     # could try [████░░░███░░████] here
 
