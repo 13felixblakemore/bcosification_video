@@ -53,7 +53,11 @@ def main(args):
         print("Missing keys:", len(missing))
         print("Unexpected keys:", len(unexpected))
 
-        print(missing)
+        print("MODEL keys:")
+        print(list(model.state_dict().keys())[:20])
+
+        print("CHECKPOINT keys:")
+        print(list(state_dict.keys())[:20])
         sys.exit()
 
         # Optional debug
