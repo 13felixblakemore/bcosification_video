@@ -99,9 +99,9 @@ def game(args):
     total_scores = []
     total = 0
     frame_dict= defaultdict(int)
-    while total < 500:
-        print(total)
-        joint_vid, labels = add_second_clip(clips_by_class, total + 43)
+    for step in range(1000):
+        print(step)
+        joint_vid, labels = add_second_clip(clips_by_class, step + 43)
 
         scores, count, dict = explain_joint(model, args, joint_vid, labels)
         for key in dict.keys():
