@@ -57,7 +57,7 @@ def main(args):
         print(list(model.state_dict().keys())[:20])
 
         print("CHECKPOINT keys:")
-        print(list(state_dict.keys())[:20])
+        print(list(new_state_dict.keys())[:20])
         sys.exit()
 
         # Optional debug
