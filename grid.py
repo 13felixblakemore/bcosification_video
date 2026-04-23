@@ -264,28 +264,31 @@ def add_blank_frames_full(batch):
             batch[:,:,t] = blank.clone()[:,:,t]
     return batch
 
-def add_second_clip(clips_by_class, seed=42):
+def add_second_clip_stride2(clips_by_class, seed=42):
     rng = random.Random(seed)
 
     # --- pick classes ---
     classes = list(clips_by_class.keys())
-
     c1, c2 = rng.sample(classes, 2)
-    clip, _, conf = rng.choice(clips_by_class[c1]) # C,T,H,W
-    clip2, _, conf = rng.choice(clips_by_class[c2])  # C,T,H,W
 
-    C,T,H,W = clip.shape
+    clip1, _, _ = rng.choice(clips_by_class[c1])  # (C, T, H, W)
+    clip2, _, _ = rng.choice(clips_by_class[c2])  # (C, T, H, W)
 
-    for t in range(T//2):
-        clip2[:, t] = clip[:, t].clone()
+    C, T, H, W = clip1.shape
 
-    black_frame = torch.zeros_like(clip[:,0]).unsqueeze(1)  # (C, H, W)
+    # --- ensure we have enough frames ---
+    assert T >= 8, f"Need at least 8 frames, got {T}"
 
-    add_blank = False
-    if add_blank:
-        clip2 = torch.cat([black_frame, clip2], dim=1)
+    # --- stride-2 sampling: 0,2,4,6 ---
+    idx = torch.arange(0, 8, 2)  # [0,2,4,6]
 
-    return clip2, [c1, c2]
+    first_half = clip1[:, idx]   # (C, 4, H, W)
+    second_half = clip2[:, idx]  # (C, 4, H, W)
+
+    # --- concatenate to get 8 frames total ---
+    combined = torch.cat([first_half, second_half], dim=1)  # (C, 8, H, W)
+
+    return combined, [c1, c2]
 
 def add_second_clip_full(batch, labels, seed=42):
     rng = random.Random(seed)
