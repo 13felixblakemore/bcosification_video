@@ -287,11 +287,8 @@ def plot_fp_score(vid, linear_mapping, contribs):
         axes[1][t].imshow(grad_video[t])
         axes[1][t].axis("off")
 
-        axes[2][t].imshow(heatmap[t], cmap="jet")
+        axes[2][t].imshow(vid_np[t])
         axes[2][t].axis("off")
-
-        axes[3][t].imshow(vid_np[t])
-        axes[3][t].axis("off")
 
     plt.tight_layout()
     plt.savefig(os.path.join(args.base_directory, f"temporal_localisation.png"), bbox_inches='tight')
