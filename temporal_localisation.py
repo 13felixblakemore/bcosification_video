@@ -218,9 +218,9 @@ def plot_fp_score(vid, linear_mapping, contribs):
     rgb_grad = rgb_grad.clamp(min=0)
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    #pair = rgb_grad[:3] + rgb_grad[3:]
-    #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
-    rgb_grad = rgb_grad[:3]
+    pair = rgb_grad[:3] + rgb_grad[3:]
+    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    #rgb_grad = rgb_grad[:3]
     rgb_grad = 1 - rgb_grad
     print("rgb grad ", rgb_grad.shape)
     # Set alpha value to the strength (L2 norm) of each location's gradient
