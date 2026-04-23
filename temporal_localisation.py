@@ -221,6 +221,7 @@ def plot_fp_score(vid, linear_mapping, contribs):
     #pair = rgb_grad[:3] + rgb_grad[3:]
     #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
     rgb_grad = rgb_grad[:3]
+    rgb_grad = 1 - rgb_grad
     print("rgb grad ", rgb_grad.shape)
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
