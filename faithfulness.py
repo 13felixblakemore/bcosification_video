@@ -73,6 +73,13 @@ def main(args):
             if "blocks.6" in k:
                 print(k)
 
+        filtered_state_dict = {
+            k: v for k, v in new_state_dict.items()
+            if k.startswith("model.model.")
+        }
+
+        model.load_state_dict(filtered_state_dict, strict=False)
+
         # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
