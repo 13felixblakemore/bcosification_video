@@ -655,7 +655,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=10.0, r
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
     pair = rgb_grad[:3] + rgb_grad[3:]
-    rgb_grad = rgb_grad[:3] / (pair + 1e-7)  # [3, T, H, W]
+    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
     #rgb_grad = rgb_grad[:3]
     #rgb_grad = 1 - rgb_grad
 
@@ -663,7 +663,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=10.0, r
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
-    alpha = torch.where(contribs < 0, 1e-7, alpha)
+    alpha = torch.where(contribs < 0, 1e-12, alpha)
     # [1, T, H, W] -> [T, 1, H, W]
     alpha_2d = alpha.permute(1, 0, 2, 3)
     alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=smooth, stride=1, padding=(smooth - 1) // 2)
