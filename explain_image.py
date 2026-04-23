@@ -270,7 +270,7 @@ def explain_video(args, video_path=None, vid_tensor=None):
     print("Logit value:", pred_val.item())
     logits = logits[0]
 
-    expl_out = model.explain_video(video_tensor, 58)
+    expl_out = model.explain_video(video_tensor)
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
@@ -280,18 +280,12 @@ def explain_video(args, video_path=None, vid_tensor=None):
 
     contribs = expl_out["contribution_map"].squeeze(0)
 
-    heatmap = expl_out["heatmap"]  # [T,H,W]
+    #heatmap = expl_out["heatmap"]  # [T,H,W]
 
     video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
     video_tensor = transform(video_tensor)
     frames = np.array(video_tensor) # CTHW
     frames = video_tensor[:3].permute(1, 2, 3, 0).detach().cpu().numpy()
-    for t, frame in enumerate(heatmap):
-        plt.imshow(frames[t])  # original frame
-        plt.imshow(heatmap[t], cmap='jet', alpha=0.5)  # overlay
-        plt.axis('off')
-        plt.savefig(os.path.join(args.base_directory, f"heatmap_{t:03d}.png"), bbox_inches='tight')
-        plt.close()
 
     for t, frame in enumerate(contribs):
         plt.imshow(frame)
