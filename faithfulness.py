@@ -53,6 +53,9 @@ def main(args):
         print("Missing keys:", len(missing))
         print("Unexpected keys:", len(unexpected))
 
+        print(missing)
+        sys.exit()
+
         # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
