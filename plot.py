@@ -59,11 +59,11 @@ def compare_scalar_between_runs(log_dirs,
         values = [e.value for e in events]
 
         # 🔑 Filter to max_epoch
-        filtered = [(s, val) for s, val in zip(steps, values) if ep <= 76000]
+        filtered = [(s, val) for s, val in zip(steps, values) if s <= 76000]
         if not filtered:
             continue
 
-        epochs, values = zip(*filtered)
+        steps, values = zip(*filtered)
 
         if smoothing > 0:
             smoothed = []
@@ -73,7 +73,7 @@ def compare_scalar_between_runs(log_dirs,
                 smoothed.append(last)
             values = smoothed
 
-        plt.plot(epochs, values, label=label)
+        plt.plot(steps, values, label=label)
 
     plt.xlabel("Epoch")
     plt.ylabel("Top 1 Val Acc")
