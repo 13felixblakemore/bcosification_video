@@ -659,7 +659,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, r
     rgb_grad = rgb_grad[:3]
     rgb_grad = 1 - rgb_grad
 
-
+    regular = False
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
     # Only show positive contributions
@@ -668,12 +668,22 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, r
     alpha_2d = alpha.permute(1, 0, 2, 3)
     alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=smooth, stride=1, padding=(smooth - 1) // 2)
     alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
-    alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
+    if regular:
+        alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
+    else:
+        # alpha: [1, T, H, W]
 
-    lm_norm = linear_mapping / (
-        linear_mapping.abs().max(0, keepdim=True).values + 1e-12
-    )
-    #rgb_grad = lm_norm[:3].clamp_min(0)
+        # compute per-frame normalisation factor
+        frame_norm = alpha.view(1, 8, -1).sum(dim=2, keepdim=True)  # [1, T, 1]
+
+        # avoid divide-by-zero
+        frame_norm = frame_norm + 1e-8
+
+        # normalise each frame independently
+        alpha = alpha / frame_norm.view(1, T, 1, 1)
+
+        # optional: rescale to [0,1] per frame for visibility
+        alpha = alpha / (alpha.amax(dim=(2, 3), keepdim=True) + 1e-8)
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
 
