@@ -654,10 +654,10 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, r
 
 
     # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    pair = rgb_grad[:3] + rgb_grad[3:]
-    rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
-    #rgb_grad = rgb_grad[:3]
-    #rgb_grad = 1 - rgb_grad
+    #pair = rgb_grad[:3] + rgb_grad[3:]
+    #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    rgb_grad = rgb_grad[:3]
+    rgb_grad = 1 - rgb_grad
 
     regular = True
     # Set alpha value to the strength (L2 norm) of each location's gradient
