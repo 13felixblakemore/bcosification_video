@@ -320,7 +320,7 @@ def plot_frame_importance_with_frames(
     frame_scores = np.asarray(frame_scores).squeeze()
     T = len(frame_scores)
 
-    fig = plt.figure(figsize=(3 * T, 8))
+    fig = plt.figure(figsize=(3 * T, 10))
     gs = fig.add_gridspec(3, T, height_ratios=[2, 1, 1])
 
     # Top plot
