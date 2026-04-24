@@ -274,9 +274,11 @@ def explain_video(args, video_path=None, vid_tensor=None):
     print("Prediction:", idx2label(expl_out["prediction"]))
     print(pred_idx.item(), expl_out["prediction"])
 
+    grad_video = expl_out["explanation"]
+
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
-    plot_frame_importance_with_frames(frames, frame_scores, frame_path)
+    plot_frame_importance_with_frames(grad_video, frames, frame_scores, frame_path)
 
     contribs = expl_out["contribution_map"].squeeze(0)
 
@@ -293,7 +295,6 @@ def explain_video(args, video_path=None, vid_tensor=None):
         plt.savefig(os.path.join(args.base_directory, f"contrib{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
-    grad_video = expl_out["explanation"]
     plt.imshow(frames[0])
     plt.axis('off')
     plt.savefig(os.path.join(args.base_directory, f"og.png"), bbox_inches='tight')
@@ -305,6 +306,7 @@ def explain_video(args, video_path=None, vid_tensor=None):
         plt.close()
 
 def plot_frame_importance_with_frames(
+    grad_video,
     frames,
     frame_scores,
     save_path=None,
@@ -318,8 +320,8 @@ def plot_frame_importance_with_frames(
     frame_scores = np.asarray(frame_scores).squeeze()
     T = len(frame_scores)
 
-    fig = plt.figure(figsize=(2 * T, 5))
-    gs = fig.add_gridspec(2, T, height_ratios=[2, 1])
+    fig = plt.figure(figsize=(3 * T, 5))
+    gs = fig.add_gridspec(3, T, height_ratios=[2, 1])
 
     # Top plot
     ax_plot = fig.add_subplot(gs[0, :])
@@ -336,9 +338,23 @@ def plot_frame_importance_with_frames(
     ax_plot.axvline(max_idx, linestyle="--", alpha=0.7)
     ax_plot.scatter([max_idx], [frame_scores[max_idx]], s=80)
 
-    # Bottom row: frames
+
     for t in range(T):
         ax_img = fig.add_subplot(gs[1, t])
+        ax_img.imshow(grad_video[t])
+        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
+        ax_img.axis("off")
+
+        # Highlight most important frame
+        if t == max_idx:
+            for spine in ax_img.spines.values():
+                spine.set_edgecolor("red")
+                spine.set_linewidth(3)
+                spine.set_visible(True)
+
+    # Bottom row: frames
+    for t in range(T):
+        ax_img = fig.add_subplot(gs[2, t])
         ax_img.imshow(frames[t])
         ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
