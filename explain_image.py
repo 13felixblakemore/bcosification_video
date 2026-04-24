@@ -321,7 +321,7 @@ def plot_frame_importance_with_frames(
     T = len(frame_scores)
 
     fig = plt.figure(figsize=(3 * T, 5))
-    gs = fig.add_gridspec(3, T, height_ratios=[2, 1])
+    gs = fig.add_gridspec(3, T, height_ratios=[2, 1, 1])
 
     # Top plot
     ax_plot = fig.add_subplot(gs[0, :])
