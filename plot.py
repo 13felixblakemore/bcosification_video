@@ -56,11 +56,10 @@ def compare_scalar_between_runs(log_dirs,
         events = ea.Scalars(tag)
 
         steps = [e.step for e in events]
-        epochs = [e.epoch for e in events]
         values = [e.value for e in events]
 
         # 🔑 Filter to max_epoch
-        filtered = [(ep, val) for ep, val in zip(epochs, values) if ep <= 20]
+        filtered = [(s, val) for s, val in zip(steps, values) if ep <= 76000]
         if not filtered:
             continue
 
