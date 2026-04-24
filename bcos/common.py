@@ -680,7 +680,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.0, r
         frame_norm = frame_norm + 1e-8
 
         # normalise each frame independently
-        alpha = alpha / frame_norm.view(1, T, 1, 1)
+        alpha = alpha / frame_norm.view(1, 8, 1, 1)
 
         # optional: rescale to [0,1] per frame for visibility
         alpha = alpha / (alpha.amax(dim=(2, 3), keepdim=True) + 1e-8)
