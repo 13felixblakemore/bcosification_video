@@ -9,6 +9,7 @@ import torch
 import torch.nn.functional as F
 from cv2.version import contrib
 from matplotlib import pyplot as plt
+from torch.utils.data import DataLoader
 from torch.version import cuda
 from torchvision.datasets import UCF101
 from torchvision.utils import save_image
@@ -76,24 +77,30 @@ def game(args):
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
 
-    dm.setup("fit")
+    dm.setup("test")
 
-    loader = dm.train_dataloader()
+    loader = DataLoader(
+        dm.eval_dataset,
+        batch_size=8,
+        shuffle=True,  # ✅ force shuffle
+        num_workers=4,  # match your config if needed
+        pin_memory=True
+    )
 
     clips_by_class = collect_high_confidence_clips(
         model=model,
         loader=loader,
         device=device,
         confidence_threshold=0.9,  # try 0.5 if this is too strict
-        max_per_class=20,
-        max_batches=30,
+        max_per_class=50,
+        max_batches=1000,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
     total = 0
-    for step in range(1000):
+    for step in range(2000):
         print(step)
         grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 43)
 
