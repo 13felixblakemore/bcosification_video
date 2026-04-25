@@ -71,6 +71,8 @@ def main(args):
 def check_faithfulness(model, loader, args, batch_lim):
     device = next(model.parameters()).device
 
+    faithfulness = []
+
     for batch_idx, (videos, labels) in enumerate(loader):
         videos = videos.to(device)
         model.zero_grad(set_to_none=True)
@@ -88,10 +90,11 @@ def check_faithfulness(model, loader, args, batch_lim):
             print("grads: ", grads.shape)
             reconstructed_logits = (x * grads).sum(dim=(1, 2, 3, 4)).detach().clone()
             print("Reconstructed logits: ", reconstructed_logits)
-            sys.exit()
             # compare error between reconstructed logit and actual logit
-    faithfulness = 0
-    return faithfulness
+            error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
+            faithfulness.append(error)
+    score = sum(faithfulness) / len(faithfulness)
+    return score
 
 
 if __name__ == "__main__":
