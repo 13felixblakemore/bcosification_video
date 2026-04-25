@@ -318,14 +318,13 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
     weighted_frames = []
 
     for t in range(T):
-        score = frame_scores[t]  # in [0, 1]
+        score = float(frame_scores[t])  # ensure scalar
 
-        frame = frames[t].astype(float)
+        # create a grayscale image (same H,W as frame)
+        H, W = frames[t].shape[:2]
+        gray = np.ones((H, W, 3)) * score  # [0 → black, 1 → white]
 
-        # scale brightness
-        frame_scaled = frame * score
-
-        weighted_frames.append(frame_scaled)
+        weighted_frames.append(gray)
 
     for t in range(T):
         ax_img = fig.add_subplot(gs[0, t])
