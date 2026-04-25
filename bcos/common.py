@@ -643,9 +643,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=95.0, r
 
     # Compute frame contribution scores
     squeezed_contribs = contribs.squeeze(0) # T, H, W
-    T, H, W = contribs.shape
-    total_mass = contribs.sum()
-    scores = [(contribs[t].sum() / total_mass) for t in range(T)]
+    T, H, W = squeezed_contribs.shape
+    total_mass = squeezed_contribs.sum()
+    scores = [(squeezed_contribs[t].sum() / total_mass) for t in range(T)]
     frame_scores = scores
 
 
