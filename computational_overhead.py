@@ -197,8 +197,8 @@ def get_parser():
 
     parser.add_argument("--base_directory", default="./experiments")
 
-    parser.add_argument("--exp_standard", required=True)
-    parser.add_argument("--exp_bcos", required=True)
+    parser.add_argument("--exp_standard", default="i3d")
+    parser.add_argument("--exp_bcos", default="i3d")
 
     parser.add_argument("--checkpoint_standard", default=None)
     parser.add_argument("--checkpoint_bcos", default=None)
