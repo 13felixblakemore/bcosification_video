@@ -357,14 +357,12 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
     for t in range(T):
         ax_img = fig.add_subplot(gs[1, t])
         ax_img.imshow(grad_video[t])
-        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
     # Bottom row: frames
     for t in range(T):
         ax_img = fig.add_subplot(gs[2, t])
         ax_img.imshow(frames[t])
-        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
     plt.tight_layout()
