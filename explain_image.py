@@ -319,17 +319,20 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
 
     mean_score = scores.mean()
 
-    # centre around mean → scale so mean becomes 0.5
-    norm_scores = scores / (2 * mean_score + 1e-8)
-    norm_scores = np.clip(norm_scores, 0, 1)
-    frame = frames[t].astype(float)
+    frame_overlay = np.zeros_like(frames)
 
-    gray = frame.mean(axis=2, keepdims=True)
-    gray = np.repeat(gray, 3, axis=2)
-    alpha = norm_scores[t]  # importance
+    for t in range(T):
+        # centre around mean → scale so mean becomes 0.5
+        norm_scores = scores / (2 * mean_score + 1e-8)
+        norm_scores = np.clip(norm_scores, 0, 1)
+        frame = frames[t].astype(float)
 
-    # interpolate between original and grayscale
-    frame_overlay = (1 - alpha) * frame + alpha * gray
+        gray = frame.mean(axis=2, keepdims=True)
+        gray = np.repeat(gray, 3, axis=2)
+        alpha = norm_scores[t]  # importance
+
+        # interpolate between original and grayscale
+        frame_overlay[t] = (1 - alpha) * frame + alpha * gray
 
     for t in range(T):
         ax_img = fig.add_subplot(gs[0, t])
