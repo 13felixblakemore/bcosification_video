@@ -61,7 +61,7 @@ DEFAULTS = dict(
             logit_bias=-math.log(NUM_CLASSES - 1),
         ),
         bcos_args=dict(
-            b=2,
+            b=1.5,
             max_out=1,
         ),
     ),
@@ -139,7 +139,7 @@ i3ds = {
                 weights=f"I3D_Weights.DEFAULT",
                 bcosify_args = dict(
                     fix_b = True, # Fixed b value (=2)
-                    use_bias = True, # No bias
+                    use_bias = False, # No bias
                     norm_layer = "BnUncV2", # Modified Batch Norm
                     manual_optim=False, # For manual optimization of b values
                     gap = True, # Global Average Pooling reorder works with conv1x1x1 for the last linear layer
