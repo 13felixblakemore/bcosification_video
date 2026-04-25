@@ -74,6 +74,7 @@ def check_faithfulness(model, loader, args, batch_lim):
     faithfulness = []
 
     for batch_idx, (videos, labels) in enumerate(loader):
+        print(batch_idx)
         videos = videos.to(device)
         model.zero_grad(set_to_none=True)
         if batch_idx >= batch_lim:
