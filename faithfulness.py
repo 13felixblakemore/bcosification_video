@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
@@ -65,9 +66,16 @@ def main(args):
     )
 
     batches = 100
-    error = check_faithfulness(model, loader, args, batches)
-    faithfulness = 1 - error
-    print("Faithfulness: ", faithfulness)
+    faithfulness_list = check_faithfulness(model, loader, args, batches)
+    faithfulness_list = np.array(faithfulness_list)
+
+    mean_error = faithfulness_list.mean()
+    std_error = faithfulness_list.std()
+
+    faithfulness = 1 - mean_error
+
+    print(f"Faithfulness: {faithfulness:.4f}")
+    print(f"Mean error: {mean_error:.4f} ± {std_error:.4f}")
 
 def check_faithfulness(model, loader, args, batch_lim):
     device = next(model.parameters()).device
@@ -96,8 +104,7 @@ def check_faithfulness(model, loader, args, batch_lim):
         # compare error between reconstructed logit and actual logit
         error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
         faithfulness.append(error)
-    score = sum(faithfulness) / len(faithfulness)
-    return score
+    return faithfulness
 
 
 if __name__ == "__main__":
