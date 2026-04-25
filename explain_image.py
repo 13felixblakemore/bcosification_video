@@ -315,20 +315,25 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
     fig = plt.figure(figsize=(3 * T, 8))
     gs = fig.add_gridspec(3, T, height_ratios=[1,1,1])
 
-    weighted_frames = []
+    scores = np.array(frame_scores, dtype=float)
 
-    for t in range(T):
-        score = float(frame_scores[t])  # ensure scalar
+    mean_score = scores.mean()
 
-        # create a grayscale image (same H,W as frame)
-        H, W = frames[t].shape[:2]
-        gray = np.ones((H, W, 3)) * score  # [0 → black, 1 → white]
+    # centre around mean → scale so mean becomes 0.5
+    norm_scores = scores / (2 * mean_score + 1e-8)
+    norm_scores = np.clip(norm_scores, 0, 1)
+    frame = frames[t].astype(float)
 
-        weighted_frames.append(gray)
+    gray = frame.mean(axis=2, keepdims=True)
+    gray = np.repeat(gray, 3, axis=2)
+    alpha = norm_scores[t]  # importance
+
+    # interpolate between original and grayscale
+    frame_overlay = (1 - alpha) * frame + alpha * gray
 
     for t in range(T):
         ax_img = fig.add_subplot(gs[0, t])
-        ax_img.imshow(weighted_frames[t])
+        ax_img.imshow(frame_overlay[t])
         ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
