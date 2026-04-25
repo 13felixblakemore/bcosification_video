@@ -602,7 +602,7 @@ def antisymmetry_percentage(linear_mapping, threshold=0.01):
 
     return percentages
 
-def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=40.0, return_contribs=False, return_heatmap=False):
+def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=95.0, return_contribs=False, return_heatmap=False):
     """
     From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
     Computing color image from dynamic linear mapping of B-cos models.
@@ -642,14 +642,11 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=40.0, r
     rgb_grad = rgb_grad.clamp(min=0)
 
     # Compute frame contribution scores
-    squeezed_contribs = contribs.squeeze(0)
-    pos = squeezed_contribs.clamp_min(0)
-    flat = pos.flatten(1, 2)  # [T, H*W]
-    top_percent = 2.0
-    k = max(1, int(flat.shape[1] * top_percent / 100.0))
-    topk_vals = flat.topk(k, dim=1).values
-
-    frame_scores = topk_vals.sum(dim=1)
+    squeezed_contribs = contribs.squeeze(0) # T, H, W
+    T, H, W = contribs.shape
+    total_mass = contribs.sum()
+    scores = [(contribs[t].sum() / total_mass) for t in range(T)]
+    frame_scores = scores
 
 
 

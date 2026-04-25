@@ -278,7 +278,8 @@ def explain_video(args, video_path=None, vid_tensor=None):
 
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
-    plot_frame_importance_with_frames(grad_video, frames, frame_scores, frame_path)
+    plot_vid(grad_video, frames, frame_scores, frame_path)
+    #plot_frame_importance_with_frames(grad_video, frames, frame_scores, frame_path)
 
     contribs = expl_out["contribution_map"].squeeze(0)
 
@@ -304,6 +305,58 @@ def explain_video(args, video_path=None, vid_tensor=None):
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
         plt.close()
+
+
+def plot_vid(grad_video, frames, frame_scores, save_path=None):
+    frames = np.asarray(frames)
+    frame_scores = np.asarray(frame_scores).squeeze()
+    T = len(frame_scores)
+
+    fig = plt.figure(figsize=(3 * T, 8))
+    gs = fig.add_gridspec(3, T, height_ratios=[1,1,1])
+
+    weighted_frames = []
+
+    for t in range(T):
+        score = frame_scores[t]  # in [0, 1]
+
+        frame = frames[t].astype(float)
+
+        # scale brightness
+        frame_scaled = frame * score
+
+        weighted_frames.append(frame_scaled)
+
+    for t in range(T):
+        ax_img = fig.add_subplot(gs[0, t])
+        ax_img.imshow(weighted_frames[t])
+        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
+        ax_img.axis("off")
+
+
+    for t in range(T):
+        ax_img = fig.add_subplot(gs[1, t])
+        ax_img.imshow(grad_video[t])
+        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
+        ax_img.axis("off")
+
+    # Bottom row: frames
+    for t in range(T):
+        ax_img = fig.add_subplot(gs[2, t])
+        ax_img.imshow(frames[t])
+        ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
+        ax_img.axis("off")
+
+    plt.tight_layout()
+
+    if save_path is not None:
+        print("Save path: ", save_path)
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+    else:
+        print("show")
+        plt.show()
+
 
 def plot_frame_importance_with_frames(
     grad_video,
