@@ -64,8 +64,9 @@ def main(args):
         pin_memory=True
     )
 
-    batches = 1
-    faithfulness = check_faithfulness(model, loader, args, batches)
+    batches = 100
+    error = check_faithfulness(model, loader, args, batches)
+    faithfulness = 1 / error
     print("Faithfulness: ", faithfulness)
 
 def check_faithfulness(model, loader, args, batch_lim):
