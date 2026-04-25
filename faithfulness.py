@@ -66,7 +66,7 @@ def main(args):
 
     batches = 100
     error = check_faithfulness(model, loader, args, batches)
-    faithfulness = 1 / error
+    faithfulness = 1 - error
     print("Faithfulness: ", faithfulness)
 
 def check_faithfulness(model, loader, args, batch_lim):
