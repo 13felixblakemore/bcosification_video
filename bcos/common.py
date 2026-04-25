@@ -687,6 +687,8 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=95.0, r
     # Reshaping to [T, H, W, C]
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
 
+    frame_scores = [fs.detach().cpu().item() for fs in frame_scores]
+
     if return_contribs:
         return np.array(grad_video), np.array(frame_scores), np.array(contribs.detach().cpu())
     else:
