@@ -321,19 +321,28 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
 
     scores = np.array(frame_scores, dtype=float)
 
-    # normalise so mean → 0.5
-    mean_score = scores.mean()
-    norm_scores = scores / (2 * mean_score + 1e-8)
-    norm_scores = np.clip(norm_scores, 0, 1)
+    weighted_frames = []
+
+    scores = np.array(frame_scores, dtype=float)
+
+    # relative importance (good for visualisation)
+    norm_scores = (scores - scores.min()) / (scores.max() - scores.min() + 1e-8)
+
+    # boost contrast between frames
+    norm_scores = norm_scores ** 0.5
 
     for t in range(len(frames)):
         frame = frames[t].astype(float)
 
-        # convert to grayscale
+        # grayscale
         gray = frame.mean(axis=2, keepdims=True)
+
+        # 🔥 CRITICAL: normalise contrast per frame
+        gray = (gray - gray.min()) / (gray.max() - gray.min() + 1e-8)
+
         gray = np.repeat(gray, 3, axis=2)
 
-        # apply importance scaling
+        # apply importance
         frame_out = gray * norm_scores[t]
 
         weighted_frames.append(frame_out.clip(0, 1))
