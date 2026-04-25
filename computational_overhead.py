@@ -58,17 +58,12 @@ def load_model(args, device):
 # Input helper
 # -----------------------------
 
-def make_inputs(batch_size, shape, device, repeat_channels=None):
-    """
-    shape = (C, T, H, W)
-    repeat_channels: e.g. 2 means (3 → 6 channels)
-    """
-    x = torch.randn((batch_size, *shape)).to(device)
+def make_inputs_std(batch_size, device):
+    return torch.randn((batch_size, 3, 16, 224, 224)).to(device)
 
-    if repeat_channels is not None:
-        x = x.repeat(1, repeat_channels, 1, 1, 1)
 
-    return x
+def make_inputs_bcos(batch_size, device):
+    return torch.randn((batch_size, 6, 16, 224, 224)).to(device)
 
 
 # -----------------------------
@@ -143,13 +138,8 @@ def run_benchmark(model_std,
     for b in batch_sizes:
         print(f"\nBatch size: {b}")
 
-        # --- Inputs ---
-        if match_channels:
-            inputs_std = make_inputs(b, shape_std, device, repeat_channels=2)
-        else:
-            inputs_std = make_inputs(b, shape_std, device)
-
-        inputs_bcos = make_inputs(b, shape_bcos, device)
+        inputs_std = make_inputs_std(b, device)
+        inputs_bcos = make_inputs_bcos(b, device)
 
         # --- Standard ---
         lat_std = benchmark_latency(model_std, inputs_std)
