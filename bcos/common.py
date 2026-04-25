@@ -688,9 +688,9 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=95.0, r
     grad_video = [rgb_grad[:, t].permute(1, 2, 0).detach().cpu().numpy() for t in range(T)]
 
     if return_contribs:
-        return np.array(grad_video), np.array(frame_scores), np.array(contribs.detach().cpu())
+        return np.array(grad_video), np.array(frame_scores.cpu()), np.array(contribs.detach().cpu())
     else:
-        return np.array(grad_video), np.array(frame_scores)
+        return np.array(grad_video), np.array(frame_scores.cpu())
 
 def linear_mapping_to_heatmap(video, linear_mapping, smooth=7, percentile=96.0):
     """
