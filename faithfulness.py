@@ -103,7 +103,7 @@ def check_faithfulness(model, loader, args, batch_lim):
         print("Reconstructed logits: ", reconstructed_logits)
         # compare error between reconstructed logit and actual logit
         error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
-        faithfulness.append(error)
+        faithfulness.append(error.detach().cpu())
     return faithfulness
 
 
