@@ -77,23 +77,24 @@ def check_faithfulness(model, loader, args, batch_lim):
         print(batch_idx)
         videos = videos.to(device)
         model.zero_grad(set_to_none=True)
-        if batch_idx >= batch_lim:
-            with torch.enable_grad(), model.explanation_mode():
-                x = videos.clone().detach().requires_grad_(True)
-                out = model.model(x)
-                pred_out = out.max(1)
+        if batch_idx == batch_lim:
+            break
+        with torch.enable_grad(), model.explanation_mode():
+            x = videos.clone().detach().requires_grad_(True)
+            out = model.model(x)
+            pred_out = out.max(1)
 
-                to_be_explained_logit = pred_out.values
-                print("Explaining logits: ", to_be_explained_logit)
-                to_be_explained_logit.backward(inputs=[x])
+            to_be_explained_logit = pred_out.values
+            print("Explaining logits: ", to_be_explained_logit)
+            to_be_explained_logit.backward(inputs=[x])
 
-            grads = x.grad.detach().clone()
-            print("grads: ", grads.shape)
-            reconstructed_logits = (x * grads).sum(dim=(1, 2, 3, 4)).detach().clone()
-            print("Reconstructed logits: ", reconstructed_logits)
-            # compare error between reconstructed logit and actual logit
-            error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
-            faithfulness.append(error)
+        grads = x.grad.detach().clone()
+        print("grads: ", grads.shape)
+        reconstructed_logits = (x * grads).sum(dim=(1, 2, 3, 4)).detach().clone()
+        print("Reconstructed logits: ", reconstructed_logits)
+        # compare error between reconstructed logit and actual logit
+        error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
+        faithfulness.append(error)
     score = sum(faithfulness) / len(faithfulness)
     return score
 
