@@ -85,7 +85,7 @@ def game(args):
         device=device,
         confidence_threshold=0.5,  # try 0.5 if this is too strict
         max_per_class=50,
-        max_batches=1000,
+        max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
@@ -99,7 +99,7 @@ def game(args):
     total_scores = []
     total = 0
     frame_dict= defaultdict(int)
-    for step in range(2000):
+    for step in range(1000):
         print(step)
         joint_vid, labels = add_second_clip(clips_by_class, step + 43)
 
