@@ -189,6 +189,7 @@ def get_parser():
 
     parser.add_argument("--exp_standard", default="i3d")
     parser.add_argument("--exp_bcos", default="i3d")
+    parser.add_argument("--exp_bcos1", default="i3d")
 
     parser.add_argument("--checkpoint_standard", default=None)
     parser.add_argument("--checkpoint_bcos", default=None)
