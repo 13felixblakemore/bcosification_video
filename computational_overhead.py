@@ -253,7 +253,7 @@ def get_parser():
     parser.add_argument("--checkpoint_standard", default=None)
     parser.add_argument("--checkpoint_bcos", default=None)
 
-    parser.add_argument("--batch_sizes", nargs="+", type=int, default=[1, 8, 32])
+    parser.add_argument("--batch_sizes", nargs="+", type=int, default=[1, 8])
 
     parser.add_argument("--output", default="benchmark_results.json")
 
