@@ -2,20 +2,12 @@ import argparse
 import cv2
 import numpy as np
 import torch
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 from evaluate import load_model_and_config
-
-from pytorch_grad_cam import GradCAMPlusPlus
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-
-
-class GradCAMPlusPlus3D(GradCAMPlusPlus):
-    def get_target_width_height(self, input_tensor):
-        # input_tensor: [B, C, T, H, W]
-        return input_tensor.size(-1), input_tensor.size(-2)  # W, H
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -30,6 +22,9 @@ def get_parser():
     return parser
 
 
+# -----------------------------
+# DO NOT CHANGE MODEL LOADING
+# -----------------------------
 def load_standard_model(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -118,34 +113,110 @@ def read_video(video_path, num_frames=8, crop_size=224):
     return x, frames_np
 
 
-def reshape_transform_3d(tensor):
-    if tensor.ndim == 5:
-        b, c, t, h, w = tensor.shape
+class GradCAMPlusPlus3D:
+    def __init__(self, model, target_layer):
+        self.model = model
+        self.target_layer = target_layer
+        self.activations = None
+        self.gradients = None
 
-        # Average across time for class activation map
-        tensor = tensor.mean(dim=2)
+        self.forward_handle = target_layer.register_forward_hook(self.save_activation)
+        self.backward_handle = target_layer.register_full_backward_hook(self.save_gradient)
 
-    return tensor
+    def save_activation(self, module, input, output):
+        self.activations = output
+
+    def save_gradient(self, module, grad_input, grad_output):
+        self.gradients = grad_output[0]
+
+    def remove_hooks(self):
+        self.forward_handle.remove()
+        self.backward_handle.remove()
+
+    def __call__(self, input_tensor, target_class=None):
+        self.model.zero_grad(set_to_none=True)
+
+        logits = self.model(input_tensor)
+
+        if target_class is None:
+            target_class = int(logits.argmax(dim=1).item())
+
+        score = logits[:, target_class].sum()
+        score.backward(retain_graph=True)
+
+        activations = self.activations
+        gradients = self.gradients
+
+        if activations is None or gradients is None:
+            raise RuntimeError("Hooks did not capture activations/gradients.")
+
+        if activations.ndim != 5:
+            raise ValueError(
+                f"Expected 5D target activations [B,C,T,H,W], got {activations.shape}"
+            )
+
+        # [B,C,T,H,W]
+        grads_power_2 = gradients ** 2
+        grads_power_3 = gradients ** 3
+
+        eps = 1e-8
+
+        # Grad-CAM++ alpha coefficients
+        denominator = (
+            2 * grads_power_2
+            + (activations * grads_power_3).sum(dim=(2, 3, 4), keepdim=True)
+            + eps
+        )
+
+        alpha = grads_power_2 / denominator
+
+        positive_gradients = F.relu(gradients)
+
+        # Channel weights: [B,C,1,1,1]
+        weights = (alpha * positive_gradients).sum(dim=(2, 3, 4), keepdim=True)
+
+        # Weighted combination over channels -> [B,T,H,W]
+        cam = (weights * activations).sum(dim=1)
+        cam = F.relu(cam)
+
+        # Upsample from target-layer resolution to input video resolution
+        # cam: [B,T,H,W] -> [B,1,T,H,W]
+        cam = cam.unsqueeze(1)
+
+        _, _, input_t, input_h, input_w = input_tensor.shape
+
+        cam = F.interpolate(
+            cam,
+            size=(input_t, input_h, input_w),
+            mode="trilinear",
+            align_corners=False,
+        )
+
+        cam = cam.squeeze(1)  # [B,T,H,W]
+
+        # Normalize per video
+        cam_min = cam.flatten(1).min(dim=1)[0].view(-1, 1, 1, 1)
+        cam_max = cam.flatten(1).max(dim=1)[0].view(-1, 1, 1, 1)
+        cam = (cam - cam_min) / (cam_max - cam_min + eps)
+
+        return cam.detach().cpu().numpy()[0], logits.detach(), target_class
 
 
 def save_gradcam_figure(frames, grayscale_cam, save_path):
     """
     frames: [T,H,W,3], float in [0,1]
-    grayscale_cam: usually [T,H,W] after reshape transform
+    grayscale_cam: [T,H,W], float in [0,1]
     """
 
     T = frames.shape[0]
 
-    if grayscale_cam.ndim == 2:
-        grayscale_cam = np.repeat(grayscale_cam[None], T, axis=0)
-
     if grayscale_cam.shape[0] != T:
-        print("Warning: CAM temporal dimension does not match frames.")
-        print("frames:", frames.shape)
-        print("cam:", grayscale_cam.shape)
-        grayscale_cam = np.repeat(grayscale_cam[:1], T, axis=0)
+        raise ValueError(f"CAM has {grayscale_cam.shape[0]} frames but video has {T}.")
 
     fig, axes = plt.subplots(2, T, figsize=(2.2 * T, 4.5))
+
+    if T == 1:
+        axes = axes[:, None]
 
     for t in range(T):
         axes[0, t].imshow(frames[t])
@@ -178,7 +249,6 @@ def save_gradcam_figure(frames, grayscale_cam, save_path):
 def main():
     args = get_parser().parse_args()
 
-    # Match your existing loading pattern.
     args.dataset = "UCF101"
     args.base_network = "standard"
     args.experiment_name = "i3d"
@@ -199,32 +269,27 @@ def main():
 
     target_layer = get_module_by_name(model, args.target_layer)
 
-    with torch.no_grad():
-        logits = model(x)
+    cam_extractor = GradCAMPlusPlus3D(
+        model=model,
+        target_layer=target_layer,
+    )
+
+    try:
+        grayscale_cam, logits, used_target_class = cam_extractor(
+            input_tensor=x,
+            target_class=args.target_class,
+        )
+
         pred_class = int(logits.argmax(dim=1).item())
 
-    target_class = args.target_class if args.target_class is not None else pred_class
+        print("Predicted class:", pred_class)
+        print("Target class:", used_target_class)
+        print("CAM shape:", grayscale_cam.shape)
 
-    print("Predicted class:", pred_class)
-    print("Target class:", target_class)
+        save_gradcam_figure(frames, grayscale_cam, args.save_path)
 
-    targets = [ClassifierOutputTarget(target_class)]
-
-    cam = GradCAMPlusPlus3D(
-        model=model,
-        target_layers=[target_layer],
-        reshape_transform=reshape_transform_3d,
-    )
-
-    grayscale_cam = cam(
-        input_tensor=x,
-        targets=targets,
-    )
-
-    # pytorch-grad-cam may return [T,H,W] or [1,H,W] depending on layer shape.
-    grayscale_cam = np.asarray(grayscale_cam)
-
-    save_gradcam_figure(frames, grayscale_cam, args.save_path)
+    finally:
+        cam_extractor.remove_hooks()
 
 
 if __name__ == "__main__":
