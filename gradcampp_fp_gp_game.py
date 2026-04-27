@@ -40,7 +40,7 @@ def get_parser(add_help=True):
     # Data collection settings
     parser.add_argument("--confidence_threshold", type=float, default=0.8)
     parser.add_argument("--max_per_class", type=int, default=50)
-    parser.add_argument("--max_batches", type=int, default=1000)
+    parser.add_argument("--max_batches", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--num_workers", type=int, default=4)
 
