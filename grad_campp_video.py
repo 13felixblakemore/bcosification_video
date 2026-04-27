@@ -1,0 +1,228 @@
+import argparse
+import cv2
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+
+from evaluate import load_model_and_config
+
+from pytorch_grad_cam import GradCAMPlusPlus
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
+
+
+def get_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base_directory", default="./experiments")
+    parser.add_argument("--checkpoint", type=str, default=None)
+    parser.add_argument("--video_path", type=str, required=True)
+    parser.add_argument("--target_class", type=int, default=None)
+    parser.add_argument("--target_layer", type=str, default="model.blocks.4")
+    parser.add_argument("--save_path", type=str, default="gradcampp_video.png")
+    parser.add_argument("--num_frames", type=int, default=8)
+    parser.add_argument("--crop_size", type=int, default=224)
+    return parser
+
+
+def load_standard_model(args):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model, model_config = load_model_and_config(args)
+
+    if args.checkpoint is not None:
+        print(f"Loading checkpoint from: {args.checkpoint}")
+        checkpoint = torch.load(args.checkpoint, map_location=device)
+        state_dict = checkpoint.get("state_dict", checkpoint)
+
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            new_key = k.replace("model.model.model.", "model.model.")
+            new_state_dict[new_key] = v
+
+        missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
+        print("Missing keys:", len(missing))
+        print("Unexpected keys:", len(unexpected))
+
+    model.to(device)
+    model.eval()
+    return model, model_config
+
+
+def get_module_by_name(model, name):
+    modules = dict(model.named_modules())
+
+    if name not in modules:
+        print("\nAvailable modules:")
+        for k in modules.keys():
+            print(k)
+        raise ValueError(f"Target layer '{name}' not found.")
+
+    return modules[name]
+
+
+def read_video(video_path, num_frames=8, crop_size=224):
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        raise FileNotFoundError(f"Could not open video: {video_path}")
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    indices = np.linspace(0, max(total_frames - 1, 0), num_frames).astype(int)
+
+    frames = []
+
+    for idx in indices:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(idx))
+        ok, frame = cap.read()
+
+        if not ok:
+            continue
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        h, w, _ = frame.shape
+        scale = 256 / min(h, w)
+        new_h, new_w = int(h * scale), int(w * scale)
+        frame = cv2.resize(frame, (new_w, new_h))
+
+        y0 = (new_h - crop_size) // 2
+        x0 = (new_w - crop_size) // 2
+        frame = frame[y0:y0 + crop_size, x0:x0 + crop_size]
+
+        frames.append(frame)
+
+    cap.release()
+
+    if len(frames) == 0:
+        raise RuntimeError("No frames were read.")
+
+    while len(frames) < num_frames:
+        frames.append(frames[-1])
+
+    frames_np = np.stack(frames).astype(np.float32) / 255.0  # [T,H,W,3]
+
+    x = torch.from_numpy(frames_np).permute(3, 0, 1, 2)  # [C,T,H,W]
+
+    mean = torch.tensor([0.485, 0.456, 0.406])[:, None, None, None]
+    std = torch.tensor([0.229, 0.224, 0.225])[:, None, None, None]
+
+    x = (x - mean) / std
+    x = x.unsqueeze(0)  # [1,C,T,H,W]
+
+    return x, frames_np
+
+
+def reshape_transform_3d(tensor):
+    """
+    pytorch-grad-cam expects activations shaped like [B, C, H, W].
+    For 3D CNN activations [B, C, T, H, W], we merge temporal dimension
+    into the batch dimension so Grad-CAM gives one heatmap per frame.
+    """
+    if tensor.ndim == 5:
+        b, c, t, h, w = tensor.shape
+        tensor = tensor.permute(0, 2, 1, 3, 4).reshape(b * t, c, h, w)
+
+    return tensor
+
+
+def save_gradcam_figure(frames, grayscale_cam, save_path):
+    """
+    frames: [T,H,W,3], float in [0,1]
+    grayscale_cam: usually [T,H,W] after reshape transform
+    """
+
+    T = frames.shape[0]
+
+    if grayscale_cam.ndim == 2:
+        grayscale_cam = np.repeat(grayscale_cam[None], T, axis=0)
+
+    if grayscale_cam.shape[0] != T:
+        print("Warning: CAM temporal dimension does not match frames.")
+        print("frames:", frames.shape)
+        print("cam:", grayscale_cam.shape)
+        grayscale_cam = np.repeat(grayscale_cam[:1], T, axis=0)
+
+    fig, axes = plt.subplots(2, T, figsize=(2.2 * T, 4.5))
+
+    for t in range(T):
+        axes[0, t].imshow(frames[t])
+        axes[0, t].set_title(f"Frame {t}")
+        axes[0, t].axis("off")
+
+        cam_t = grayscale_cam[t]
+        cam_t = cv2.resize(cam_t, (frames.shape[2], frames.shape[1]))
+
+        overlay = show_cam_on_image(
+            frames[t],
+            cam_t,
+            use_rgb=True,
+            image_weight=0.55,
+        )
+
+        axes[1, t].imshow(overlay)
+        axes[1, t].axis("off")
+
+    axes[0, 0].set_ylabel("Original")
+    axes[1, 0].set_ylabel("Grad-CAM++")
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"Saved Grad-CAM++ figure to {save_path}")
+
+
+def main():
+    args = get_parser().parse_args()
+
+    # Match your existing loading pattern.
+    args.dataset = "UCF101"
+    args.base_network = "standard"
+    args.experiment_name = "i3d"
+    args.reload = "last"
+    args.ema = False
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model, model_config = load_standard_model(args)
+    print(model_config)
+
+    x, frames = read_video(
+        args.video_path,
+        num_frames=args.num_frames,
+        crop_size=args.crop_size,
+    )
+    x = x.to(device)
+
+    target_layer = get_module_by_name(model, args.target_layer)
+
+    with torch.no_grad():
+        logits = model(x)
+        pred_class = int(logits.argmax(dim=1).item())
+
+    target_class = args.target_class if args.target_class is not None else pred_class
+
+    print("Predicted class:", pred_class)
+    print("Target class:", target_class)
+
+    targets = [ClassifierOutputTarget(target_class)]
+
+    cam = GradCAMPlusPlus(
+        model=model,
+        target_layers=[target_layer],
+        reshape_transform=reshape_transform_3d,
+    )
+
+    grayscale_cam = cam(
+        input_tensor=x,
+        targets=targets,
+    )
+
+    # pytorch-grad-cam may return [T,H,W] or [1,H,W] depending on layer shape.
+    grayscale_cam = np.asarray(grayscale_cam)
+
+    save_gradcam_figure(frames, grayscale_cam, args.save_path)
+
+
+if __name__ == "__main__":
+    main()
