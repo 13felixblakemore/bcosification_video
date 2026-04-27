@@ -11,6 +11,12 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 
+
+class GradCAMPlusPlus3D(GradCAMPlusPlus):
+    def get_target_width_height(self, input_tensor):
+        # input_tensor: [B, C, T, H, W]
+        return input_tensor.size(-1), input_tensor.size(-2)  # W, H
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_directory", default="./experiments")
@@ -204,7 +210,7 @@ def main():
 
     targets = [ClassifierOutputTarget(target_class)]
 
-    cam = GradCAMPlusPlus(
+    cam = GradCAMPlusPlus3D(
         model=model,
         target_layers=[target_layer],
         reshape_transform=reshape_transform_3d,
