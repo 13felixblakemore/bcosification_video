@@ -113,14 +113,11 @@ def read_video(video_path, num_frames=8, crop_size=224):
 
 
 def reshape_transform_3d(tensor):
-    """
-    pytorch-grad-cam expects activations shaped like [B, C, H, W].
-    For 3D CNN activations [B, C, T, H, W], we merge temporal dimension
-    into the batch dimension so Grad-CAM gives one heatmap per frame.
-    """
     if tensor.ndim == 5:
         b, c, t, h, w = tensor.shape
-        tensor = tensor.permute(0, 2, 1, 3, 4).reshape(b * t, c, h, w)
+
+        # Average across time for class activation map
+        tensor = tensor.mean(dim=2)
 
     return tensor
 
