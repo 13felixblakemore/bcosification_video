@@ -67,8 +67,11 @@ def read_video(video_path, num_frames=8, crop_size=224):
     if not cap.isOpened():
         raise FileNotFoundError(f"Could not open video: {video_path}")
 
+    start_idx = 16
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    indices = np.linspace(0, max(total_frames - 1, 0), num_frames).astype(int)
+    #indices = np.linspace(0, max(total_frames - 1, 0), num_frames).astype(int)
+    indices = np.arange(start_idx, start_idx + num_frames)
+
 
     frames = []
 
