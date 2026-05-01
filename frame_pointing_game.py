@@ -67,7 +67,7 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.0,
+        confidence_threshold=0.9,
         max_per_class=30,
         max_batches=200,
     )

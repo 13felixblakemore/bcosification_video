@@ -194,7 +194,7 @@ def gp_scores_from_linear_map(
     contribs = (vid * linear_map).squeeze(0)
 
     contribs = contribs.sum(0)
-    debug_quadrant_masses(contribs)
+
     # --- ensure shape [T, H, W]
     if contribs.dim() == 4:
         linear_map = linear_map.squeeze(0)
@@ -299,44 +299,28 @@ def plot_grid(linear_mapping, vid):
 
     vid = vid[:3].permute(1, 2, 3, 0)
     vid = np.array(vid.cpu().detach())
+
+    # original
     for t, frame in enumerate(vid):
         plt.imshow(frame)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"og_{t}.png"), bbox_inches='tight')
         plt.close()
 
+    # explanation
     for t, frame_expl in enumerate(np.array(grad_video)):
         plt.imshow(frame_expl)
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"explanation_{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
-
-
+    # heatmap
     for t, frame in enumerate(heatmap):
         plt.imshow(vid[t])  # original frame
         plt.imshow(heatmap[t], cmap='jet', alpha=0.5)  # overlay
         plt.axis('off')
         plt.savefig(os.path.join(args.base_directory, f"heatmap_{t:03d}.png"), bbox_inches='tight')
         plt.close()
-
-    sys.exit()
-
-
-def debug_quadrant_masses(linear_map):
-    contrib = torch.relu(linear_map)
-    T, H, W = contrib.shape
-    h_mid = H // 2
-    w_mid = W // 2
-
-    q0 = contrib[:, :h_mid, :w_mid].sum().item()
-    q1 = contrib[:, :h_mid, w_mid:].sum().item()
-    q2 = contrib[:, h_mid:, :w_mid].sum().item()
-    q3 = contrib[:, h_mid:, w_mid:].sum().item()
-    total = q0 + q1 + q2 + q3
-
-    print("Quadrant masses:", [q0, q1, q2, q3])
-    print("Normalised:", [q0/total, q1/total, q2/total, q3/total])
 
 if __name__ == "__main__":
     parser = get_parser()
