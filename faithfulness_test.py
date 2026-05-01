@@ -127,7 +127,7 @@ def test_faithfulness(args):
 
         with torch.no_grad():
             logits = model(videos)
-            norm_preds = minmax_norm(logits)
+            probs = F.softmax(logits, dim=1)
             preds = logits.argmax(dim=1)
             correct_mask = preds == labels
 
@@ -137,11 +137,11 @@ def test_faithfulness(args):
         videos = videos[correct_mask]
         labels = labels[correct_mask]
         preds = preds[correct_mask]
-        norm_preds = norm_preds[correct_mask]
+        probs = probs[correct_mask]
 
         target_classes = labels
 
-        original_scores = norm_preds[
+        original_scores = probs[
             torch.arange(videos.size(0), device=device),
             target_classes
         ]
@@ -156,9 +156,9 @@ def test_faithfulness(args):
 
         with torch.no_grad():
             masked_logits = model(masked_videos)
-            masked_norm_preds = minmax_norm(masked_logits)
+            masked_probs = F.softmax(masked_logits, dim=1)
 
-            masked_scores = masked_norm_preds[
+            masked_scores = masked_probs[
                 torch.arange(masked_videos.size(0), device=device),
                 target_classes
             ]
