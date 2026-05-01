@@ -29,7 +29,7 @@ def load_standard_model(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model, model_config = load_model_and_config(args)
-    model = load_checkpoint(model_config, args.checkpoint, device)
+    model = load_checkpoint(model, args.checkpoint, device)
 
     model.to(device)
     model.eval()
