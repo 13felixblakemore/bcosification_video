@@ -112,7 +112,7 @@ def test_faithfulness(args):
         model = load_checkpoint(model, args.checkpoint, device)
 
     model.eval()
-    loader = get_loader(model_config, batch_size=2)
+    loader = get_loader(model_config, batch_size=4)
 
     faithfulness_scores = []
     max_batches = 200
@@ -127,7 +127,7 @@ def test_faithfulness(args):
 
         with torch.no_grad():
             logits = model(videos)
-            probs = F.softmax(logits, dim=1)
+            norm_preds = minmax_norm(logits)
             preds = logits.argmax(dim=1)
             correct_mask = preds == labels
 
@@ -137,11 +137,11 @@ def test_faithfulness(args):
         videos = videos[correct_mask]
         labels = labels[correct_mask]
         preds = preds[correct_mask]
-        probs = probs[correct_mask]
+        norm_preds = norm_preds[correct_mask]
 
         target_classes = labels
 
-        original_scores = probs[
+        original_scores = norm_preds[
             torch.arange(videos.size(0), device=device),
             target_classes
         ]
@@ -151,14 +151,14 @@ def test_faithfulness(args):
             videos,
             target_classes,
             device,
-            k_percentile=0.7
+            k_percentile=0.2
         )
 
         with torch.no_grad():
             masked_logits = model(masked_videos)
-            masked_probs = F.softmax(masked_logits, dim=1)
+            masked_norm_preds = minmax_norm(masked_logits)
 
-            masked_scores = masked_probs[
+            masked_scores = masked_norm_preds[
                 torch.arange(masked_videos.size(0), device=device),
                 target_classes
             ]
