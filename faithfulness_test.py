@@ -32,7 +32,7 @@ def test_faithfulness(args):
         model = load_checkpoint(model, args.checkpoint, device)
 
     model.eval()
-    loader = get_loader(model_config, batch_size=4)
+    loader = get_loader(model_config, batch_size=2)
 
     faithfulness_scores = []
     max_batches = 500
@@ -105,8 +105,8 @@ def mask_topk_contributions(model, videos, target_classes, device, k_percentile=
     target_logits.sum().backward()
 
     contributions = videos_for_grad * videos_for_grad.grad
-    contribution_maps = contributions.sum(dim=1)
-    contribution_maps = contribution_maps.clamp(min=0)
+    contribution_maps = contributions.clamp(min=0)
+    contribution_maps = contribution_maps.sum(dim=1)
 
     B = contribution_maps.size(0)
     flat_contribs = contribution_maps.view(B, -1)
