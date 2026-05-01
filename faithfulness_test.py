@@ -69,18 +69,18 @@ def test_faithfulness(args):
             target_classes
         ]
 
-    masked_videos = mask_topk_contributions(model, videos, target_classes, device)
-    with torch.no_grad():
-        masked_logits = model(masked_videos)
-        masked_probs = F.softmax(masked_logits, dim=1)
+        masked_videos = mask_topk_contributions(model, videos, target_classes, device)
+        with torch.no_grad():
+            masked_logits = model(masked_videos)
+            masked_probs = F.softmax(masked_logits, dim=1)
 
-        masked_scores = masked_probs[
-            torch.arange(masked_videos.size(0), device=device),
-            target_classes
-        ]
+            masked_scores = masked_probs[
+                torch.arange(masked_videos.size(0), device=device),
+                target_classes
+            ]
 
-        batch_scores = torch.abs(original_scores - masked_scores)
-        faithfulness_scores.extend(batch_scores.detach().cpu().tolist())
+            batch_scores = torch.abs(original_scores - masked_scores)
+            faithfulness_scores.extend(batch_scores.detach().cpu().tolist())
 
     mean_faithfulness = np.mean(faithfulness_scores)
     std_faithfulness = np.std(faithfulness_scores)
