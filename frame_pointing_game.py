@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
-from gp_game2 import load_checkpoint, get_loader
+from gp_game import load_checkpoint, get_loader
 from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip
 
 

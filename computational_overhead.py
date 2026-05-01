@@ -7,7 +7,7 @@ import numpy as np
 import torch
 
 from evaluate import load_model_and_config
-from gp_game2 import load_checkpoint
+from gp_game import load_checkpoint
 
 try:
     from fvcore.nn import FlopCountAnalysis

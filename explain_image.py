@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import torch
 import os
 
-from gp_game2 import load_checkpoint
+from gp_game import load_checkpoint
 
 try:
     from tqdm.auto import tqdm

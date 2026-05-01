@@ -1,3 +1,6 @@
+# this is my contribution
+# util functions for games
+
 import random
 from collections import defaultdict
 

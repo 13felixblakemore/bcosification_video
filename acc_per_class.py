@@ -5,7 +5,7 @@ from collections import defaultdict
 import torch
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
-from gp_game2 import load_checkpoint, get_loader
+from gp_game import load_checkpoint, get_loader
 
 
 def get_parser(add_help=True):

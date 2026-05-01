@@ -10,7 +10,7 @@ from pytorch_grad_cam import GradCAMPlusPlus
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from evaluate import load_model_and_config
 from pytorch_grad_cam.utils.image import show_cam_on_image
-from gp_game2 import load_checkpoint
+from gp_game import load_checkpoint
 
 
 def get_parser():
