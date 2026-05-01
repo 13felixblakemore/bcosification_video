@@ -127,12 +127,14 @@ def explain_joint(model, args, clip, labels):
             raise RuntimeError("x.grad is None")
 
         grad = x.grad.detach().clone().squeeze(0)
-        grad = grad[:3].clamp_min(0)
-        grad = grad.sum(0)
+
 
         contribs = grad.to(device) * clip.to(device).squeeze()
 
-        T,H,W = grad.shape
+        contribs = contribs[:3].clamp_min(0)
+        contribs = contribs.sum(0)
+
+        T,H,W = contribs.shape
         if i == 0:
             frames = [0,1,2,3]
         else:
