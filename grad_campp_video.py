@@ -12,6 +12,13 @@ from evaluate import load_model_and_config
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from gp_game import load_checkpoint
 
+class GradCAMPlusPlus3D(GradCAMPlusPlus):
+    def get_target_width_height(self, input_tensor):
+        return (
+            input_tensor.size(-1),  # W
+            input_tensor.size(-2),  # H
+            input_tensor.size(-3),  # T
+        )
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -108,7 +115,7 @@ def run_library_gradcampp(model, input_tensor, target_layer, target_class=None):
     else:
         targets = [ClassifierOutputTarget(target_class)]
 
-    with GradCAMPlusPlus(
+    with GradCAMPlusPlus3D(
         model=model,
         target_layers=[target_layer],
     ) as cam:
