@@ -30,7 +30,7 @@ def run_accuracy_eval(args):
     class_total = defaultdict(int)
 
     print("Starting")
-    num_batches = len(loader)
+    num_batches = 100
 
     with torch.no_grad():
         for batch_idx, (videos, labels) in enumerate(loader):
