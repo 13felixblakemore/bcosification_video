@@ -56,13 +56,13 @@ def load_checkpoint(model, checkpoint_path, device):
     return model
 
 
-def get_loader(model_config):
+def get_loader(model_config, batch_size=8):
     dm = UCF101DataModule(model_config["data"])
     dm.setup("test")
 
     return DataLoader(
         dm.eval_dataset,
-        batch_size=8,
+        batch_size=batch_size,
         shuffle=True,
         num_workers=4,
         pin_memory=True

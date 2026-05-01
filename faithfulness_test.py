@@ -32,7 +32,7 @@ def test_faithfulness(args):
         model = load_checkpoint(model, args.checkpoint, device)
 
     model.eval()
-    loader = get_loader(model_config)
+    loader = get_loader(model_config, batch_size=4)
 
     faithfulness_scores = []
     max_batches = 10
