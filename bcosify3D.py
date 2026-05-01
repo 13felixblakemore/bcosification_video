@@ -8,20 +8,14 @@ import torchvision.transforms as transforms
 from torch.nn import BatchNorm3d
 from torch.utils.checkpoint import checkpoint
 
-from CLIP.clip.model import AttentionPool2d
-
 from bcos.common import BcosUtilMixin
-from bcos.modules import BcosAttentionPool2d, BcosSequential, LogitLayer
+from bcos.modules import BcosSequential, LogitLayer
 from bcos.modules.bcosifyconv3d import BcosifyConv3d
 from bcos.modules.bcosifylinear import BcosifyLinear
 from bcos.modules.norms.uncentered_norms import BatchNormUncentered3d
 
 IMAGENET_MEAN_ADDINVERSE = (0.485, 0.456, 0.406, 0.515, 0.544, 0.594)
 IMAGENET_STD_ADDINVERSE = (0.229, 0.224, 0.225, 0.229, 0.224, 0.225)
-
-CLIP_MEAN_ADDINVERSE = (0.48145466, 0.4578275, 0.40821073, 0.51854534, 0.5421725, 0.59178927)
-CLIP_MEAN_ZERO = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-CLIP_STD_ADDINVERSE = (0.26862954, 0.26130258, 0.27577711, 0.26862954, 0.26130258, 0.27577711)
 
 
 class BcosifyNetwork(BcosUtilMixin, nn.Module):
@@ -34,35 +28,19 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
         if logit_layer:
             self.logit_layer = LogitLayer(logit_temperature=None, logit_bias=-math.log(101 - 1), )
 
-        # Setting clip_kd
-        self.clip_kd = model_config['bcosify_args'].get('clip_kd', None)
-        self.bfy_mean_zero = model_config.get('bfy_mean_zero', False)
-        self.linearprobe_clip = model_config['bcosify_args'].get('linearprobe_clip', False)
-        # Bcosify normalization as 0th layer
-        # Must change the mean and std to that of the correct dataset
-        if self.clip_kd and self.bfy_mean_zero:
-            self.bcosifynormalize = BcosifyNormalize(CLIP_MEAN_ZERO, CLIP_STD_ADDINVERSE)
-        elif (self.clip_kd or self.linearprobe_clip) and not self.bfy_mean_zero:
-            self.bcosifynormalize = BcosifyNormalize(CLIP_MEAN_ADDINVERSE, CLIP_STD_ADDINVERSE)
-        else:
-            self.bcosifynormalize = BcosifyNormalize(IMAGENET_MEAN_ADDINVERSE, IMAGENET_STD_ADDINVERSE)
+        self.bcosifynormalize = BcosifyNormalize(IMAGENET_MEAN_ADDINVERSE, IMAGENET_STD_ADDINVERSE)
 
         # Add channels to the first convolutional layer to allow for 6 channel inputs
         if add_channels:
             BcosifyNetwork.add_channels(self.model)
-        print("Standard")
-        print(self.model)
+
         BcosifyNetwork.bcosify(self.model, self.model_config)
-        print("B-Cos")
-        print(self.model)
 
     def print_all_params(self, module, prefix=""):
         for name, child in module.named_children():
-            # Print all parameters in this child
             for pname, p in child.__dict__.get("_parameters", {}).items():
                 if p is not None:
                     print(f"{prefix}{name}.{pname} | requires_grad={p.requires_grad} | shape={p.shape}")
-            # Recurse into children
             self.print_all_params(child, prefix=prefix + name + ".")
 
     def forward(self, x):
@@ -97,9 +75,8 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
     @classmethod
     def bcosify(cls, model, model_config):
-        bcosify_args = model_config.get("bcosify_args", None)
-        clip_kd = bcosify_args.get("clip_kd", False) if bcosify_args is not None else False
         for n, module in model.named_children():
+            # Avoid double wrapping
             if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d)):
                 continue
             if len(list(module.children())) > 0:
