@@ -1,3 +1,5 @@
+# This code is my contribution
+
 import argparse
 import time
 import json
@@ -6,9 +8,6 @@ import torch
 
 from evaluate import load_model_and_config
 
-# -----------------------------
-# Optional imports
-# -----------------------------
 try:
     from fvcore.nn import FlopCountAnalysis
     FVCORE_AVAILABLE = True
@@ -17,11 +16,6 @@ except ImportError:
 
 from torch.profiler import profile, ProfilerActivity
 
-
-# -----------------------------
-# Utils
-# -----------------------------
-
 def set_determinism(seed=42):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -29,19 +23,12 @@ def set_determinism(seed=42):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-
 def synchronize():
     if torch.cuda.is_available():
         torch.cuda.synchronize()
 
-
 def get_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-# -----------------------------
-# Model Loading
-# -----------------------------
 
 def load_model(args, device):
     model, config = load_model_and_config(args)
@@ -52,6 +39,7 @@ def load_model(args, device):
 
         state_dict = checkpoint.get("state_dict", checkpoint)
 
+        # Wrapper issue
         new_state_dict = {}
         for k, v in state_dict.items():
             new_key = k.replace("model.model.model.", "model.model.")
@@ -65,25 +53,16 @@ def load_model(args, device):
     return model, config
 
 
-# -----------------------------
-# Inputs
-# -----------------------------
-
+# Make random inputs for both 3 and 6 channel inputs
 def make_inputs_std(batch_size, device):
     return torch.randn((batch_size, 3, 16, 224, 224)).to(device)
-
 
 def make_inputs_bcos(batch_size, device):
     return torch.randn((batch_size, 6, 16, 224, 224)).to(device)
 
-
-# -----------------------------
-# Benchmarks
-# -----------------------------
-
+# record model latency
 def benchmark_latency(model, inputs, n_warmup=20, n_runs=50):
     times = []
-
     with torch.no_grad():
         for _ in range(n_warmup):
             _ = model.model(inputs)
@@ -104,7 +83,7 @@ def benchmark_latency(model, inputs, n_warmup=20, n_runs=50):
         "p95": float(np.percentile(times, 95)),
     }
 
-
+# record throughput
 def benchmark_throughput(model, inputs, duration=5.0):
     count = 0
     start = time.perf_counter()
@@ -120,6 +99,7 @@ def benchmark_throughput(model, inputs, duration=5.0):
     return count / elapsed
 
 
+# record peak allocated memory
 def benchmark_memory(model, inputs):
     if not torch.cuda.is_available():
         return -1
@@ -132,6 +112,7 @@ def benchmark_memory(model, inputs):
     return torch.cuda.max_memory_allocated() / (1024 ** 2)
 
 
+# record flops
 def benchmark_flops(model, inputs):
     if not FVCORE_AVAILABLE:
         return -1
@@ -169,27 +150,22 @@ def benchmark_profile(model, inputs, device, steps=10):
     return table
 
 
-# -----------------------------
-# Main benchmark loop
-# -----------------------------
-
+# main loop
 def run_benchmark(model_std, model_bcos, batch_sizes, device):
 
     results = {}
 
     for b in batch_sizes:
-        print(f"\nBatch size: {b}")
+        print("Batch size: ", b)
 
         inputs_std = make_inputs_std(b, device)
         inputs_bcos = make_inputs_bcos(b, device)
 
-        # --- Standard ---
         lat_std = benchmark_latency(model_std, inputs_std)
         thr_std = benchmark_throughput(model_std, inputs_std)
         mem_std = benchmark_memory(model_std, inputs_std)
         flops_std = benchmark_flops(model_std, inputs_std)
 
-        # --- B-cos ---
         lat_bcos = benchmark_latency(model_bcos, inputs_bcos)
         thr_bcos = benchmark_throughput(model_bcos, inputs_bcos)
         mem_bcos = benchmark_memory(model_bcos, inputs_bcos)
@@ -197,7 +173,7 @@ def run_benchmark(model_std, model_bcos, batch_sizes, device):
 
         overhead = ((lat_bcos["mean"] - lat_std["mean"]) / lat_std["mean"]) * 100
 
-        print("\n--- Results ---")
+        print("Results:\n")
         print(f"Latency std:  {lat_std['mean']:.6f}s")
         print(f"Latency bcos: {lat_bcos['mean']:.6f}s")
         print(f"Overhead:     {overhead:.2f}%")
@@ -211,13 +187,13 @@ def run_benchmark(model_std, model_bcos, batch_sizes, device):
         print(f"FLOPs std:  {flops_std:.2e}")
         print(f"FLOPs bcos: {flops_bcos:.2e}")
 
-        # --- Profiling only once ---
+        # profiling
         if b == 1:
-            print("\n--- PROFILING STANDARD MODEL ---")
+            print("Profiling standard")
             profile_std = benchmark_profile(model_std, inputs_std, device)
             print(profile_std)
 
-            print("\n--- PROFILING BCOS MODEL ---")
+            print("Profiling bcos")
             profile_bcos = benchmark_profile(model_bcos, inputs_bcos, device)
             print(profile_bcos)
         else:
@@ -241,10 +217,6 @@ def run_benchmark(model_std, model_bcos, batch_sizes, device):
     return results
 
 
-# -----------------------------
-# CLI
-# -----------------------------
-
 def get_parser():
     parser = argparse.ArgumentParser()
 
@@ -255,14 +227,8 @@ def get_parser():
 
     parser.add_argument("--batch_sizes", nargs="+", type=int, default=[1, 8])
 
-    parser.add_argument("--output", default="benchmark_results.json")
-
     return parser
 
-
-# -----------------------------
-# Main
-# -----------------------------
 
 def main():
     args = get_parser().parse_args()
@@ -270,7 +236,6 @@ def main():
     set_determinism()
     device = get_device()
 
-    # -------- STANDARD --------
     args_std = argparse.Namespace(**vars(args))
     args_std.experiment_name = "i3d"
     args_std.base_network = "standard"
@@ -281,7 +246,6 @@ def main():
 
     model_std, _ = load_model(args_std, device)
 
-    # -------- BCOS --------
     args_bcos = argparse.Namespace(**vars(args))
     args_bcos.experiment_name = "i3d"
     args_bcos.base_network = "bcosification"
@@ -292,7 +256,6 @@ def main():
 
     model_bcos, _ = load_model(args_bcos, device)
 
-    # -------- Run --------
     results = run_benchmark(
         model_std,
         model_bcos,
@@ -300,10 +263,7 @@ def main():
         device
     )
 
-    with open(args.output, "w") as f:
-        json.dump(results, f, indent=4)
-
-    print(f"\nSaved results to {args.output}")
+    # save maybe??
 
 
 if __name__ == "__main__":

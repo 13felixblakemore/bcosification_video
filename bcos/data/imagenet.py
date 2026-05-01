@@ -1,3 +1,7 @@
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+# It is not a contribution of this dissertation
+
 imagenet_templates = [
     'a bad photo of a {}.',
     'a photo of many {}.',

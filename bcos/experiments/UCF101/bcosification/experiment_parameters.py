@@ -26,12 +26,12 @@ NUM_CLASSES = 101
 NUM_TRAIN_EXAMPLES: int = 50000 # not sure
 NUM_EVAL_EXAMPLES: int = 3925 # not sure
 
-DEFAULT_BATCH_SIZE = 8 # could be causing noisy gradients?
+DEFAULT_BATCH_SIZE = 8
 DEFAULT_NUM_EPOCHS = 20
 DEFAULT_LR = 1e-4
 DEFAULT_CROP_SIZE = 224
 
-DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered3d)  # bnu-linear
+DEFAULT_NORM_LAYER = norms.NoBias(norms.BatchNormUncentered3d)
 #DEFAULT_NORM_LAYER = nn.BatchNorm3d
 DEFAULT_OPTIMIZER = OptimizerFactory(name="Adam", lr=DEFAULT_LR, bcosify=True, b_opt = False, weight_decay=1e-4)
 DEFAULT_LR_SCHEDULE = LRSchedulerFactory(
@@ -128,7 +128,8 @@ densenets = {
     )
     for depth in DENSENET_DEPTHS
 }
-# -------------------------------------------------------------------------
+
+
 I3D_DEPTHS = ["50"]
 i3ds = {
     f"i3d": update_default(

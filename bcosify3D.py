@@ -1,3 +1,7 @@
+# This file contains code adapted from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+# Specifically, this is adapted from bcosify.py to work for 3D architectures
+
 import math
 import time
 import warnings

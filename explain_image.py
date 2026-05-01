@@ -1,3 +1,5 @@
+# This code is my contribution. Used to create explanations for 2D or 3D. Requires adaptation.
+
 import argparse
 import sys
 import time
@@ -128,28 +130,12 @@ def explain_image(args, image_path):
     plt.close()
 
 def debug(model, video_tensor):
-    """
-    Test Euler reconstruction on the first B-Cos conv only.
-
-    Checks whether:
-        f(x) = sum(stem.conv(x))
-    satisfies:
-        f(x) == <x, grad_x f>
-
-    Parameters
-    ----------
-    model : nn.Module
-        Your loaded B-Cosified I3D model.
-    video_tensor : torch.Tensor
-        Input video tensor of shape [1, C, T, H, W]
-    """
     model.eval()
 
-    # Fresh leaf tensor with grad enabled
     x = video_tensor.detach().clone().requires_grad_(True)
 
     print(len(model.model.blocks))
-    # Get first block and first conv
+
     block_0 = model.model.blocks[0]
     block_1 = model.model.blocks[1]
     block_2 = model.model.blocks[2]
@@ -161,11 +147,9 @@ def debug(model, video_tensor):
     for name, module in model.named_children():
         print(name, "->", module.__class__.__name__)
 
-    # Forward through only the first conv
-    y = model.bcosifynormalize(x)
-    f = y.sum()                  # scalar
+    out = model.bcosifynormalize(x)
+    f = out.sum()
 
-    # Backward
     if x.grad is not None:
         x.grad.zero_()
     f.backward()
@@ -173,12 +157,12 @@ def debug(model, video_tensor):
     grad = x.grad.detach().clone()
     recon = (x * grad).sum()
 
-    print("=== Debug: stem conv only ===")
+    print("Debugging")
     print("input shape: ", x.shape)
-    print("conv output shape:", y.shape)
+    print("conv output shape:", out.shape)
     print("scalar f = sum(conv(x)):", f.item())
-    print("reconstructed <x, grad>:", recon.item())
-    print("difference f - recon:", (f - recon).item())
+    print("reconstructed:", recon.item())
+    print("difference:", (f - recon).item())
     print("max abs grad:", grad.abs().max().item())
 
     import inspect
@@ -189,7 +173,7 @@ def debug(model, video_tensor):
         "reconstruction": recon.detach(),
         "difference": (f - recon).detach(),
         "grad": grad,
-        "output": y.detach(),
+        "output": out.detach(),
     }
 
 def explain_video(args, video_path=None, vid_tensor=None):
@@ -199,7 +183,7 @@ def explain_video(args, video_path=None, vid_tensor=None):
 
     if device == torch.device("cuda"):
         torch.backends.cudnn.benchmark = False
-    # torch.use_deterministic_algorithms(True)
+
     if video_path:
         cap = cv2.VideoCapture(video_path)
         frames = []
@@ -236,49 +220,37 @@ def explain_video(args, video_path=None, vid_tensor=None):
 
         checkpoint = torch.load(args.checkpoint, map_location=device)
 
-        # Handle Lightning checkpoints
         state_dict = checkpoint.get("state_dict", checkpoint)
 
-        # 🔧 Fix key mismatches (VERY important for your setup)
         new_state_dict = {}
         for k, v in state_dict.items():
             new_key = k
-
-            # Common prefix issues in your repo
-            #new_key = new_key.replace("model.model.model.", "model.model.")
-            #new_key = new_key.replace("model.model.", "model.")
+            new_key = new_key.replace("model.model.model.", "model.model.")
 
             new_state_dict[new_key] = v
 
         missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
 
         print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
 
-        # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
 
     model.eval()
 
     logits = model(video_tensor)
-    norm_video_tensor = model.bcosifynormalize(video_tensor)
     pred_val, pred_idx = logits.max(dim=1)
 
     print("Predicted class:", pred_idx.item(), idx2label(pred_idx))
     print("Logit value:", pred_val.item())
-    logits = logits[0]
 
     expl_out = model.explain_video(video_tensor)
-    print("Prediction:", idx2label(expl_out["prediction"]))
-    print(pred_idx.item(), expl_out["prediction"])
-
     grad_video = expl_out["explanation"]
 
     frame_scores = expl_out["frame_scores"]
     frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
-    plot_vid(grad_video, frames, frame_scores, frame_path)
+
+    #plot_vid(grad_video, frames, frame_scores, frame_path)
     #plot_frame_importance_with_frames(grad_video, frames, frame_scores, frame_path)
 
     contribs = expl_out["contribution_map"].squeeze(0)
@@ -287,7 +259,6 @@ def explain_video(args, video_path=None, vid_tensor=None):
 
     video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
     video_tensor = transform(video_tensor)
-    frames = np.array(video_tensor) # CTHW
     frames = video_tensor[:3].permute(1, 2, 3, 0).detach().cpu().numpy()
 
     for t, frame in enumerate(contribs):
@@ -296,10 +267,6 @@ def explain_video(args, video_path=None, vid_tensor=None):
         plt.savefig(os.path.join(args.base_directory, f"contrib{t:03d}.png"), bbox_inches='tight')
         plt.close()
 
-    plt.imshow(frames[0])
-    plt.axis('off')
-    plt.savefig(os.path.join(args.base_directory, f"og.png"), bbox_inches='tight')
-    plt.close()
     for t, frame_expl in enumerate(grad_video):
         plt.imshow(frame_expl)
         plt.axis('off')
@@ -315,51 +282,36 @@ def plot_vid(grad_video, frames, frame_scores, save_path=None):
     fig = plt.figure(figsize=(3 * T, 8))
     gs = fig.add_gridspec(3, T, height_ratios=[1,1,1])
 
-    scores = np.array(frame_scores, dtype=float)
-
     weighted_frames = []
-
     scores = np.array(frame_scores, dtype=float)
 
-    weighted_frames = []
-
-    scores = np.array(frame_scores, dtype=float)
-
-    # relative importance (good for visualisation)
     norm_scores = (scores - scores.min()) / (scores.max() - scores.min() + 1e-8)
-
-    # boost contrast between frames
     norm_scores = norm_scores ** 0.5
 
+    # weighted greyscale
     for t in range(len(frames)):
         frame = frames[t].astype(float)
+        grey = frame.mean(axis=2, keepdims=True)
+        grey = (grey - grey.min()) / (grey.max() - grey.min() + 1e-8)
+        grey = np.repeat(grey, 3, axis=2)
 
-        # grayscale
-        gray = frame.mean(axis=2, keepdims=True)
-
-        # 🔥 CRITICAL: normalise contrast per frame
-        gray = (gray - gray.min()) / (gray.max() - gray.min() + 1e-8)
-
-        gray = np.repeat(gray, 3, axis=2)
-
-        # apply importance
-        frame_out = gray * norm_scores[t]
-
+        frame_out = grey * norm_scores[t]
         weighted_frames.append(frame_out.clip(0, 1))
 
+    # temporal weighted greyscale
     for t in range(T):
         ax_img = fig.add_subplot(gs[0, t])
         ax_img.imshow(weighted_frames[t])
         ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
-
+    # spatial explanation
     for t in range(T):
         ax_img = fig.add_subplot(gs[1, t])
         ax_img.imshow(grad_video[t])
         ax_img.axis("off")
 
-    # Bottom row: frames
+    # original frames
     for t in range(T):
         ax_img = fig.add_subplot(gs[2, t])
         ax_img.imshow(frames[t])
@@ -383,10 +335,6 @@ def plot_frame_importance_with_frames(
     save_path=None,
     title="Frame importance over time",
 ):
-    """
-    frames: array-like of shape [T, H, W, 3]
-    frame_scores: array-like of shape [T]
-    """
     frames = np.asarray(frames)
     frame_scores = np.asarray(frame_scores).squeeze()
     T = len(frame_scores)
@@ -394,7 +342,7 @@ def plot_frame_importance_with_frames(
     fig = plt.figure(figsize=(3 * T, 10))
     gs = fig.add_gridspec(3, T, height_ratios=[2, 1, 1])
 
-    # Top plot
+    # graph of frame importance
     ax_plot = fig.add_subplot(gs[0, :])
     x = np.arange(T)
     ax_plot.plot(x, frame_scores, marker="o")
@@ -404,11 +352,9 @@ def plot_frame_importance_with_frames(
     ax_plot.set_title(title)
     ax_plot.grid(True, alpha=0.3)
 
-    # Highlight max frame
     max_idx = int(np.argmax(frame_scores))
     ax_plot.axvline(max_idx, linestyle="--", alpha=0.7)
     ax_plot.scatter([max_idx], [frame_scores[max_idx]], s=80)
-
 
     for t in range(T):
         ax_img = fig.add_subplot(gs[1, t])
@@ -416,21 +362,19 @@ def plot_frame_importance_with_frames(
         ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
-        # Highlight most important frame
         if t == max_idx:
             for spine in ax_img.spines.values():
                 spine.set_edgecolor("red")
                 spine.set_linewidth(3)
                 spine.set_visible(True)
 
-    # Bottom row: frames
+    # original frames
     for t in range(T):
         ax_img = fig.add_subplot(gs[2, t])
         ax_img.imshow(frames[t])
         ax_img.set_title(f"{t}\n{frame_scores[t]:.2f}", fontsize=10)
         ax_img.axis("off")
 
-        # Highlight most important frame
         if t == max_idx:
             for spine in ax_img.spines.values():
                 spine.set_edgecolor("red")
@@ -444,7 +388,6 @@ def plot_frame_importance_with_frames(
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
         plt.close()
     else:
-        print("show")
         plt.show()
 
 if __name__ == "__main__":

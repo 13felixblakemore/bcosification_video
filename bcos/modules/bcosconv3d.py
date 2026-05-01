@@ -11,6 +11,10 @@ from torch.nn.modules.utils import _pair, _triple
 
 from .common import DetachableModule
 
+# This file contains code adapted from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+# specifically adapted from bcosconv2d.py
+
 __all__ = ["NormedConv3d", "BcosConv3d", "BcosConv3dWithScale"]
 
 

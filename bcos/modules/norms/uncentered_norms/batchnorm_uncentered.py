@@ -1,10 +1,15 @@
 """
+This file contains code adapted from the public B-Cosification repo:
+https://github.com/shrebox/B-cosification
+
+which partially took code from
+https://github.com/pytorch/pytorch/blob/9e81c0c3f46a36333e82b799b4afa79b44b6bb59/torch/nn/modules/batchnorm.py
+
 Batch norm without centering.
 
 In particular, detached batch norm without centering.
 
-Code partially taken from
-https://github.com/pytorch/pytorch/blob/9e81c0c3f46a36333e82b799b4afa79b44b6bb59/torch/nn/modules/batchnorm.py
+
 """
 from typing import Optional
 
@@ -186,6 +191,8 @@ def batch_norm_uncentered_2d(
     return result
 
 
+# My contribution, adpapted from BatchNormUncentered2d above
+
 class BatchNormUncentered3d(nn.BatchNorm3d, DetachableModule):
     def __init__(self, *args, **kwargs):
         self.bias = kwargs.pop("bias", None)
@@ -193,11 +200,6 @@ class BatchNormUncentered3d(nn.BatchNorm3d, DetachableModule):
         super().__init__(*args, **kwargs)
 
     def forward(self, input):
-        # self._check_input_dim(input)  # require 4
-
-        # exponential_average_factor is set to self.momentum
-        # (when it is available) only so that it gets updated
-        # in ONNX graph when this node is exported to ONNX.
         if self.momentum is None:
             exponential_average_factor = 0.0
         else:

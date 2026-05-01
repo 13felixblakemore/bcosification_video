@@ -1,3 +1,7 @@
+# This file contains code taken from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+# None of this file is my contribution
+
 import argparse
 from pathlib import Path
 

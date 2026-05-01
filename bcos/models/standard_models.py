@@ -5,6 +5,10 @@ from pytorchvideo.models.hub import i3d_r50
 import torch
 import torch.nn.functional as F
 
+# This file contains code taken from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+
+
 ## START: ------------------- For standard models -------------------------------
 class MyResNet(ResNet):
     def _forward_impl(self, x):
@@ -64,6 +68,8 @@ class DenseNetBcos(DenseNet):
         out = torch.flatten(out, 1)
         return out
 
+
+# My contribution
 
 class I3D(nn.Module):
     def __init__(self, pretrained=False):

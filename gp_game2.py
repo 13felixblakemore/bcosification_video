@@ -1,3 +1,5 @@
+# This is my contribution
+
 # parse args
 import argparse
 import os
@@ -26,7 +28,7 @@ from grid import sample_unique_class_grid, make_2x2_grid, collect_high_confidenc
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
-        description="Explain an image/vid", add_help=add_help
+        description="Grid Pointing Game", add_help=add_help
     )
     parser.add_argument(
         "--base_directory",
@@ -50,40 +52,32 @@ def game(args):
 
         checkpoint = torch.load(args.checkpoint, map_location=device)
 
-        # Handle Lightning checkpoints
         state_dict = checkpoint.get("state_dict", checkpoint)
 
-        # 🔧 Fix key mismatches (VERY important for your setup)
         new_state_dict = {}
         for k, v in state_dict.items():
             new_key = k
-
-            # Common prefix issues in your repo
-            #new_key = new_key.replace("model.model.model.", "model.model.")
-            #new_key = new_key.replace("model.model.", "model.")
+            new_key = new_key.replace("model.model.model.", "model.model.")
 
             new_state_dict[new_key] = v
 
         missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
 
         print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
 
-        # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
+
     model.eval()
     print(model_config)
     dm = UCF101DataModule(model_config["data"])
-
     dm.setup("test")
 
     loader = DataLoader(
         dm.eval_dataset,
         batch_size=8,
-        shuffle=True,  # ✅ force shuffle
-        num_workers=4,  # match your config if needed
+        shuffle=True,
+        num_workers=4,
         pin_memory=True
     )
 
@@ -91,8 +85,8 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.9,  # try 0.5 if this is too strict
-        max_per_class=50,
+        confidence_threshold=0.9,
+        max_per_class=5,
         max_batches=30,
     )
 
@@ -100,11 +94,13 @@ def game(args):
 
     total_scores = []
     total = 0
-    for step in range(2000):
-        print(step)
-        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 43)
 
+    num_samples = 20
+    for step in range(num_samples):
+        print(f"{step}/{num_samples}")
+        grid_video, grid_labels, confs = sample_unique_class_grid(clips_by_class, step + 43)
         scores, count = explain(model, args, grid_video, grid_labels)
+
         total += count
         if scores:
             total_scores.append(scores)
@@ -135,23 +131,19 @@ def game(args):
 
 def explain(model, args, video_tensor, labels, true_quad=None):
     device = next(model.parameters()).device
-    base_video = video_tensor.to(device).unsqueeze(0)   # [1, C, T, H, W]
+    base_video = video_tensor.to(device).unsqueeze(0)
 
     count = 0
     scores = []
-
-    #print("labels:", labels)
 
     for quadrant, label in enumerate(labels):
         if label == -1:
             continue
         x = base_video.clone().detach().requires_grad_(True)
-
         model.zero_grad(set_to_none=True)
 
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
-            pred = out.topk(10, 1)
 
             logit = out[0, label]
             pred_class = out.argmax(dim=1).item()

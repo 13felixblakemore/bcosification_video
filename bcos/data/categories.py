@@ -1,8 +1,9 @@
 """
 Contains categories for the datasets.
 """
-__all__ = ["IMAGENET_CATEGORIES", "CIFAR10_CATEGORIES", "IMAGENETTE_CATEGORIES", "UCF101_CATEGORIES"]
+__all__ = ["IMAGENET_CATEGORIES", "IMAGENETTE_CATEGORIES", "UCF101_CATEGORIES"]
 
+# Taken from https://www.crcv.ucf.edu/research/data-sets/ucf101/
 UCF101_CATEGORIES = [
     "Apply Eye Makeup",
      "Apply Lipstick",
@@ -107,7 +108,7 @@ UCF101_CATEGORIES = [
      "Yo Yo",
                      ]
 
-
+# Taken from https://github.com/fastai/imagenette
 IMAGENETTE_CATEGORIES = [
     "tench",
     "English springer",
@@ -132,20 +133,6 @@ IMAGENET_CATEGORIES = [
     "gas pump",
     "golf ball",
     "parachute",
-]
-
-
-CIFAR10_CATEGORIES = [
-    "airplane",
-    "automobile",
-    "bird",
-    "cat",
-    "deer",
-    "dog",
-    "frog",
-    "horse",
-    "ship",
-    "truck",
 ]
 
 # Taken from https://github.com/pytorch/vision/blob/11bd2eaa6d6976129836b329b01/torchvision/models/_meta.py

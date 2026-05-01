@@ -3,6 +3,9 @@ from torch import Tensor
 
 from bcos.modules.bcosconv3d import BcosConv3d
 
+# This file contains code adapted from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+# specifically adapted from bcosifyconv2d.py
 
 class BcosifyConv3d(BcosConv3d):
     def __init__(self,

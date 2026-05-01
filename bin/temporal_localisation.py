@@ -41,56 +41,52 @@ def game(args):
         print(f"Loading checkpoint from: {args.checkpoint}")
 
         checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        # Handle Lightning checkpoints
         state_dict = checkpoint.get("state_dict", checkpoint)
 
-        # 🔧 Fix key mismatches (VERY important for your setup)
+        # Fix wrapper issues
         new_state_dict = {}
         for k, v in state_dict.items():
             new_key = k
-
-            # Common prefix issues in your repo
             new_key = new_key.replace("model.model.model.", "model.model.")
-            #new_key = new_key.replace("model.model.", "model.")
-
             new_state_dict[new_key] = v
-
         missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
 
         print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
 
-        # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
+
     model.eval()
-    print(model_config)
+
+    print("Config: ", model_config)
+
     dm = UCF101DataModule(model_config["data"])
 
     dm.setup("test")
 
+    # Force shuffle on eval
     loader = DataLoader(
         dm.eval_dataset,
         batch_size=8,
-        shuffle=True,  # ✅ force shuffle
-        num_workers=4,  # match your config if needed
+        shuffle=True,
+        num_workers=4,
         pin_memory=True
     )
 
+    # Collect a dictionary of clips by class in the confidence threshold
     clips_by_class = collect_high_confidence_clips(
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.5,  # try 0.5 if this is too strict
+        confidence_threshold=0.5,
         max_per_class=50,
         max_batches=500,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
-    # 1. Change to a dictionary of lists: {class_id: [score1, score2, ...]}
+
     class_scores = defaultdict(list)
+
     num = len(loader)
     num = 10
 
@@ -347,23 +343,21 @@ def explain(model, args, batch, labels):
     batch = batch.to(device)
 
     for idx, vid in enumerate(batch):
-        # Add the batch dimension back for the model [1, C, T, H, W]
         x = vid.unsqueeze(0).clone().detach().requires_grad_(True)
         model.zero_grad(set_to_none=True)
 
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
-            # Target the specific label for THIS video in the batch
             current_label = labels[idx].item()
             logit = out[0, current_label]
             logit.backward()
 
         if x.grad is None:
-            continue  # Or raise error
+            continue
 
-        # Process gradients
+        # Linear maps
         grad = x.grad.detach().clone().squeeze(0)  # [C, T, H, W]
-        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W] (Positive RGB contrib)
+        grad = grad[:3].clamp_min(0).sum(0)  # [T, H, W]
 
         T, H, W = grad.shape
         frames = [3, 4]  # Your target "signal" frames

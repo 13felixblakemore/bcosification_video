@@ -1,10 +1,20 @@
 import os
 import time
+import pytorchvideo
+import torch
+import torch.utils.data as data
+import torchvision
+from pytorchvideo.data import make_clip_sampler
+from torchvision.datasets import ImageFolder, UCF101
+from torch.utils.data import DataLoader, Dataset
+from PIL import Image
+import random
+import bcos.settings as settings
 from random import shuffle
 from typing import List
-
-import pytorchvideo
-from pytorchvideo.data import make_clip_sampler
+from .categories import IMAGENET_CATEGORIES, IMAGENETTE_CATEGORIES, UCF101_CATEGORIES
+from .sampler import RASampler
+from .transforms import RandomCutmix, RandomMixup, SplitAndGrid
 
 try:
     from defusedxml.ElementTree import parse as ET_parse
@@ -20,24 +30,12 @@ except ImportError:
         "`pip install pytorch-lightning`"
     )
 
-import torch
-import torch.utils.data as data
-import torchvision
-from torchvision.datasets import CIFAR10, ImageFolder, UCF101
-from torch.utils.data import DataLoader, Dataset
-from PIL import Image
-import random
+# This file is adapted from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
 
-import bcos.settings as settings
+# My contribution is the UCF101DataModule only, which is adapted from the existing ImageNetDataModule
 
-from .categories import CIFAR10_CATEGORIES, IMAGENET_CATEGORIES, IMAGENETTE_CATEGORIES, UCF101_CATEGORIES
-from .sampler import RASampler
-from .transforms import RandomCutmix, RandomMixup, SplitAndGrid
-
-from .cc3m import (CC3MImg, CC3MText, CustomDataCollatorImg,
-                  CustomDataCollatorText)
-
-__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "CIFAR10DataModule", "ClassificationDataModule", "VOCDataModule", "CC3MDataModule", "UCF101DataModule"]
+__all__ = ["ImageNetDataModule", "ImageNetteDataModule", "ClassificationDataModule", "UCF101DataModule"]
 
 def get_random_cut(dataset, cut_ratio):
     all_indices = [*range(0, len(dataset))]
@@ -258,7 +256,6 @@ class ImageNetDataModule(ClassificationDataModule):
 
 
 class ImageNetteDataModule(ClassificationDataModule):
-    # from https://image-net.org/download.php
     NUM_CLASSES: int = 10
 
     NUM_TRAIN_EXAMPLES: int = 50000
@@ -350,12 +347,7 @@ class UCF101DataModule(ClassificationDataModule):
                 _precomputed_metadata=train_md,
             )
             self.train_dataset = VideoOnlyDataset(self.train_dataset)
-            video_paths = self.train_dataset.dataset.video_clips.video_paths
-            rank_zero_info("First 5 training video paths:")
-            for p in video_paths[:5]:
-                rank_zero_info(p)
             #torch.save(self.train_dataset.metadata, "ucf101_train_metadata.pt")
-            #assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
             rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
         start = time.perf_counter()
@@ -372,10 +364,9 @@ class UCF101DataModule(ClassificationDataModule):
         )
         self.eval_dataset = VideoOnlyDataset(self.eval_dataset)
         #torch.save(self.eval_dataset.metadata, "ucf101_eval_metadata.pt")
-        #assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
         rank_zero_info(f"Done! Took time {time.perf_counter() - start:.2f}s")
 
-
+# Removes audio from videos
 class VideoOnlyDataset(torch.utils.data.Dataset):
     def __init__(self, dataset):
         self.dataset = dataset
@@ -387,271 +378,11 @@ class VideoOnlyDataset(torch.utils.data.Dataset):
         video, _, label = self.dataset[idx]  # discard audio
         return video, label
 
-class CIFAR10DataModule(ClassificationDataModule):
-    # from https://www.cs.toronto.edu/~kriz/cifar.html
-    NUM_CLASSES: int = 10
 
-    NUM_TRAIN_EXAMPLES: int = 50_000
-    NUM_EVAL_EXAMPLES: int = 10_000
 
-    CATEGORIES: List[str] = CIFAR10_CATEGORIES
 
-    def setup(self, stage: str) -> None:
-        DATA_ROOT = settings.DATA_ROOT
-        if stage == "fit":
-            self.train_dataset = CIFAR10(
-                root=DATA_ROOT,
-                train=True,
-                transform=self.config["train_transform"],
-                download=True,
-            )
-            assert len(self.train_dataset) == self.NUM_TRAIN_EXAMPLES
 
-        val_dataset = pytorchvideo.data.Kinetics(
-            data_path=self._TRAIN_PATH,
-            clip_sampler=pytorchvideo.data.make_clip_sampler("uniform", self._CLIP_DURATION),
-            decode_audio=False,
-            #video_path_prefix=UCF101_PATH,
-            # transform=val_transform,
-        )
-        assert len(self.eval_dataset) == self.NUM_EVAL_EXAMPLES
 
-class VOCDataModule(ClassificationDataModule):
-    NUM_CLASSES: int = 20
 
-    def setup(self, stage: str) -> None:
-        DATA_ROOT = settings.VOC_PATH
-        if stage == "fit":
-            if self.config.get('train_split_portion', None) is not None:
-                    entire_train_data = VOCDataset(
-                        root=DATA_ROOT,
-                        image_set='train',
-                        download=False,
-                        # transform=self.config["train_transform"], # Don't pass it here!
-                        year='2012',
-                        preload = self.config['preload'],
-                        also_annotation=self.config['also_annotation'],
-                    )
-                    train_indices, eval_indices = get_random_cut(entire_train_data, self.config.get('train_split_portion'))
-                    self.train_dataset = MySubset(entire_train_data,
-                                indices=train_indices,
-                                transform=self.config["train_transform"] 
-                                )
-                    self.eval_dataset = MySubset(entire_train_data,
-                                indices=eval_indices,
-                                transform=self.config["test_transform"] 
-                                )
-                    self.train_idx_trans = lambda idx: train_indices[idx]
-                    self.eval_idx_trans = lambda idx: eval_indices[idx]
-                    rank_zero_info(f'[Fit and Eval Setup] {len(self.train_dataset), len(self.eval_dataset)} for train and eval.')
-                    rank_zero_info(f'Eval indices hash is: {hash(tuple(sorted(eval_indices)))}')
-                    return
-            else:
-                self.train_dataset = VOCDataset(
-                    root=DATA_ROOT,
-                    image_set='train',
-                    transform=self.config["train_transform"],
-                    download=False,
-                    year='2012',
-                    preload = self.config['preload'],
-                    also_annotation=self.config['also_annotation'],
-                )
 
-        if stage in ['fit', 'val'] and self.config.get('train_split_portion', None) is not None:
-            rank_zero_info("Not Setting up anything as val split is part of fit and should be done in fit setup!")
-            return
 
-        eval_stage = stage
-        if stage == 'fit':
-            eval_stage = 'val'
-
-        self.eval_dataset = VOCDataset(
-            root=DATA_ROOT,
-            image_set=eval_stage,
-            transform=self.config["test_transform"],
-            download=False,
-            year='2012',
-            preload=self.config['preload'],
-            also_annotation=self.config['also_annotation'],
-        )
-
-class VOCDataset(torchvision.datasets.VOCDetection):
-    def __init__(self, *args, preload=False, also_annotation=False, **kwargs):
-        super(VOCDataset, self).__init__(*args, **kwargs)
-        self.transforms = None
-
-        self.target_dict = {'aeroplane': 0, 'bicycle': 1, 'bird': 2, 'boat': 3, 'bottle': 4, 'bus': 5, 'car': 6,
-                'cat': 7, 'chair': 8, 'cow': 9, 'diningtable': 10, 'dog': 11, 'horse': 12, 'motorbike': 13, 'person': 14,
-                'pottedplant': 15, 'sheep': 16, 'sofa': 17, 'train': 18, 'tvmonitor': 19}
-        self.reverse_target_dict = {0: 'aeroplane', 1: 'bicycle', 2: 'bird', 3: 'boat', 4: 'bottle', 5: 'bus', 6: 'car', 7:
-                       'cat', 8: 'chair', 9: 'cow', 10: 'diningtable', 11: 'dog', 12: 'horse', 13: 'motorbike', 14: 'person', 
-                15: 'pottedplant', 16: 'sheep', 17: 'sofa', 18: 'train', 19: 'tvmonitor'}
-
-        self.num_classes = 20
-
-        if preload:
-            self.preload = False
-            self.load_data()
-        self.preload = preload
-        self.also_annotation = also_annotation
-        assert self.transforms is None, f'Not considered as of now!'
-
-    def load_data(self):
-        rank_zero_info(f"Preloading all the data!")
-        transform = self.transform
-        target_transform = self.target_transform
-
-        self.cached_images = []
-        self.cached_targets = []
-        self.transform = None
-        self.target_transform = None
-        for idx in range(len(self)):
-            img, target = self[idx]
-            self.cached_images[idx] = img
-            self.cached_targets[idx] = target
-
-        self.transform = transform
-        self.target_transform = target_transform
-        rank_zero_info(f"cached all the data successfully!")
-        rank_zero_info(f"Putting back the transforms {self.transform=}, {self.target_transform=}")
-
-    def __getitem__(self, index: int):
-        """
-        Args:
-            index (int): Index
-        Returns:
-            tuple: (image, target) where target is the image segmentation.
-        """
-        if self.preload:
-            img = self.cached_images[index]
-            target = self.cached_targets[index]
-        else:
-            img = Image.open(self.images[index]).convert("RGB")
-            annotations = self.parse_voc_xml(ET_parse(self.annotations[index]).getroot())
-
-            objects = annotations['annotation']['object']
-            target = torch.zeros(self.num_classes)
-            object_names = [item['name'] for item in objects]
-            for name in object_names:
-                target[self.target_dict[name]] = 1
-
-        if self.transform is not None:
-            img = self.transform(img)
-        
-        if self.also_annotation:
-            size = annotations['annotation']['size']
-            width = int(size['width'])
-            height = int(size['height'])
-            wscale = 224 / width
-            hscale = 224 / height
-
-            object_bndboxes = [item['bndbox'] for item in objects]
-            bbs = []
-            for name, bndbox in zip(object_names, object_bndboxes):
-                index = self.target_dict[name]
-                xmin, xmax = int(bndbox['xmin']), int(bndbox['xmax'])
-                ymin, ymax = int(bndbox['ymin']), int(bndbox['ymax'])
-
-                new_xmin, new_xmax = int(min(max(xmin*wscale, 0), 223)), int(min(max(xmax*wscale, 0), 223))
-                new_ymin, new_ymax = int(min(max(ymin*hscale, 0), 223)), int(min(max(ymax*hscale, 0), 223))
-
-                bbs.append([index, new_xmin, new_ymin, new_xmax, new_ymax])
-            return img, target, bbs
-        else:
-            return img, target
-        
-        # This applies transforms to both img and target (irrelevant for us!)
-        # if self.transforms is not None:
-        #     img, target = self.transforms(img, target)
-
-class MySubset(data.Subset):
-    """
-    Subset dataset with a few more things:
-    - supporting a custom transform
-    - delegate rest of attr./methods to internal dataset.
-
-    Note: Mainly required for splitting and then using different transforms on
-          created `Subset`s. (Otherwise, it's overwritten b/c internal is same.)
-    Note: only for supervised data of form (x, y)
-    """
-    def __init__(self, dataset, indices, transform=None, target_transform=None):
-        super().__init__(dataset, indices)
-        self.transform = transform
-        self.target_transform = target_transform
-        if hasattr(dataset, "transform") and dataset.transform is not None:
-            rank_zero_info(f"Internal dataset has transform will apply transform on top: {dataset}")
-
-    def __getitem__(self, item):
-        x, y = super().__getitem__(item)
-        if self.transform is not None:
-            x = self.transform(x)
-        if self.target_transform is not None:
-            y = self.target_transform(y)
-        return x, y
-
-    def __getattr__(self, item):
-        if item in ['transform', 'target_transform']:
-            return self.__dict__[item]
-        # not found in attr so look in internal dataset
-        return getattr(self.dataset, item)
-
-class CC3MDataModule(ClassificationDataModule):
-    NUM_CLASSES: int = -1 # How to handle this?
-
-    def setup(self, stage: str) -> None:
-        DATA_ROOT = settings.CC3M_PATH
-        
-        collator = CustomDataCollatorImg()
-        cc3m_obj = CC3MImg()
-
-        if stage == "fit":
-            split_path = "training"
-            tar_name = "{00000..00331}.tar"
-            data_shard = os.path.join(DATA_ROOT, split_path, tar_name)
-            self.train_dataset = cc3m_obj.get_wds_dataset(
-                data_shard, 
-                self.config["train_transform"], 
-                self.batch_size, 
-                collator=collator)
-
-        split_path = "validation"
-        tar_name = "{00000..00001}.tar"
-        data_shard = os.path.join(DATA_ROOT, split_path, tar_name)
-        self.eval_dataset = cc3m_obj.get_wds_dataset(
-                data_shard, 
-                self.config["test_transform"], 
-                self.batch_size, 
-                collator=collator)
-    
-    # # Following loaders are not the default but adapated as per the cc3m.py code from Sukrut
-    def train_dataloader(self):
-        train_sampler = self.get_train_sampler()
-        # shuffle = None if train_sampler is not None else True
-        shuffle = False
-        return data.DataLoader(
-            self.train_dataset,
-            None, 
-            shuffle=shuffle,
-            sampler=train_sampler,
-            num_workers=0,
-            collate_fn=self.train_collate_fn,
-            pin_memory=False,
-        )
-
-    def val_dataloader(self):
-        return data.DataLoader(
-            self.eval_dataset,
-            None,
-            shuffle=False,
-            num_workers=0,
-            pin_memory=False,
-        )
-
-    def test_dataloader(self):
-        return data.DataLoader(
-            self.eval_dataset,
-            None,
-            shuffle=False,
-            num_workers=0,
-            pin_memory=False,
-        )

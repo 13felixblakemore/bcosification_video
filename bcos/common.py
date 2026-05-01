@@ -1,10 +1,7 @@
-"""
-This module contains utilities related to B-cos models.
-None of this is "essential" to training or doing inference with the models.
-(Most of the stuff can be done quickly and easily in a few lines of code.)
-However, they are useful for e.g. visualizing the explanations etc.
-So essentially it's a collection of convenience/helper functions/classes.
-"""
+# This file contains code taken from the public B-Cosification repo:
+# https://github.com/shrebox/B-cosification
+# My contribution is gradient_to_video, which is adapted from existing code in this file.
+
 import sys
 import warnings
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union

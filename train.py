@@ -1,3 +1,7 @@
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+# It is not a contribution of this dissertation
+
 import torch.multiprocessing as mp
 mp.set_start_method("fork", force=True)
 

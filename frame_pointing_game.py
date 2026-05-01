@@ -1,6 +1,9 @@
-import argparse
+# This is my contribution
 
+import torch.nn.functional as F
+import argparse
 import torch
+from torch.utils.data import DataLoader
 
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
@@ -9,7 +12,7 @@ from grid import collect_high_confidence_clips, add_blank_frames, add_second_cli
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
-        description="Explain an image/vid", add_help=add_help
+        description="Frame pointing game", add_help=add_help
     )
     parser.add_argument(
         "--base_directory",
@@ -32,43 +35,39 @@ def game(args):
         print(f"Loading checkpoint from: {args.checkpoint}")
 
         checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        # Handle Lightning checkpoints
         state_dict = checkpoint.get("state_dict", checkpoint)
 
-        # 🔧 Fix key mismatches (VERY important for your setup)
         new_state_dict = {}
         for k, v in state_dict.items():
             new_key = k
-
-            # Common prefix issues in your repo
             new_key = new_key.replace("model.model.model.", "model.model.")
-            #new_key = new_key.replace("model.model.", "model.")
 
             new_state_dict[new_key] = v
 
         missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
 
         print("Loaded checkpoint.")
-        print("Missing keys:", len(missing))
-        print("Unexpected keys:", len(unexpected))
 
-        # Optional debug
         if "epoch" in checkpoint:
             print("Checkpoint epoch:", checkpoint["epoch"])
-    model.eval()
-    print(model_config)
-    dm = UCF101DataModule(model_config["data"])
 
+    model.eval()
+    dm = UCF101DataModule(model_config["data"])
     dm.setup("test")
 
-    loader = dm.train_dataloader()
+    loader = DataLoader(
+        dm.eval_dataset,
+        batch_size=8,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True
+    )
 
     clips_by_class = collect_high_confidence_clips(
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.5,  # try 0.5 if this is too strict
+        confidence_threshold=0.5,
         max_per_class=8,
         max_batches=20,
     )
@@ -77,22 +76,22 @@ def game(args):
 
     total_scores = []
 
-    for step in range(50):
+    num_samples = 50
+    for step in range(num_samples):
         print(step)
-        #clip, label = add_blank_frames(clips_by_class, step)
         clip, labels = add_second_clip(clips_by_class, step)
         score = explain_joint(model, args, clip, labels)
         total_scores.append(score)
 
-    print(total_scores)
-    #avgs = [sum(row) / len(row) for row in zip(*total_scores)]
+    print("Total scores: ", total_scores)
     avgs = sum(total_scores) / len(total_scores)
-    print("Average scores:", avgs)
+    print("Average scores: ", avgs)
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
-    base_video = clip.to(device).unsqueeze(0)   # [1, C, T, H, W]
+    base_video = clip.to(device).unsqueeze(0)
 
+    count = 0
     scores = []
 
     x = base_video.clone().detach().requires_grad_(True)
@@ -104,6 +103,15 @@ def explain_joint(model, args, clip, labels):
             out = model(x)
 
             logit = out[0, label]
+            pred_class = out.argmax(dim=1).item()
+            confidence = F.softmax(out, dim=1)[0, label].item()
+
+            if pred_class == label:
+                count += 1
+                pass
+            else:
+                continue
+
             logit.backward(inputs=[x])
 
         if x.grad is None:
@@ -112,13 +120,14 @@ def explain_joint(model, args, clip, labels):
         grad = x.grad.detach().clone().squeeze(0)
         grad = grad[:3].clamp_min(0)
         grad = grad.sum(0)
-        # then keep only top 10% of gradients
 
         T,H,W = grad.shape
-        if i ==0:
+        if i == 0:
             frames = [0,1,2,3]
         else:
             frames = [4,5,6,7]
+
+        # score = correct contribution / total
         frame_contrib = 0
         total_contrib = 0
         for t in range(T):
@@ -126,45 +135,9 @@ def explain_joint(model, args, clip, labels):
                 frame_contrib += grad[t].sum(dim=(0,1)).item()
             total_contrib += grad[t].sum(dim=(0,1)).item()
         scores.append(frame_contrib/total_contrib)
+
     return scores
 
-
-
-
-def explain(model, args, clip, label):
-    device = next(model.parameters()).device
-    base_video = clip.to(device).unsqueeze(0)   # [1, C, T, H, W]
-
-    scores = []
-
-    x = base_video.clone().detach().requires_grad_(True)
-
-    model.zero_grad(set_to_none=True)
-
-    with torch.enable_grad(), model.explanation_mode():
-        out = model(x)
-
-        logit = out[0, label]
-        logit.backward(inputs=[x])
-
-    if x.grad is None:
-        raise RuntimeError("x.grad is None")
-
-    grad = x.grad.detach().clone().squeeze(0)
-    grad = grad[:3].clamp_min(0)
-    grad = grad.sum(0)
-    # then keep only top 10% of gradients
-
-    T,H,W = grad.shape
-    frames = [3,4]
-    frame_contrib = 0
-    total_contrib = 0
-    print(grad.shape)
-    for t in range(T):
-        if t in frames:
-            frame_contrib += grad[t].sum(dim=(0,1)).item()
-        total_contrib += grad[t].sum(dim=(0,1)).item()
-    return frame_contrib / total_contrib
 
 
 if __name__ == "__main__":
