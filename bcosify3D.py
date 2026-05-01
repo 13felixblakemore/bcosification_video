@@ -85,16 +85,16 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
 
             norm_layer = model_config['bcosify_args'].get('norm_layer', 'BnUncV2')
             gap = model_config['bcosify_args'].get('gap',
-                                                   True)  # Global Average Pooling reorder works with conv1x1 for the last linear layer
+                                                   True)
             last_layer_name = model_config.get('last_layer_name', 'NoLastLayerName')
 
             if isinstance(module, nn.Conv3d):
                 # replace Conv3d with BcosConv3d
                 setattr(model, n, BcosifyConv3d.from_standard_module(module, model_config))
-            elif isinstance(module, nn.Linear) and (n != last_layer_name or clip_kd or (
-            not gap)):  # For standard models as the modified model changes the forward and the last fc linear to conv1x1
+            elif isinstance(module, nn.Linear) and (n != last_layer_name or (
+            not gap)):  # For standard models as the modified model changes the forward and the last fc linear to conv1x1x1
                 # replace Linear with BcosLinear
-                if n != 'k_proj' and n != 'v_proj' and n != 'q_proj':  # Only modify c_proj (output layer) for the clip_kd
+                if n != 'k_proj' and n != 'v_proj' and n != 'q_proj':
                     setattr(model, n, BcosifyLinear.from_standard_module(module, model_config))
             elif isinstance(module, nn.Linear) and n == last_layer_name and gap:
                 # replace Linear with BcosConv3d (conv1x1x1) for the last layer
@@ -102,10 +102,9 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
                 print('Last Linear Layer Bcosified (Conv1x1x1) with GAP')
             elif isinstance(module, nn.Sequential):
                 # replace Sequential with BcosSequential
-                # batch norm 3d?
                 setattr(model, n, BcosSequential.from_standard_module(module))
             elif isinstance(module, nn.BatchNorm3d) and (norm_layer == 'BnUnc3d' or norm_layer == 'BnUncV2'):
-                ## Add the norms
+                # replace batch norm with uncentered version
                 setattr(model, n, BatchNormUncentered3d.from_standard_module(module, model_config))
             else:
                 # rest of the modules are not replaced
@@ -130,7 +129,5 @@ class BcosifyNormalize(nn.Module):
         mean = self.mean.to(x.device)
         std = self.std.to(x.device)
         assert x.shape[1] == self.mean.shape[1]
-         #print(x.min().item(), x.max().item())
         out = (x.float() - mean) / std
-        #print("out:" ,out.min().item(), out.max().item())
         return out

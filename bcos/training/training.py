@@ -14,6 +14,10 @@ from bcos.training.bcosify_trainer import BcosifyTrainer
 from bcos.training.trainer import setup_loggers, ClassificationLitModel, setup_callbacks, \
     put_trainer_args_into_trainer_config
 
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+# It is not a contribution of this dissertation
+
 def run_training(args):
     """
     Instantiates everything and runs the training.

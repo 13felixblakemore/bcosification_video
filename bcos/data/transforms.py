@@ -8,7 +8,6 @@ from torchvision.utils import make_grid
 
 class BcosifyNormalize(torch.nn.Module):
     """
-    Check this issue for description: https://gitlab.mpi-klsb.mpg.de/sarya/b-cosify-conventional-dnns/-/issues/23
     Bcosifynormalized
                 adding three new channels to the input whose values are equal 
                 to the negative of the values of the first three channels after normalization.

@@ -1,6 +1,11 @@
 """
 This module contains the main public API of the bcos package.
 """
+
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+# It is not a contribution of this dissertation
+
 # This module contains the preset transforms for ImageNet and C10
 import bcos.data.presets as presets
 
@@ -30,7 +35,6 @@ from bcos.common import (
     gradient_to_image,
     plot_contribution_map,
 )
-from bcos.version import __version__
 
 __all__ = [
     "presets",

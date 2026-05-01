@@ -7,6 +7,22 @@ import torch
 import torch.distributed as dist
 import torch.utils.data
 
+"""
+Repeated Augmentation Sampler.
+
+This file is retained from the B-Cosification repository framework:
+https://github.com/shrebox/B-cosification
+
+The implementation itself originates from TorchVision's reference classification code:
+https://github.com/pytorch/vision/blob/32d254bbfcf14975f846765775584e61ef25a5/references/classification/sampler.py
+
+TorchVision notes that the sampler is borrowed from the DeiT repository:
+https://github.com/facebookresearch/deit/blob/main/samplers.py
+
+This sampler is included only as framework/infrastructure code. It is not a contribution
+of this dissertation.
+"""
+
 
 class RASampler(torch.utils.data.DistributedSampler):
     """Sampler that restricts data loading to a subset of the dataset for distributed,

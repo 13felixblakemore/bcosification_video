@@ -1,3 +1,9 @@
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+
+# It is adapted to include UCF101
+
+
 """
 General settings. Mainly paths to data.
 """
