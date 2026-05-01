@@ -130,7 +130,7 @@ def explain_joint(model, args, clip, labels):
         grad = grad[:3].clamp_min(0)
         grad = grad.sum(0)
 
-        contribs = grad * clip
+        contribs = grad.to(device) * clip.to(device)
 
         T,H,W = grad.shape
         if i == 0:
