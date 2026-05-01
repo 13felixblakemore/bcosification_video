@@ -1,6 +1,6 @@
 # This file contains code taken from the public B-Cosification repo:
 # https://github.com/shrebox/B-cosification
-# My contribution is gradient_to_video, which is adapted from existing code in this file.
+# My contribution is gradient_to_video, and explain_video which are adapted from existing code in this file.
 
 import sys
 import warnings
@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
 import cv2
 
 if TYPE_CHECKING:
-    # this isn't supposed to be a hard dependency
     import matplotlib
     import matplotlib.pyplot as plt
 
@@ -29,7 +28,6 @@ __all__ = [
     "gradient_to_image",
     "plot_contribution_map",
 ]
-
 
 TensorLike = Union[Tensor, np.ndarray]
 
@@ -193,42 +191,20 @@ class BcosUtilMixin:
         **grad2vid_kwargs,
     ) -> "Dict[str, Any]":
         """
-        Generates an explanation for the given input tensor.
-        This is not a generic explanation method, but rather a helper for simply getting explanations.
-        It is intended for simple use cases (simple exploration, debugging, etc.).
+        Generates explanations for plotting
 
         Parameters
         ----------
         in_tensor : Tensor
-            The input tensor to explain. Must be 4-dimensional and have batch size of 1.
+            The input tensor to explain. Must be 5-dimensional and have batch size of 1.
         idx : int, optional
             The index of the output to explain. If None, the prediction is explained.
-        grad2img_kwargs : Any
-            Additional keyword arguments passed to `gradient_to_image` method
+        grad2vid_kwargs : Any
+            Additional keyword arguments passed to `gradient_to_video' method
             for generating the explanation.
 
-        Examples
-        --------
-        Here is an example of how to use this method to generate and visualize an explanation and a contribution map:
 
-        >>> model = ...  # instantiate some B-cos model
-        >>> img = ...  # instantiate some input image tensor
-        >>> expl_out = model.explain(img)
-        >>> expl_out["prediction"]
-        932
-
-        >>> import matplotlib.pyplot as plt
-        >>> plt.imshow(expl_out["explanation"])
-        >>> plt.show()  # show the explanation
-
-        >>> model.plot_contribution_map(expl_out["contribution_map"])
-        >>> plt.show()  # show the contribution map
-
-        Warnings
-        --------
         This method is NOT optimized for speed.
-        Also, on a more general note: Care should be taken when generating explanations during training,
-        as the gradients might be different from during inference.
 
         Returns
         -------
@@ -249,7 +225,7 @@ class BcosUtilMixin:
             warnings.warn(
                 "Input tensor did not require grad! Has been set automatically to True!"
             )
-            in_tensor.requires_grad = True  # nonsense otherwise
+            in_tensor.requires_grad = True
         if self.training:  # noqa
             warnings.warn(
                 "Model is in training mode! "
@@ -262,8 +238,8 @@ class BcosUtilMixin:
             pred_out = out.max(1)
             result["prediction"] = pred_out.indices.item()
 
-            # select output (logit) to explain
-            if idx is None:  # explain prediction
+            # select output logit to explain
+            if idx is None:
                 to_be_explained_logit = pred_out.values
                 result["explained_class_idx"] = pred_out.indices.item()
             else:  # user specified idx
@@ -279,7 +255,7 @@ class BcosUtilMixin:
         result["reconstructed_logit"] = (in_tensor * grad).sum(dim=(1, 2, 3, 4)).detach().clone()
         result["contribution_map"] = (in_tensor * grad).sum(1)
 
-        # generate (color) explanation
+        # generate explanation
         result["explanation"], result["frame_scores"], result["contribution_map"] = gradient_to_video(
             in_tensor[0], in_tensor.grad[0], return_contribs=True, return_heatmap = True, **grad2vid_kwargs
         )
@@ -599,12 +575,9 @@ def antisymmetry_percentage(linear_mapping, threshold=0.01):
 
     return percentages
 
-def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=66.5, return_contribs=False, return_heatmap=False):
+def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=98.5, return_contribs=False, return_heatmap=False):
     """
-    From https://github.com/moboehle/B-cos/blob/0023500ce/interpretability/utils.py#L41.
-    Computing color image from dynamic linear mapping of B-cos models.
-
-    Parameters
+    Params
     ----------
     video: Tensor
         Original input video (encoded with 6 color channels)
@@ -620,7 +593,7 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=66.5, r
     Returns
     -------
     np.ndarray
-        image explanation of the B-cos model.
+        video explanation of the B-cos model.
         Shape: [H, T, W, C] (C=4 ie RGBA)
     """
     # shape of vid and linmap is [C, T, H, W], summing over first dimension gives the contribution map per location per frame
@@ -635,10 +608,10 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=66.5, r
         linear_mapping.abs().max(0, keepdim=True).values + 1e-12
     )
 
-    # clip off values below 0 (i.e., set negatively weighted channels to 0 weighting)
+    # clip
     rgb_grad = rgb_grad.clamp(min=0)
 
-    # Compute frame contribution scores
+    # compute frame contribution scores
     squeezed_contribs = contribs.squeeze(0) # T, H, W
     T, H, W = squeezed_contribs.shape
     total_mass = squeezed_contribs.sum()
@@ -647,37 +620,21 @@ def gradient_to_video(video, linear_mapping, smooth=15, alpha_percentile=66.5, r
 
 
 
-    # normalise s.t. each pair (e.g., r and 1-r) sums to 1 and only use resulting rgb values
-    #pair = rgb_grad[:3] + rgb_grad[3:]
-    #rgb_grad = rgb_grad[:3] / (pair + 1e-12)  # [3, T, H, W]
+    # use only rgb channels for visualisation
+    # this provided better explanations than the standard 2d method
     rgb_grad = rgb_grad[:3]
     rgb_grad = 1 - rgb_grad
 
-    regular = True
     # Set alpha value to the strength (L2 norm) of each location's gradient
     alpha = linear_mapping.norm(p=2, dim=0, keepdim=True)
-    # Only show positive contributions
+    # only positive contribs
     alpha = torch.where(contribs < 0, 1e-12, alpha)
-    # [1, T, H, W] -> [T, 1, H, W]
+
     alpha_2d = alpha.permute(1, 0, 2, 3)
     alpha_2d = F.avg_pool2d(alpha_2d, kernel_size=smooth, stride=1, padding=(smooth - 1) // 2)
-    alpha = alpha_2d.permute(1, 0, 2, 3)  # back to [1, T, H, W]
-    if regular:
-        alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
-    else:
-        # alpha: [1, T, H, W]
+    alpha = alpha_2d.permute(1, 0, 2, 3)
+    alpha = (alpha / torch.quantile(alpha, q=alpha_percentile / 100)).clip(0, 1)
 
-        # compute per-frame normalisation factor
-        frame_norm = alpha.view(1, 8, -1).sum(dim=2, keepdim=True)  # [1, T, 1]
-
-        # avoid divide-by-zero
-        frame_norm = frame_norm + 1e-8
-
-        # normalise each frame independently
-        alpha = alpha / frame_norm.view(1, 8, 1, 1)
-
-        # optional: rescale to [0,1] per frame for visibility
-        alpha = alpha / (alpha.amax(dim=(2, 3), keepdim=True) + 1e-8)
     rgb_grad = torch.concatenate([rgb_grad, alpha], dim=0)  # [4, T, H, W]
     T = rgb_grad.shape[1]
 
@@ -699,22 +656,20 @@ def linear_mapping_to_heatmap(video, linear_mapping, smooth=7, percentile=96.0):
         heatmap: [T, H, W] in [0,1]
     """
 
-    # Contribution per pixel
     contribs = (video * linear_mapping).sum(0)  # [T, H, W]
 
-    # Only keep positive evidence (standard in B-Cos)
     heatmap = contribs.clamp(min=0)
 
-    # Smooth spatially (per frame)
-    heatmap = heatmap.unsqueeze(1)  # [T,1,H,W]
+    # smooth per frame
+    heatmap = heatmap.unsqueeze(1)
     heatmap = F.avg_pool2d(
         heatmap,
         kernel_size=smooth,
         stride=1,
         padding=(smooth - 1) // 2
-    ).squeeze(1)  # [T,H,W]
+    ).squeeze(1)
 
-    # Normalize per frame (IMPORTANT for video)
+    # norm per frame
     q = torch.quantile(heatmap.flatten(1), percentile / 100.0, dim=1, keepdim=True)
     heatmap = heatmap / (q.unsqueeze(-1) + 1e-12)
 

@@ -1,3 +1,5 @@
+# This is my contribution
+
 import argparse
 
 import numpy as np
@@ -32,7 +34,7 @@ def minmax_norm(logits):
     return (logits - mins) / (maxs - mins + 1e-8)
 
 
-def mask_topk_explanation(model, videos, target_classes, device, k_percentile=0.7):
+def mask_topk_explanation(model, videos, target_classes, device, k_percentile=0.2):
     videos_for_grad = videos.detach().clone().to(device)
     videos_for_grad.requires_grad_(True)
 
@@ -69,8 +71,9 @@ def mask_topk_explanation(model, videos, target_classes, device, k_percentile=0.
     )
     explanation_scores = explanation_scores_2d.reshape(B, T, H, W)
 
-    flat_scores = explanation_scores.view(B, -1)
-    denom = torch.quantile(flat_scores, q=0.98, dim=1).view(B, 1, 1, 1)
+    flat = explanation_scores.view(B, -1)
+    denom = torch.quantile(flat, q=0.98, dim=1).view(B, 1, 1, 1)
+
     explanation_scores = (explanation_scores / (denom + 1e-8)).clamp(0, 1)
 
     flat_scores = explanation_scores.view(B, -1)
@@ -151,7 +154,7 @@ def test_faithfulness(args):
             videos,
             target_classes,
             device,
-            k_percentile=0.1
+            k_percentile=0.2
         )
 
         with torch.no_grad():
@@ -166,17 +169,12 @@ def test_faithfulness(args):
             batch_scores = torch.abs(original_scores - masked_scores)
             faithfulness_scores.extend(batch_scores.detach().cpu().tolist())
 
-    if len(faithfulness_scores) == 0:
-        print("No correctly classified clips were evaluated.")
-        return None, None
-
     mean_faithfulness = np.mean(faithfulness_scores)
-    std_faithfulness = np.std(faithfulness_scores)
 
-    print(f"Faithfulness: {mean_faithfulness:.4f} ± {std_faithfulness:.4f}")
+    print(f"Faithfulness: {mean_faithfulness:.4f}")
     print(f"Evaluated clips: {len(faithfulness_scores)}")
 
-    return mean_faithfulness, std_faithfulness
+    return mean_faithfulness
 
 
 if __name__ == "__main__":
