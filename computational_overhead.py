@@ -7,6 +7,7 @@ import numpy as np
 import torch
 
 from evaluate import load_model_and_config
+from gp_game2 import load_checkpoint
 
 try:
     from fvcore.nn import FlopCountAnalysis
@@ -33,21 +34,9 @@ def get_device():
 def load_model(args, device):
     model, config = load_model_and_config(args)
 
-    if args.checkpoint is not None:
-        print(f"Loading checkpoint: {args.checkpoint}")
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        state_dict = checkpoint.get("state_dict", checkpoint)
-
-        # Wrapper issue
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_key = k.replace("model.model.model.", "model.model.")
-            new_state_dict[new_key] = v
-
-        model.load_state_dict(new_state_dict, strict=False)
-
+    model = load_checkpoint(model, args.checkpoint, device)
     model.to(device)
+
     model.eval()
 
     return model, config
@@ -117,12 +106,8 @@ def benchmark_flops(model, inputs):
     if not FVCORE_AVAILABLE:
         return -1
 
-    try:
-        flops = FlopCountAnalysis(model.model, inputs)
-        return float(flops.total())
-    except Exception as e:
-        print("FLOPs failed:", e)
-        return -1
+    flops = FlopCountAnalysis(model.model, inputs)
+    return float(flops.total())
 
 
 def benchmark_profile(model, inputs, device, steps=10):
