@@ -35,7 +35,7 @@ def test_faithfulness(args):
     loader = get_loader(model_config, batch_size=4)
 
     faithfulness_scores = []
-    max_batches = 10
+    max_batches = 100
 
     for batch_idx, batch in enumerate(loader):
         videos, labels = batch
