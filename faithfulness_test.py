@@ -47,10 +47,10 @@ def test_faithfulness(args):
 
         with torch.no_grad():
             logits = model(videos)
-            probs = F.softmax(logits, dim=1)
+            norm_preds = minmax_norm(logits)
 
             # only test on correct
-            preds = probs.argmax(dim=1)
+            preds = logits.argmax(dim=1)
             correct_mask = preds == labels
 
         if correct_mask.sum() == 0:
@@ -60,11 +60,12 @@ def test_faithfulness(args):
         labels = labels[correct_mask]
         probs = probs[correct_mask]
         preds = preds[correct_mask]
+        norm_preds = norm_preds[correct_mask]
 
         # Use the correctly predicted class as the explanation target
         target_classes = labels
 
-        original_scores = probs[
+        original_scores = norm_preds[
             torch.arange(videos.size(0), device=device),
             target_classes
         ]
@@ -72,9 +73,9 @@ def test_faithfulness(args):
         masked_videos = mask_topk_contributions(model, videos, target_classes, device, k_percentile=0.7)
         with torch.no_grad():
             masked_logits = model(masked_videos)
-            masked_probs = F.softmax(masked_logits, dim=1)
+            masked_norm_preds = minmax_norm(masked_logits)
 
-            masked_scores = masked_probs[
+            masked_scores = masked_norm_preds[
                 torch.arange(masked_videos.size(0), device=device),
                 target_classes
             ]
@@ -124,6 +125,12 @@ def mask_topk_contributions(model, videos, target_classes, device, k_percentile=
     masked_videos[:, 3:][inv_mask] = 1
 
     return masked_videos
+
+
+def minmax_norm(logits):
+    mins = logits.min(dim=1, keepdim=True).values
+    maxs = logits.max(dim=1, keepdim=True).values
+    return (logits - mins) / (maxs - mins + 1e-8)
 
 if __name__ == "__main__":
     parser = get_parser()
