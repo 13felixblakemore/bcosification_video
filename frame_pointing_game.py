@@ -84,8 +84,17 @@ def game(args):
         total_scores.append(score)
 
     print("Total scores: ", total_scores)
-    avgs = sum(total_scores) / len(total_scores)
-    print("Average scores: ", avgs)
+
+    flat_scores = [s for scores in total_scores for s in scores]
+
+    print("Number of scores:", len(flat_scores))
+    print("Number of attempted samples:", len(total_scores))
+
+    if flat_scores:
+        avgs = sum(flat_scores) / len(flat_scores)
+        print("Average score:", avgs)
+    else:
+        print("No valid scores found.")
 
 def explain_joint(model, args, clip, labels):
     device = next(model.parameters()).device
@@ -99,6 +108,9 @@ def explain_joint(model, args, clip, labels):
     model.zero_grad(set_to_none=True)
 
     for i, label in enumerate(labels):
+        x.grad = None
+        model.zero_grad(set_to_none=True)
+
         with torch.enable_grad(), model.explanation_mode():
             out = model(x)
 
@@ -106,10 +118,7 @@ def explain_joint(model, args, clip, labels):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, label].item()
 
-            if pred_class == label:
-                count += 1
-                pass
-            else:
+            if pred_class != label:
                 continue
 
             logit.backward(inputs=[x])
@@ -120,6 +129,8 @@ def explain_joint(model, args, clip, labels):
         grad = x.grad.detach().clone().squeeze(0)
         grad = grad[:3].clamp_min(0)
         grad = grad.sum(0)
+
+        contribs = grad * clip
 
         T,H,W = grad.shape
         if i == 0:
@@ -132,8 +143,8 @@ def explain_joint(model, args, clip, labels):
         total_contrib = 0
         for t in range(T):
             if t in frames:
-                frame_contrib += grad[t].sum(dim=(0,1)).item()
-            total_contrib += grad[t].sum(dim=(0,1)).item()
+                frame_contrib += contribs[t].sum(dim=(0,1)).item()
+            total_contrib += contribs[t].sum(dim=(0,1)).item()
         scores.append(frame_contrib/total_contrib)
 
     return scores
