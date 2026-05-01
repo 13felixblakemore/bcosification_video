@@ -1,10 +1,9 @@
 import argparse
 import sys
-
+import torch.nn.functional as F
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
 
