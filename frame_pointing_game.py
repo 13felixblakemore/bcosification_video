@@ -67,23 +67,21 @@ def game(args):
         model=model,
         loader=loader,
         device=device,
-        confidence_threshold=0.5,
-        max_per_class=8,
-        max_batches=20,
+        confidence_threshold=0.0,
+        max_per_class=30,
+        max_batches=200,
     )
 
     print("Found high-confidence clips for", len(clips_by_class), "classes")
 
     total_scores = []
 
-    num_samples = 50
+    num_samples = 500
     for step in range(num_samples):
         print(step)
         clip, labels = add_second_clip(clips_by_class, step)
         score = explain_joint(model, args, clip, labels)
         total_scores.append(score)
-
-    print("Total scores: ", total_scores)
 
     flat_scores = [s for scores in total_scores for s in scores]
 
