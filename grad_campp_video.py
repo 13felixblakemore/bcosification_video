@@ -6,19 +6,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-from pytorch_grad_cam import GradCAMPlusPlus
-from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from evaluate import load_model_and_config
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from gp_game import load_checkpoint
 
-class GradCAMPlusPlus3D(GradCAMPlusPlus):
-    def get_target_width_height(self, input_tensor):
-        return (
-            input_tensor.size(-1),  # W
-            input_tensor.size(-2),  # H
-            input_tensor.size(-3),  # T
-        )
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -36,7 +27,7 @@ def load_standard_model(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     model, model_config = load_model_and_config(args)
-    model = load_checkpoint(model, args.checkpoint, device)
+    model = load_checkpoint(model_config, args.checkpoint, device)
 
     model.to(device)
     model.eval()
@@ -109,27 +100,86 @@ def read_video(video_path, num_frames=8, crop_size=224):
     return x, frames_np
 
 
-def run_library_gradcampp(model, input_tensor, target_layer, target_class=None):
-    if target_class is None:
-        targets = None
-    else:
-        targets = [ClassifierOutputTarget(target_class)]
+class GradCAMPlusPlus3D:
+    def __init__(self, model, target_layer):
+        self.model = model
+        self.target_layer = target_layer
+        self.activations = None
+        self.gradients = None
 
-    with GradCAMPlusPlus3D(
-        model=model,
-        target_layers=[target_layer],
-    ) as cam:
-        grayscale_cam = cam(
-            input_tensor=input_tensor,
-            targets=targets,
+        self.forward_handle = target_layer.register_forward_hook(self.save_activation)
+        self.backward_handle = target_layer.register_full_backward_hook(self.save_gradient)
+
+    def save_activation(self, module, input, output):
+        self.activations = output
+
+    def save_gradient(self, module, grad_input, grad_output):
+        self.gradients = grad_output[0]
+
+    def remove_hooks(self):
+        self.forward_handle.remove()
+        self.backward_handle.remove()
+
+    def __call__(self, input_tensor, target_class=None):
+        self.model.zero_grad(set_to_none=True)
+
+        logits = self.model(input_tensor)
+
+        if target_class is None:
+            target_class = int(logits.argmax(dim=1).item())
+
+        score = logits[:, target_class].sum()
+        score.backward(retain_graph=True)
+
+        activations = self.activations
+        gradients = self.gradients
+
+        if activations is None or gradients is None:
+            raise RuntimeError("Hooks did not capture activations/gradients.")
+
+        if activations.ndim != 5:
+            raise ValueError(
+                f"Expected 5D target activations [B,C,T,H,W], got {activations.shape}"
+            )
+
+        grads_power_2 = gradients ** 2
+        grads_power_3 = gradients ** 3
+
+        eps = 1e-8
+
+        denominator = (
+            2 * grads_power_2
+            + (activations * grads_power_3).sum(dim=(2, 3, 4), keepdim=True)
+            + eps
         )
 
-        logits = cam.outputs
+        alpha = grads_power_2 / denominator
 
-    if target_class is None:
-        target_class = int(logits.argmax(dim=1).item())
+        positive_gradients = F.relu(gradients)
 
-    return grayscale_cam[0], logits.detach(), target_class
+        weights = (alpha * positive_gradients).sum(dim=(2, 3, 4), keepdim=True)
+
+        cam = (weights * activations).sum(dim=1)
+        cam = F.relu(cam)
+
+        cam = cam.unsqueeze(1)
+
+        _, _, input_t, input_h, input_w = input_tensor.shape
+
+        cam = F.interpolate(
+            cam,
+            size=(input_t, input_h, input_w),
+            mode="trilinear",
+            align_corners=False,
+        )
+
+        cam = cam.squeeze(1)
+
+        cam_min = cam.flatten(1).min(dim=1)[0].view(-1, 1, 1, 1)
+        cam_max = cam.flatten(1).max(dim=1)[0].view(-1, 1, 1, 1)
+        cam = (cam - cam_min) / (cam_max - cam_min + eps)
+
+        return cam.detach().cpu().numpy()[0], logits.detach(), target_class
 
 
 def save_gradcam_figure(frames, grayscale_cam, save_path):
@@ -186,20 +236,27 @@ def main():
 
     target_layer = get_module_by_name(model, args.target_layer)
 
-    grayscale_cam, logits, used_target_class = run_library_gradcampp(
+    cam_extractor = GradCAMPlusPlus3D(
         model=model,
-        input_tensor=x,
         target_layer=target_layer,
-        target_class=args.target_class,
     )
 
-    pred_class = int(logits.argmax(dim=1).item())
+    try:
+        grayscale_cam, logits, used_target_class = cam_extractor(
+            input_tensor=x,
+            target_class=args.target_class,
+        )
 
-    print("Predicted class:", pred_class)
-    print("Target class:", used_target_class)
-    print("CAM shape:", grayscale_cam.shape)
+        pred_class = int(logits.argmax(dim=1).item())
 
-    save_gradcam_figure(frames, grayscale_cam, args.save_path)
+        print("Predicted class:", pred_class)
+        print("Target class:", used_target_class)
+        print("CAM shape:", grayscale_cam.shape)
+
+        save_gradcam_figure(frames, grayscale_cam, args.save_path)
+
+    finally:
+        cam_extractor.remove_hooks()
 
 
 if __name__ == "__main__":
