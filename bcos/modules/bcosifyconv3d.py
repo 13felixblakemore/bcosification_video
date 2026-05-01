@@ -115,26 +115,17 @@ class BcosifyConv3d(BcosConv3d):
         return out
 
     def extra_repr(self) -> str:
-        # rest in self.linear
         s = "B={b}"
 
         if self.max_out > 1:
             s += ", max_out={max_out}"
 
-        # final comma as self.linear is shown in next line
         s += ","
         additional_entries = dict(b=self.b.data.item()) if isinstance(self.b, nn.Parameter) else {}
         return s.format(**self.__dict__, **additional_entries)
 
     @classmethod
     def from_standard_module(cls, mod, model_config):
-        """
-        Create a BcosConv2d from a standard Conv2d module.
-        Args:
-            mod: Standard Conv2d module.
-        Returns:
-            BcosConv2d module.
-        """
         clamping = model_config['bcosify_args'].get("clamping", False)
         b_loss = model_config['bcosify_args'].get("learn_b", False)
         b = model_config['bcos_args'].get("b", 1)
@@ -160,7 +151,6 @@ class BcosifyConv3d(BcosConv3d):
                 new_mod.linear.bias = nn.Parameter(mod.bias.data)
         return new_mod
 
-    # same method as from_standard_module specifcally for last layer where i replace a Linear layer with BcosConv2d
     @classmethod
     def from_standard_module_linear(cls, mod, model_config):
         """

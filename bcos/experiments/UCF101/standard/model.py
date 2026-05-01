@@ -1,3 +1,6 @@
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+
 from lightning_utilities.core.rank_zero import rank_zero_info
 from torch import nn
 from torchvision.models.densenet import DenseNet121_Weights, _load_state_dict

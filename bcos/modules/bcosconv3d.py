@@ -29,18 +29,15 @@ class NormedConv3d(nn.Conv3d):
         self.use_weight_norm = True
 
     def forward(self, in_tensor: Tensor) -> Tensor:
-        # For toggling weight normalisation
         if self.use_weight_norm:
-            # dims need changing here, at time
             w = self.weight / LA.vector_norm(self.weight, dim=(1, 2, 3, 4), # dim=(1, 2, 3, 4) [out_channels, in_channels, time/frames, height, width]
                                              keepdim=True)  # [out_channels, in_channels, height, width]
         else:
             w = self.weight
-        # For scaling the weights with initial pre-trained weights
         if self.scale is not None and self.use_weight_norm:
             w = self.scale * w
         return self._conv_forward(input=in_tensor, weight=w,
-                                  bias=self.bias)  # Here bias = False not possible as _conv_forward expects bias tensor
+                                  bias=self.bias)
 
     def set_scale(self, weight: Tensor, trainable=False):
         # change dim
@@ -52,7 +49,7 @@ class NormedConv3d(nn.Conv3d):
 
 class BcosConv3d(DetachableModule):
     """
-    BcosConv3d is a 3D convolution with unit norm weights and a cosine similarity
+    BcosConv3d is a 3D convolution adapted from BcosConv2d with unit norm weights and a cosine similarity
     activation function. The cosine similarity is calculated between the
     convolutional patch and the weight vector. The output is then scaled by the
     cosine similarity.
@@ -155,7 +152,7 @@ class BcosConv3d(DetachableModule):
             in_tensor: Input tensor. Expected shape: (B, C, T, H, W)
 
         Returns:
-            BcosConv2d output on the input tensor.
+            BcosConv3d output on the input tensor.
         """
         return self.forward_impl(in_tensor)
 
@@ -166,7 +163,7 @@ class BcosConv3d(DetachableModule):
             in_tensor: Input tensor. Expected shape: (B, C, T, H, W)
 
         Returns:
-            BcosConv2d output on the input tensor.
+            BcosConv3d output on the input tensor.
         """
         # Simple linear layer
         out = self.linear(in_tensor)
@@ -213,9 +210,6 @@ class BcosConv3d(DetachableModule):
         else:
             G = self.groups
             C = self.in_channels
-            # group channels together and sum reduce over them
-            # ie [N,C,H,W] -> [N,G,C//G,H,W] -> [N,G,H,W]
-            # note groups MUST come first
             squares = squares.unflatten(1, (G, C // G)).sum(2)
 
         norms = (
@@ -230,9 +224,6 @@ class BcosConv3d(DetachableModule):
         ).sqrt_()
 
         if self.groups > 1:
-            # norms.shape will be [N,G,H,W] (here H,W are spatial dims of output)
-            # we need to convert this into [N,O,H,W] so that we can divide by this norm
-            # (because we can't easily do broadcasting)
             N, G, T, H, W = norms.shape
             O = self.out_channels  # noqa: E741
             norms = torch.repeat_interleave(norms, repeats=O // G, dim=1)
@@ -240,9 +231,6 @@ class BcosConv3d(DetachableModule):
         return norms
 
     def _calc_patch_norms_slow(self, in_tensor: Tensor) -> Tensor:
-        # this is much slower but definitely correct
-        # use for testing or something difficult to implement
-        # like dilation
         ones_kernel = torch.ones_like(self.linear.weight)
 
         return (
@@ -259,13 +247,10 @@ class BcosConv3d(DetachableModule):
         ).sqrt_()
 
     def extra_repr(self) -> str:
-        # rest in self.linear
         s = "B={b}"
 
         if self.max_out > 1:
             s += ", max_out={max_out}"
-
-        # final comma as self.linear is shown in next line
         s += ","
 
         return s.format(**self.__dict__)

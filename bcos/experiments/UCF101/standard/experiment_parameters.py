@@ -1,3 +1,6 @@
+# This file is from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+
 import math  # noqa
 
 import torch.nn

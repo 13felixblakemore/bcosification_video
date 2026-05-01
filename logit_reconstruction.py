@@ -87,3 +87,6 @@ if __name__ == "__main__":
     args.reload = "last"
     args.ema = False
     main(args)
+
+# usage
+# python logit_reconstruction.py --checkpoint experiments/UCF101/bcosification/i3d/last.ckpt

@@ -1,3 +1,6 @@
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+
 """
 This module contains the main public API of the bcos package.
 """

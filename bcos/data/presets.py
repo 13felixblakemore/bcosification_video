@@ -177,7 +177,7 @@ class UCF101ClassificationPresetEval:
         return video
 
 # Taken from existing B-Cosification Repo - https://github.com/shrebox/B-cosification
-# Used for replicating 2D B-Cosification Results
+# Used for replicating 2D B-Cosification Results:
 
 class ImageNetClassificationPresetTrain:
     def __init__(

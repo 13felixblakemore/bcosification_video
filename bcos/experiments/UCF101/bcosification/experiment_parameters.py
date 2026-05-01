@@ -1,3 +1,6 @@
+# This file is adapted from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
+
 import math  # noqa
 
 import torch.nn
@@ -136,7 +139,7 @@ i3ds = {
         dict(
             model=dict(
                 name=f"i3d",
-                last_layer_name = "classifier", # For replacing the last fc layer with conv1x1
+                last_layer_name = "classifier", # For replacing the last fc layer with conv1x1x1
                 weights=f"I3D_Weights.DEFAULT",
                 bcosify_args = dict(
                     fix_b = True, # Fixed b value (=2)

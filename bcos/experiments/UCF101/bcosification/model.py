@@ -1,4 +1,5 @@
-import sys
+# This file is retained from the B-Cosification repository framework:
+# https://github.com/shrebox/B-cosification
 
 from torch import nn
 from torchvision.models.densenet import DenseNet121_Weights, _load_state_dict

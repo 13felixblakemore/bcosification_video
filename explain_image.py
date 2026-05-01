@@ -370,3 +370,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     image = args.image_path
     explain_video(args, image)
+
+# usage
+# python explain_image.py --dataset UCF101 --base_network bcosification --experiment_name i3d
+# --image_path /mnt/fast0/fb720/UCF-101/GolfSwing/v_GolfSwing_g11_c06.avi
+# --checkpoint experiments/UCF101/bcosification/i3d/74.9B=2.ckpt

@@ -8,8 +8,6 @@ import torch.nn.functional as F
 # This file contains code taken from the public B-Cosification repo:
 # https://github.com/shrebox/B-cosification
 
-
-## START: ------------------- For standard models -------------------------------
 class MyResNet(ResNet):
     def _forward_impl(self, x):
         x = self.conv1(x)
@@ -36,9 +34,8 @@ class MyDenseNet(DenseNet):
         out = torch.flatten(out, 1)
         out = self.classifier(out)
         return out
-## END: ------------------- For standard models -------------------------------
 
-## ------------------- For Bcos models -------------------------------
+
 class ResNetBcos(ResNet):
     def _forward_impl(self, x):
 

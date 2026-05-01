@@ -135,3 +135,7 @@ if __name__ == "__main__":
     args.reload = "last"
     args.ema = False
     game(args)
+
+# usage
+# python frame_pointing_game.py --checkpoint experiments/UCF101/bcosification/i3d/last.ckpt
+# ensure checkpoint model matches config
