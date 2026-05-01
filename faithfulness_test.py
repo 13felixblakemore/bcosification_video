@@ -35,7 +35,7 @@ def test_faithfulness(args):
     loader = get_loader(model_config, batch_size=4)
 
     faithfulness_scores = []
-    max_batches = 100
+    max_batches = 500
 
     for batch_idx, batch in enumerate(loader):
         videos, labels = batch
@@ -69,7 +69,7 @@ def test_faithfulness(args):
             target_classes
         ]
 
-        masked_videos = mask_topk_contributions(model, videos, target_classes, device, k_percentile=0.2)
+        masked_videos = mask_topk_contributions(model, videos, target_classes, device, k_percentile=0.7)
         with torch.no_grad():
             masked_logits = model(masked_videos)
             masked_probs = F.softmax(masked_logits, dim=1)
