@@ -58,7 +58,6 @@ def test_faithfulness(args):
 
         videos = videos[correct_mask]
         labels = labels[correct_mask]
-        probs = probs[correct_mask]
         preds = preds[correct_mask]
         norm_preds = norm_preds[correct_mask]
 
