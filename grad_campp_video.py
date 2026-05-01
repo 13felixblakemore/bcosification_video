@@ -1,4 +1,4 @@
-# this is taken from
+# this is adapted for my use from https://github.com/adityac94/Grad_CAM_plus_plus
 
 import argparse
 import cv2
