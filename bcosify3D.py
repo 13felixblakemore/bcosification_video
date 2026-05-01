@@ -81,7 +81,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
     def bcosify(cls, model, model_config):
         for n, module in model.named_children():
             # Avoid double wrapping
-            if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d, nn.BatchNorm3d)):
+            if isinstance(module, (BcosifyConv3d, BcosifyLinear, BcosSequential, BatchNormUncentered3d)):
                 continue
             if len(list(module.children())) > 0:
                 # compound module, go inside it
