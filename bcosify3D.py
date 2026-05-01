@@ -87,6 +87,7 @@ class BcosifyNetwork(BcosUtilMixin, nn.Module):
             gap = model_config['bcosify_args'].get('gap',
                                                    True)  # Global Average Pooling reorder works with conv1x1 for the last linear layer
             last_layer_name = model_config.get('last_layer_name', 'NoLastLayerName')
+
             if isinstance(module, nn.Conv3d):
                 # replace Conv3d with BcosConv3d
                 setattr(model, n, BcosifyConv3d.from_standard_module(module, model_config))
