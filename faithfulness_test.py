@@ -151,7 +151,7 @@ def test_faithfulness(args):
             videos,
             target_classes,
             device,
-            k_percentile=0.2
+            k_percentile=0.1
         )
 
         with torch.no_grad():
