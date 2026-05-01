@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
+from gp_game2 import load_checkpoint, get_loader
 from grid import collect_high_confidence_clips, add_blank_frames, add_second_clip
 
 
@@ -31,37 +32,11 @@ def get_parser(add_help=True):
 def game(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, model_config = load_model_and_config(args)
-    if args.checkpoint is not None:
-        print(f"Loading checkpoint from: {args.checkpoint}")
-
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-        state_dict = checkpoint.get("state_dict", checkpoint)
-
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_key = k
-            new_key = new_key.replace("model.model.model.", "model.model.")
-
-            new_state_dict[new_key] = v
-
-        missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
-
-        print("Loaded checkpoint.")
-
-        if "epoch" in checkpoint:
-            print("Checkpoint epoch:", checkpoint["epoch"])
+    model = load_checkpoint(model, args.checkpoint, device)
 
     model.eval()
-    dm = UCF101DataModule(model_config["data"])
-    dm.setup("test")
 
-    loader = DataLoader(
-        dm.eval_dataset,
-        batch_size=8,
-        shuffle=True,
-        num_workers=4,
-        pin_memory=True
-    )
+    loader = get_loader(model_config, 1)
 
     clips_by_class = collect_high_confidence_clips(
         model=model,
@@ -116,7 +91,7 @@ def explain_joint(model, args, clip, labels):
             pred_class = out.argmax(dim=1).item()
             confidence = F.softmax(out, dim=1)[0, label].item()
 
-            if pred_class != label or confidence < 0.95:
+            if pred_class != label:
                 continue
 
             logit.backward(inputs=[x])

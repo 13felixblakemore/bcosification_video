@@ -16,6 +16,9 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import torch
 import os
+
+from gp_game2 import load_checkpoint
+
 try:
     from tqdm.auto import tqdm
 except ImportError:
@@ -117,15 +120,14 @@ def explain_image(args, image_path):
     print(module.shape)
     symmetry = (module[:, :3] + module[:, 3:]).abs().mean()
     print(symmetry)
+
     model.eval()
 
     expl_out = model.explain(img)
-    #print("Prediction:", idx2label[expl_out["prediction"]])
 
     plt.imshow(expl_out["explanation"])
     path_to_save = os.path.join(args.base_directory, "explanation.png")
 
-    # Saving the plot
     plt.savefig(path_to_save, bbox_inches='tight')
     plt.close()
 
@@ -215,26 +217,7 @@ def explain_video(args, video_path=None, vid_tensor=None):
         video_tensor.grad.zero_()
 
     model, config = load_model_and_config(args)
-    if args.checkpoint is not None:
-        print(f"Loading checkpoint from: {args.checkpoint}")
-
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        state_dict = checkpoint.get("state_dict", checkpoint)
-
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_key = k
-            new_key = new_key.replace("model.model.model.", "model.model.")
-
-            new_state_dict[new_key] = v
-
-        missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
-
-        print("Loaded checkpoint.")
-
-        if "epoch" in checkpoint:
-            print("Checkpoint epoch:", checkpoint["epoch"])
+    model = load_checkpoint(model, args.checkpoint, device=device)
 
     model.eval()
 
@@ -247,17 +230,9 @@ def explain_video(args, video_path=None, vid_tensor=None):
     expl_out = model.explain_video(video_tensor)
     grad_video = expl_out["explanation"]
 
-    frame_scores = expl_out["frame_scores"]
-    frame_path = os.path.join(args.base_directory, f"temporal_explanation.png")
-
-    #plot_vid(grad_video, frames, frame_scores, frame_path)
-    #plot_frame_importance_with_frames(grad_video, frames, frame_scores, frame_path)
-
     contribs = expl_out["contribution_map"].squeeze(0)
 
-    #heatmap = expl_out["heatmap"]  # [T,H,W]
-
-    video_tensor = torch.tensor(np.stack(frames))  # [T,H,W,C]
+    video_tensor = torch.tensor(np.stack(frames))
     video_tensor = transform(video_tensor)
     frames = video_tensor[:3].permute(1, 2, 3, 0).detach().cpu().numpy()
 

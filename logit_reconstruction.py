@@ -1,3 +1,5 @@
+# my contribution
+
 import argparse
 import sys
 import torch.nn.functional as F
@@ -6,11 +8,12 @@ import torch
 from torch.utils.data import DataLoader
 from bcos.data.datamodules import UCF101DataModule
 from evaluate import load_model_and_config
+from gp_game2 import load_checkpoint, get_loader
 
 
 def get_parser(add_help=True):
     parser = argparse.ArgumentParser(
-        description="Explain an image/vid", add_help=add_help
+        description="Reconstruct logit to test faithfulness", add_help=add_help
     )
     parser.add_argument(
         "--base_directory",
@@ -29,52 +32,21 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, model_config = load_model_and_config(args)
 
-    if args.checkpoint is not None:
-        print(f"Loading checkpoint from: {args.checkpoint}")
-
-        checkpoint = torch.load(args.checkpoint, map_location=device)
-
-        # Handle Lightning checkpoints
-        state_dict = checkpoint.get("state_dict", checkpoint)
-
-        # 🔧 Fix key mismatches (VERY important for your setup)
-        new_state_dict = {}
-        for k, v in state_dict.items():
-            new_key = k
-
-            # Common prefix issues in your repo
-            new_key = new_key.replace("model.model.model.", "model.model.")
-            #new_key = new_key.replace("model.model.", "model.")
-
-            new_state_dict[new_key] = v
-
-        model.load_state_dict(new_state_dict, strict=False)
+    model = load_checkpoint(model, args.checkpoint, device)
 
     model.eval()
-    print(model_config)
-    dm = UCF101DataModule(model_config["data"])
 
-    dm.setup("test")
-
-    loader = DataLoader(
-        dm.eval_dataset,
-        batch_size=1,
-        shuffle=True,  # ✅ force shuffle
-        num_workers=4,  # match your config if needed
-        pin_memory=True
-    )
+    loader = get_loader(model_config, 1)
 
     batches = 100
     faithfulness_list = check_faithfulness(model, loader, args, batches)
     faithfulness_list = np.array(faithfulness_list)
 
     mean_error = faithfulness_list.mean()
-    std_error = faithfulness_list.std()
 
     faithfulness = 1 - mean_error
 
     print(f"Faithfulness: {faithfulness:.4f}")
-    print(f"Mean error: {mean_error:.4f} ± {std_error:.4f}")
 
 def check_faithfulness(model, loader, args, batch_lim):
     device = next(model.parameters()).device
@@ -97,9 +69,9 @@ def check_faithfulness(model, loader, args, batch_lim):
             to_be_explained_logit.backward(inputs=[x])
 
         grads = x.grad.detach().clone()
-        print("grads: ", grads.shape)
         reconstructed_logits = (x * grads).sum(dim=(1, 2, 3, 4)).detach().clone()
         print("Reconstructed logits: ", reconstructed_logits)
+
         # compare error between reconstructed logit and actual logit
         error = (abs(reconstructed_logits) - abs(to_be_explained_logit)) / abs(reconstructed_logits)
         faithfulness.append(error.detach().cpu())

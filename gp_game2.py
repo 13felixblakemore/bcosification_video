@@ -47,8 +47,6 @@ def load_checkpoint(model, checkpoint_path, device):
     missing, unexpected = model.load_state_dict(new_state_dict, strict=False)
 
     print("Loaded checkpoint.")
-    print("Missing keys:", len(missing))
-    print("Unexpected keys:", len(unexpected))
 
     if "epoch" in checkpoint:
         print("Checkpoint epoch:", checkpoint["epoch"])
@@ -114,10 +112,6 @@ def game(args):
 
     print("total clips:", total_correct)
     print("count:", len(all_scores))
-
-    if len(all_scores) == 0:
-        print("No valid scores found.")
-        return
 
     avg_score = sum(all_scores) / len(all_scores)
     print(f"Score: {avg_score:.4f}")
