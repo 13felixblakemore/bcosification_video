@@ -34,6 +34,9 @@ def run_accuracy_eval(args):
 
     with torch.no_grad():
         for batch_idx, (videos, labels) in enumerate(loader):
+            if batch_idx > num_batches:
+                break
+
             videos, labels = videos.to(device), labels.to(device)
 
             outputs = model(videos)
